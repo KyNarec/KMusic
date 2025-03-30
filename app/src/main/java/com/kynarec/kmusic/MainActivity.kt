@@ -1,4 +1,4 @@
-package com.example.kmusic
+package com.kynarec.kmusic
 
 import android.os.Bundle
 import android.util.Log
