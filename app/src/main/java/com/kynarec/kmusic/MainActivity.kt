@@ -1,6 +1,5 @@
 package com.kynarec.kmusic
 
-
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -23,10 +22,17 @@ class MainActivity : AppCompatActivity() {
 
     fun navigatePlaylists(view: View) {
         Log.i("Playlists", "Playlist button was clicked")
+
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, PlaylistsFragment())
+            .commit()
     }
 
     fun navigateSongs(view: View) {
         Log.i("Songs", "Songs button was clicked")
 
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, SongsFragment())
+            .commit()
     }
 }
