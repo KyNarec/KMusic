@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">KMusic</string>
+    <string name="playlists_tab">Playlists</string>
+    <string name="songs_tab">Songs</string>
 </resources>

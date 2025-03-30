@@ -1,6 +1,8 @@
 package com.example.kmusic
 
 import android.os.Bundle
+import android.util.Log
+import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -16,5 +18,14 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+    }
+
+    fun navigatePlaylists(view: View) {
+        Log.i("Playlists", "Playlist button was clicked")
+    }
+
+    fun navigateSongs(view: View) {
+        Log.i("Songs", "Songs button was clicked")
+
     }
 }

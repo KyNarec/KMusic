@@ -29,7 +29,6 @@
             android:id="@+id/toolbar"
             android:layout_width="410dp"
             android:layout_height="43dp"
-            android:background="?attr/colorPrimary"
             android:minHeight="?attr/actionBarSize"
             android:theme="?attr/actionBarTheme"
             app:layout_constraintEnd_toEndOf="parent"
@@ -43,13 +42,43 @@
             android:layout_height="67dp"
             android:layout_marginTop="32dp"
             android:background="#00FFFFFF"
+            android:onClick="navigatePlaylists"
             android:rotation="-90"
-            android:text="Playlists"
+            android:text="@string/playlists_tab"
             android:textColor="@color/white"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="@+id/navigationBar"
             app:layout_constraintStart_toStartOf="@+id/navigationBar"
             app:layout_constraintTop_toTopOf="@+id/navigationBar" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textColor="@color/white"
+            android:textSize="34sp"
+            app:layout_constraintBottom_toTopOf="@+id/navigationBar"
+            app:layout_constraintEnd_toEndOf="@+id/toolbar"
+            app:layout_constraintHorizontal_bias="0.043"
+            app:layout_constraintStart_toStartOf="@+id/toolbar"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.666" />
+
+        <Button
+            android:id="@+id/songs"
+            android:layout_width="114dp"
+            android:layout_height="67dp"
+            android:layout_marginTop="24dp"
+            android:background="#00FFFFFF"
+            android:onClick="navigateSongs"
+            android:rotation="-90"
+            android:text="@string/songs_tab"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="@+id/navigationBar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/button" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
