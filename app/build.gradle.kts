@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.kmusic"
+    namespace = "com.kynarec.kmusic"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.kmusic"
+        applicationId = "com.kynarec.kmusic"
         minSdk = 31
         targetSdk = 35
         versionCode = 1
