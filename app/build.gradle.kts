@@ -33,9 +33,16 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    buildFeatures{
+        dataBinding {
+            enable = true
+        }
+    }
 }
 
 dependencies {
+
+    implementation(project(":innertube"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
