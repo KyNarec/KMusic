@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    // python support
+    id("com.chaquo.python")
 }
 
 android {
@@ -15,6 +17,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // python support
+        ndk {
+            // On Apple silicon, you can omit x86_64.
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
     }
 
     buildTypes {
@@ -40,6 +48,17 @@ android {
     }
 }
 
+chaquopy {
+    defaultConfig {
+        pip {
+            install("innertube")
+
+        }
+    }
+    productFlavors { }
+    sourceSets { }
+}
+
 dependencies {
 
     implementation(project(":innertube"))
@@ -53,4 +72,11 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    implementation(libs.androidx.databinding.runtime)
+    implementation(libs.ktor.client.core)
+    implementation(libs.androidx.recyclerview)
+    implementation (libs.androidx.cardview)
+    implementation (libs.glide)
+    annotationProcessor (libs.compiler)
 }

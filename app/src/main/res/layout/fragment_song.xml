@@ -1,18 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
-    <data>
-        <variable
-            name="shownSong"
-            type="com.kynarec.innertube.models.SongItem" />
-    </data>
-<FrameLayout
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="100dp"
-    android:onClick="playSong"
-    tools:context=".SongFragment">
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -29,26 +23,26 @@
             tools:src="@tools:sample/avatars" />
 
         <TextView
-            android:id="@+id/textView2"
+            android:id="@+id/song_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="32dp"
             android:layout_marginTop="16dp"
-            android:text="@{shownSong.title}"
             android:textSize="24sp"
-            app:layout_constraintBottom_toTopOf="@+id/textView3"
+            app:layout_constraintBottom_toTopOf="@+id/song_artist"
             app:layout_constraintStart_toEndOf="@+id/imageView"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Song Title" />
 
         <TextView
-            android:id="@+id/textView3"
+            android:id="@+id/song_artist"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="32dp"
             android:layout_marginBottom="16dp"
-            android:text="@{shownSong.artists.get(0).name}"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/imageView" />
+            app:layout_constraintStart_toEndOf="@+id/imageView"
+            tools:text="Artist Name" />
 
         <TextView
             android:id="@+id/textView4"
@@ -56,10 +50,9 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="8dp"
-            android:text="@{shownSong.duration.toString()}"
             android:textSize="10sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:text="3:45" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>
-</layout>

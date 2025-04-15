@@ -8,24 +8,24 @@ import android.view.View
 import android.view.ViewGroup
 import com.kynarec.innertube.models.SongItem
 import com.kynarec.innertube.models.Artist
-import com.kynarec.kmusic.databinding.FragmentSongBinding
+import com.kynarec.kmusic.models.Song
 
 
 class SongFragment : Fragment() {
 
 //    private var song: SongItem? = null
-    private var song: SongItem = SongItem(
-    id = "@id_001",
-    title = "Smth",
-    artists = listOf(
-        Artist("idk", "@id_002")
-    ),
-    duration = 250,
-    thumbnail = "TODO()",
-    explicit = true,
-)
-    private var _binding: FragmentSongBinding? = null
-    private val binding get() = _binding!!
+//    private var song: SongItem = SongItem(
+//    id = "@id_001",
+//    title = "Smth",
+//    artists = listOf(
+//        Artist("idk", "@id_002")
+//    ),
+//    duration = 250,
+//    thumbnail = "TODO()",
+//    explicit = true,
+//)
+    //private var _binding: FragmentSongBinding? = null
+    //private val binding get() = _binding!!
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,16 +39,16 @@ class SongFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate using data binding.
-        _binding = FragmentSongBinding.inflate(inflater, container, false)
+        //_binding = FragmentSongBinding.inflate(inflater, container, false)
 
         // Set the song variable on the binding.
         // (Make sure song is not null before setting, or handle the null case in your layout.)
-        binding.shownSong = song
+        //binding.shownSong
 
-        return binding.root
+        //return binding.root
 
         // Inflate the layout for this fragment
-//        return inflater.inflate(R.layout.fragment_song, container, false)
+        return inflater.inflate(R.layout.fragment_song, container, false)
 //        return binding.root
     }
 
@@ -68,6 +68,6 @@ class SongFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
+//        _binding = null
     }
 }
