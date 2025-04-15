@@ -31,25 +31,7 @@ class MainActivity : AppCompatActivity() {
         }
         val py = Python.getInstance()
         val module = py.getModule("backend")
-        //py = Python.getInstance()
-        //module = py.getModule("backend")
-//        val t = module.callAttr("searchOneSong", "Numb")
-//        module.callAttr("getSongThumbnailURL", t)
-//        val pyResult = module.callAttr("searchSongs", "Numb")
-//        val videoIds = ArrayList<Song>()
-//        for (item in pyResult.asList()) {
-//            videoIds.add(Song(
-//                id = item.toString(),
-//                title = module.callAttr("getSongTitle", item.toString()).toString(),
-//                artist = module.callAttr("getSongArtistName", item.toString()).toString(),
-//                thumbnail = module.callAttr("getSongThumbnailURL", item.toString()).toString()
-//            ))
-//        }
 
-        //val i = InnerTube()
-        //GlobalScope.launch {
-        //    print(i.getSearchSuggestions(YouTubeClient.WEB_REMIX, "numb"))
-        //}
     }
 
     fun navigatePlaylists(view: View) {
@@ -65,9 +47,6 @@ class MainActivity : AppCompatActivity() {
         val songsFragment = SongsFragment()
         val bundle = Bundle()
 
-        // Assuming you have an ArrayList of Song objects
-        //val songsList = ArrayList<Song>()
-        // Add your songs to the list here
         val py = Python.getInstance()
         val module = py.getModule("backend")
 

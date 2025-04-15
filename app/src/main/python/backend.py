@@ -32,8 +32,7 @@ def searchSongs(query):
 #searchSongs("Numb")
 
 def searchOneSong(songName):
-    #print(searchSongs(songName)[0])
-    #print("\n")
+
     return searchSongs(songName)[0]
 
 print(searchOneSong("Numb"))
@@ -59,11 +58,9 @@ def getSongTitle(video_id):
     #print(title)
     return title
 
-#getSongTitle("5qZQEq_C3vc")
 
 def getSongArtistName(video_id):
     data = client.next(video_id = video_id)
-    #print("client.next")
     n_data = (data.get('contents')
               .get('singleColumnMusicWatchNextResultsRenderer')
               .get('tabbedRenderer')
