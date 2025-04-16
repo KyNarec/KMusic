@@ -2,15 +2,18 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="match_parent"
+    android:layout_gravity="right"
     tools:context=".SearchFragment">
 
     <Button
         android:id="@+id/search_bar"
-        android:layout_width="350dp"
+        android:layout_width="0dp"
         android:layout_height="48dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="40dp"
+        android:layout_marginEnd="8dp"
         android:backgroundTint="@color/search_bar_background"
         android:focusable="auto"
         android:focusableInTouchMode="false"
@@ -20,7 +23,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="SpeakableTextPresentCheck" />
+        tools:ignore="SpeakableTextPresentCheck,DuplicateClickableBoundsCheck" />
 
     <com.google.android.material.textfield.TextInputEditText
         android:id="@+id/search_field"
@@ -41,6 +44,5 @@
         app:layout_constraintEnd_toEndOf="@+id/search_bar"
         app:layout_constraintStart_toStartOf="@+id/search_bar"
         app:layout_constraintTop_toTopOf="parent" />
-        <requestFocus/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
