@@ -1,5 +1,4 @@
 from innertube import InnerTube
-import re
 
 PARAMS_TYPE_VIDEO =     "EgIQAQ%3D%3D"
 PARAMS_TYPE_CHANNEL =   "EgIQAg%3D%3D"
@@ -130,6 +129,28 @@ def playSongById(video_id):
     print(n_data.keys())
 
     return n_data
+
+def searchSongsWithDetails(query):
+    n_data = searchSongs(query)
+    results = []
+    for i in n_data:        
+        
+        # Get all details at once
+        video_id = i
+        title = getSongTitle(i)
+        artist = getSongArtistName(i)
+        thumbnail = getSongThumbnailURL(i)
+        duration = getSongDuration(i)
+        
+        # Add as a dictionary
+        results.append({
+            "id": video_id,
+            "title": title,
+            "artist": artist,
+            "thumbnail": thumbnail,
+            "duration": duration
+        })
+    return results
 
 def testing(search_query):
     one_song = searchOneSong(search_query)

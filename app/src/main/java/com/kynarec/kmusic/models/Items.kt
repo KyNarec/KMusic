@@ -8,7 +8,7 @@ data class Song(
     val title: String,
     val artist: String,
     val thumbnail: String,
-    val duration: Int
+    val duration: String
     // other properties
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
@@ -16,7 +16,7 @@ data class Song(
         parcel.readString() ?: "",
         parcel.readString() ?: "",
         parcel.readString() ?: "",
-        parcel.readInt() ?: 0,
+        parcel.readString() ?: "",
         // Read other properties
     )
 
@@ -25,7 +25,7 @@ data class Song(
         parcel.writeString(title)
         parcel.writeString(artist)
         parcel.writeString(thumbnail)
-        parcel.writeInt(duration)
+        parcel.writeString(duration)
         // Write other properties
     }
 

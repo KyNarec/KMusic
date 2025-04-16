@@ -7,6 +7,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.bumptech.glide.request.RequestOptions
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.models.Song
 
@@ -32,12 +34,13 @@ class SongAdapter(private val songs: ArrayList<Song>) :
         // Set the song data
         holder.titleTextView.text = song.title
         holder.artistTextView.text = song.artist
-        holder.durationTextView.text = song.duration.toString()
+        holder.durationTextView.text = song.duration
 
         // Load thumbnail using Glide
         Glide.with(holder.itemView.context)
             .load(song.thumbnail)
             .centerCrop()
+            .apply(RequestOptions.bitmapTransform(RoundedCorners(30)))
             .into(holder.thumbnailImageView)
 
         // Set click listener to handle selection

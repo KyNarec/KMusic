@@ -12,6 +12,9 @@ import com.chaquo.python.android.AndroidPlatform
 import com.kynarec.kmusic.models.Song
 import kotlinx.coroutines.DelicateCoroutinesApi
 
+import kotlinx.coroutines.*
+import android.widget.Toast
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -50,14 +53,16 @@ class MainActivity : AppCompatActivity() {
         val py = Python.getInstance()
         val module = py.getModule("backend")
 
-        val pyResult = module.callAttr("searchSongs", "Numb")
+        val pyResult = module.callAttr("searchSongsWithDetails", "Numb")
+
         val songsList = ArrayList<Song>()
         for (item in pyResult.asList()) {
             songsList.add(Song(
-                id = item.toString(),
-                title = module.callAttr("getSongTitle", item.toString()).toString(),
-                artist = module.callAttr("getSongArtistName", item.toString()).toString(),
-                thumbnail = module.callAttr("getSongThumbnailURL", item.toString()).toString()
+                id = item.callAttr("get", "id").toString(),
+                title = item.callAttr("get", "title").toString(),
+                artist = item.callAttr("get", "artist").toString(),
+                thumbnail = item.callAttr("get", "thumbnail").toString(),
+                duration = item.callAttr("get", "duration").toString()
             ))
         }
 
