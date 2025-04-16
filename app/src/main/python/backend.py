@@ -6,6 +6,8 @@ PARAMS_TYPE_PLAYLIST =  "EgIQAw%3D%3D"
 PARAMS_TYPE_FILM =      "EgIQBA%3D%3D"
 PARAMS_TYPE_SONG =      "EgWKAQIIAWoQEAMQBBAJEAoQBRAREBAQFQ%3D%3D"
 
+print("INNERTUBE HAS BEEN INITIALIZED")
+
 client = InnerTube("WEB_REMIX", "1.20250409.01.00")
 def searchSongs(query):
     data = client.search(query=query, params=PARAMS_TYPE_SONG)
@@ -31,7 +33,6 @@ def searchSongs(query):
 
 
 def searchOneSong(songName):
-
     return searchSongs(songName)[0]
 
 def getSongTitle(video_id):
@@ -131,24 +132,31 @@ def playSongById(video_id):
     return n_data
 
 def searchSongsWithDetails(query):
-    n_data = searchSongs(query)
+    list_of_song_ids = searchSongs(query)
     results = []
-    for i in n_data:        
-        
-        # Get all details at once
-        video_id = i
-        title = getSongTitle(i)
-        artist = getSongArtistName(i)
-        thumbnail = getSongThumbnailURL(i)
-        duration = getSongDuration(i)
+    for i in list_of_song_ids:
+        t = client.next(video_id = i)
+        data = (t.get('contents')
+              .get('singleColumnMusicWatchNextResultsRenderer')
+              .get('tabbedRenderer')
+              .get('watchNextTabbedResultsRenderer')
+              .get('tabs')[0]
+              .get('tabRenderer')
+              .get('content')
+              .get('musicQueueRenderer')
+              .get('content')
+              .get('playlistPanelRenderer')
+              .get('contents')[0]
+              .get('playlistPanelVideoRenderer')
+              )
         
         # Add as a dictionary
         results.append({
-            "id": video_id,
-            "title": title,
-            "artist": artist,
-            "thumbnail": thumbnail,
-            "duration": duration
+            "id": i,
+            "title": data.get('title').get('runs')[0].get('text'),
+            "artist": data.get('longBylineText').get('runs')[0].get('text'),
+            "thumbnail": data.get('thumbnail').get('thumbnails')[-1].get('url'),
+            "duration": data.get('lengthText').get('runs')[0].get('text')
         })
     return results
 
@@ -159,7 +167,7 @@ def testing(search_query):
     title = getSongTitle(one_song)
     artist = getSongArtistName(one_song)
     duration = getSongDuration(one_song)
-    player = playSongById(one_song)
+    #player = playSongById(one_song)
     
 
     print("Multiple songs: ", many_songs)
@@ -168,7 +176,7 @@ def testing(search_query):
     print("One Song Artist: ", artist)
     print("One Song Duration: ", duration)
     print("One Song URL: ", thumbnail)
-    print(player)
+    #print(player)
 
-testing("Somewhere I belong")
-playSongById(searchOneSong("Numb"))
+#testing("Somewhere I belong")
+#playSongById(searchOneSong("Numb"))

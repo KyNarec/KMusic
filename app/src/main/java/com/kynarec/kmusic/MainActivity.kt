@@ -14,6 +14,10 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 
 import kotlinx.coroutines.*
 import android.widget.Toast
+import com.kynarec.innertube.InnerTube
+import com.kynarec.innertube.YouTube
+import com.kynarec.innertube.encoder.BrotliEncoder
+import com.kynarec.innertube.models.YouTubeClient
 
 
 class MainActivity : AppCompatActivity() {
@@ -37,6 +41,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+
     fun navigatePlaylists(view: View) {
         Log.i("Playlists", "Playlist button was clicked")
 
@@ -46,34 +51,54 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun navigateSongs(view: View) {
-
-        val songsFragment = SongsFragment()
-        val bundle = Bundle()
-
+        // Launch a coroutine on the Main thread.
         val py = Python.getInstance()
         val module = py.getModule("backend")
-
         val pyResult = module.callAttr("searchSongsWithDetails", "Numb")
-
         val songsList = ArrayList<Song>()
         for (item in pyResult.asList()) {
-            songsList.add(Song(
-                id = item.callAttr("get", "id").toString(),
-                title = item.callAttr("get", "title").toString(),
-                artist = item.callAttr("get", "artist").toString(),
-                thumbnail = item.callAttr("get", "thumbnail").toString(),
-                duration = item.callAttr("get", "duration").toString()
-            ))
+            CoroutineScope(Dispatchers.Main).launch {
+                songsList.add(
+                    Song(
+                        id = item.callAttr("get", "id").toString(),
+                        title = item.callAttr("get", "title").toString(),
+                        artist = item.callAttr("get", "artist").toString(),
+                        thumbnail = item.callAttr("get", "thumbnail").toString(),
+                        duration = item.callAttr("get", "duration").toString()
+                    )
+                )
+                println("idk")
+            }
         }
 
-        // Put the ArrayList in the bundle
-        bundle.putParcelableArrayList("songs_list", songsList)
+//        CoroutineScope(Dispatchers.Main).launch {
+//            // Move the Python calls and processing to a background thread:
+//            val songsList = withContext(Dispatchers.IO) {
+//
+//                val resultList = ArrayList<Song>()
+//                for (item in pyResult.asList()) {
+//                    // Using callAttr("get", ...) to retrieve values from the Python dict.
+//                    resultList.add(
+//                        Song(
+//                            id = item.callAttr("get", "id").toString(),
+//                            title = item.callAttr("get", "title").toString(),
+//                            artist = item.callAttr("get", "artist").toString(),
+//                            thumbnail = item.callAttr("get", "thumbnail").toString(),
+//                            duration = item.callAttr("get", "duration").toString()
+//                        )
+//                    )
+//                }
+//                resultList
+//            }
 
-        // Set the arguments to the fragment
-        songsFragment.arguments = bundle
-
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, songsFragment)
-            .commit()
+            // Now we're back on the Main thread—prepare the fragment.
+            val songsFragment = SongsFragment()
+            val bundle = Bundle().apply {
+                putParcelableArrayList("songs_list", songsList)
+            }
+            songsFragment.arguments = bundle
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, songsFragment)
+                .commit()
+        }
     }
-}
