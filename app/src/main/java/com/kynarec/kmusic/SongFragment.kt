@@ -6,10 +6,6 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.kynarec.innertube.models.SongItem
-import com.kynarec.innertube.models.Artist
-import com.kynarec.kmusic.models.Song
-
 
 class SongFragment : Fragment() {
 

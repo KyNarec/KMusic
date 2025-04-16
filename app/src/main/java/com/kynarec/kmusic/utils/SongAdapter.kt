@@ -32,7 +32,7 @@ class SongAdapter(private val songs: ArrayList<Song>) :
         // Set the song data
         holder.titleTextView.text = song.title
         holder.artistTextView.text = song.artist
-        holder.durationTextView.text = "3:23"
+        holder.durationTextView.text = song.duration.toString()
 
         // Load thumbnail using Glide
         Glide.with(holder.itemView.context)
@@ -43,6 +43,7 @@ class SongAdapter(private val songs: ArrayList<Song>) :
         // Set click listener to handle selection
         holder.itemView.setOnClickListener {
             // Handle click - you can navigate to detailed view or play the song
+            println("A song was pressed")
         }
     }
 
