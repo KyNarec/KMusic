@@ -74,8 +74,8 @@ def getSongArtistName(video_id):
               )
     
     artist = n_data.get('longBylineText').get('runs')[0].get('text')
-    print(n_data.get('longBylineText').get('runs')[0])
-    print(artist)
+    #print(n_data.get('longBylineText').get('runs')[0])
+    #print(artist)
     return artist
 
 
@@ -99,7 +99,7 @@ def getSongThumbnailURL(video_id):
 
     # -1 gets the last (highest res) thumbnail
     thumbnail = n_data.get('thumbnail').get('thumbnails')[-1].get('url')
-    print("thumbnail URL for songID: ", video_id, " ", thumbnail)
+    #print("thumbnail URL for songID: ", video_id, " ", thumbnail)
 
     return thumbnail
 
@@ -123,6 +123,14 @@ def getSongDuration(video_id):
     duration = n_data.get('lengthText').get('runs')[0].get('text')
     return duration
 
+def playSongById(video_id):
+    data = client.player(video_id)
+    n_data = data.get('playerConfig')
+    print(n_data)
+    print(n_data.keys())
+
+    return n_data
+
 def testing(search_query):
     one_song = searchOneSong(search_query)
     many_songs = searchSongs(search_query)
@@ -130,6 +138,8 @@ def testing(search_query):
     title = getSongTitle(one_song)
     artist = getSongArtistName(one_song)
     duration = getSongDuration(one_song)
+    player = playSongById(one_song)
+    
 
     print("Multiple songs: ", many_songs)
     print("One Song Id: ", one_song)
@@ -137,6 +147,7 @@ def testing(search_query):
     print("One Song Artist: ", artist)
     print("One Song Duration: ", duration)
     print("One Song URL: ", thumbnail)
-
+    print(player)
 
 testing("Somewhere I belong")
+playSongById(searchOneSong("Numb"))
