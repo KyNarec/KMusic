@@ -13,11 +13,6 @@ import com.kynarec.kmusic.models.Song
 import kotlinx.coroutines.DelicateCoroutinesApi
 
 import kotlinx.coroutines.*
-import android.widget.Toast
-import com.kynarec.innertube.InnerTube
-import com.kynarec.innertube.YouTube
-import com.kynarec.innertube.encoder.BrotliEncoder
-import com.kynarec.innertube.models.YouTubeClient
 
 
 class MainActivity : AppCompatActivity() {
@@ -101,4 +96,12 @@ class MainActivity : AppCompatActivity() {
                 .replace(R.id.fragmentContainer, songsFragment)
                 .commit()
         }
+
+    fun navigateSearch(view: View) {
+        Log.i("Search", "Search button was clicked")
+
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragmentContainer, SearchFragment())
+            .commit()
     }
+}
