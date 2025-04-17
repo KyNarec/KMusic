@@ -1,4 +1,5 @@
 from innertube import InnerTube
+from time import perf_counter
 
 PARAMS_TYPE_VIDEO =     "EgIQAQ%3D%3D"
 PARAMS_TYPE_CHANNEL =   "EgIQAg%3D%3D"
@@ -132,7 +133,13 @@ def playSongById(video_id):
     return n_data
 
 def searchSongsWithDetails(query):
+    print("request reached python and is sent to api")
+    t0 = perf_counter()
     list_of_song_ids = searchSongs(query)
+    t1 = perf_counter()
+    t10 = t1 - t0
+    print(f"Elapsed (high‑res): {t10:.6f} seconds")
+    print("request came back from api and is now processing")
     results = []
     for i in list_of_song_ids:
         t = client.next(video_id = i)
@@ -158,6 +165,10 @@ def searchSongsWithDetails(query):
             "thumbnail": data.get('thumbnail').get('thumbnails')[-1].get('url'),
             "duration": data.get('lengthText').get('runs')[0].get('text')
         })
+    t2 = perf_counter()
+    t12 = t2 - t10
+    print(f"Elapsed (high‑res): {t12:.6f} seconds")
+    print("Processing done")
     return results
 
 def testing(search_query):
