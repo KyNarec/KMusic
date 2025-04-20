@@ -1,5 +1,6 @@
 from innertube import InnerTube
 from time import perf_counter
+from pprint import pprint
 
 PARAMS_TYPE_VIDEO =     "EgIQAQ%3D%3D"
 PARAMS_TYPE_CHANNEL =   "EgIQAg%3D%3D"
@@ -125,12 +126,15 @@ def getSongDuration(video_id):
     return duration
 
 def playSongById(video_id):
-    data = client.player(video_id)
-    n_data = data.get('playerConfig')
-    print(n_data)
-    print(n_data.keys())
-
-    return n_data
+    client2 = InnerTube("ANDROID")
+    
+    data = client2.player(video_id)
+   #streams = data["streamingData"]["adaptiveFormats"]
+    print("printStreamableUrls")
+    n_data = (data.get('streamingData').get('adaptiveFormats'))
+    #print(n_data)
+    #pprint(n_data[-1].get('url'))
+    return n_data[-1].get('url')
 
 def searchSongsWithDetails(query):
     print("request reached python and is sent to api")
@@ -191,3 +195,8 @@ def testing(search_query):
 
 #testing("Somewhere I belong")
 #playSongById(searchOneSong("Numb"))
+playSongById(searchOneSong("Numb"))
+
+
+
+    

@@ -1,5 +1,6 @@
 package com.kynarec.kmusic
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
@@ -11,13 +12,18 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
 import com.kynarec.kmusic.models.Song
+import com.kynarec.kmusic.service.PlayerService
 import kotlinx.coroutines.DelicateCoroutinesApi
 
 import kotlinx.coroutines.*
 
 
+
 class MainActivity : AppCompatActivity() {
+    private lateinit var exoPlayer: ExoPlayer
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,6 +42,25 @@ class MainActivity : AppCompatActivity() {
         val py = Python.getInstance()
         val module = py.getModule("backend")
 
+        val serviceIntent = Intent(this, PlayerService::class.java)
+        startService(serviceIntent)
+
+//        val id = module.callAttr("searchOneSong", "Somewhere I belong")
+//        val pyResult = module.callAttr("playSongById", id)
+//        val mediaItem = MediaItem.fromUri(pyResult.toString())
+//
+//        Log.i("Main Activity","URL: $pyResult")
+//
+//        exoPlayer = ExoPlayer.Builder(this).build()
+//        //val mediaItem = MediaItem.fromUri(audioUrl)
+//        try {
+//            exoPlayer.setMediaItem(mediaItem)
+//            //exoPlayer.setMediaSource(mediaSource)
+//            exoPlayer.prepare()
+//            exoPlayer.play()
+//        } catch (e: Exception) {
+//            println(e)
+//        }
     }
 
 

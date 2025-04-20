@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 
+
 class SongFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,9 +35,15 @@ class SongFragment : Fragment() {
             }
     }
 
-    fun playSong(view: View) {
-        Log.i("song", "song was pressed")
-    }
+//    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+//        super.onViewCreated(view, savedInstanceState)
+//
+//        val song = view.findViewById<ConstraintLayout>(R.id.constraint_layout)
+//
+//        song.setOnClickListener {
+//            (activity as? MainActivity)?.playSong(requireView(), song.)
+//        }
+//    }
 
     override fun onDestroyView() {
         super.onDestroyView()
