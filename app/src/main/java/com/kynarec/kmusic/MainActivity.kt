@@ -12,8 +12,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
 import com.kynarec.kmusic.models.Song
 import com.kynarec.kmusic.service.PlayerService
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -23,7 +21,6 @@ import kotlinx.coroutines.*
 
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var exoPlayer: ExoPlayer
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,22 +42,6 @@ class MainActivity : AppCompatActivity() {
         val serviceIntent = Intent(this, PlayerService::class.java)
         startService(serviceIntent)
 
-//        val id = module.callAttr("searchOneSong", "Somewhere I belong")
-//        val pyResult = module.callAttr("playSongById", id)
-//        val mediaItem = MediaItem.fromUri(pyResult.toString())
-//
-//        Log.i("Main Activity","URL: $pyResult")
-//
-//        exoPlayer = ExoPlayer.Builder(this).build()
-//        //val mediaItem = MediaItem.fromUri(audioUrl)
-//        try {
-//            exoPlayer.setMediaItem(mediaItem)
-//            //exoPlayer.setMediaSource(mediaSource)
-//            exoPlayer.prepare()
-//            exoPlayer.play()
-//        } catch (e: Exception) {
-//            println(e)
-//        }
     }
 
 
@@ -88,53 +69,6 @@ class MainActivity : AppCompatActivity() {
             .replace(R.id.fragmentContainer, SongsFragment())
             .commit()
         //TODO("Display songs from DB")
-
-        // Launch a coroutine on the Main thread.
-//        val py = Python.getInstance()
-//        val module = py.getModule("backend")
-//        val pyResult = module.callAttr("searchSongsWithDetails", "Numb")
-//        val songsList = ArrayList<Song>()
-//        for (item in pyResult.asList()) {
-//            CoroutineScope(Dispatchers.Main).launch {
-//                songsList.add(
-//                    Song(
-//                        id = item.callAttr("get", "id").toString(),
-//                        title = item.callAttr("get", "title").toString(),
-//                        artist = item.callAttr("get", "artist").toString(),
-//                        thumbnail = item.callAttr("get", "thumbnail").toString(),
-//                        duration = item.callAttr("get", "duration").toString()
-//                    )
-//                )
-//                println("idk")
-//            }
-//        }
-//
-////        CoroutineScope(Dispatchers.Main).launch {
-////            // Move the Python calls and processing to a background thread:
-////            val songsList = withContext(Dispatchers.IO) {
-////
-////                val resultList = ArrayList<Song>()
-////                for (item in pyResult.asList()) {
-////                    // Using callAttr("get", ...) to retrieve values from the Python dict.
-////                    resultList.add(
-////                        Song(
-////                            id = item.callAttr("get", "id").toString(),
-////                            title = item.callAttr("get", "title").toString(),
-////                            artist = item.callAttr("get", "artist").toString(),
-////                            thumbnail = item.callAttr("get", "thumbnail").toString(),
-////                            duration = item.callAttr("get", "duration").toString()
-////                        )
-////                    )
-////                }
-////                resultList
-////            }
-//
-//            // Now we're back on the Main thread—prepare the fragment.
-//            val songsFragment = SongsFragment()
-//            val bundle = Bundle().apply {
-//                putParcelableArrayList("songs_list", songsList)
-//            }
-//            songsFragment.arguments = bundle
 
         }
 
