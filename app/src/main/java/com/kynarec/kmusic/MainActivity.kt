@@ -42,6 +42,9 @@ class MainActivity : AppCompatActivity() {
         val serviceIntent = Intent(this, PlayerService::class.java)
         startService(serviceIntent)
 
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.player_control_bar, PlayerControlBar())
+            .commit()
     }
 
 
@@ -134,6 +137,18 @@ class MainActivity : AppCompatActivity() {
         songsFragment.arguments = bundle
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, songsFragment)
+            .commit()
+    }
+
+    fun updatePlayerControlBar(song: Song) {
+        val playerControlBar = PlayerControlBar()
+
+        val  bundle = Bundle().apply {
+            putParcelable("song", song)
+        }
+        playerControlBar.arguments = bundle
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.player_control_bar, playerControlBar)
             .commit()
     }
 }

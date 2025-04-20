@@ -3,8 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="100dp"
-    android:background="?attr/selectableItemBackground"
+    android:layout_height="75dp"
     android:clickable="true"
     android:focusable="true">
 
@@ -14,10 +13,12 @@
         android:layout_height="match_parent">
 
         <ImageView
-            android:id="@+id/imageView"
-            android:layout_width="87dp"
-            android:layout_height="85dp"
-            android:layout_marginStart="16dp"
+            android:id="@+id/thumbnail"
+            android:layout_width="70dp"
+            android:layout_height="66dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -29,11 +30,15 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
+            android:breakStrategy="simple"
             android:textSize="24sp"
             app:layout_constraintBottom_toTopOf="@+id/song_artist"
-            app:layout_constraintStart_toEndOf="@+id/imageView"
+            app:layout_constraintStart_toEndOf="@+id/thumbnail"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="Song Title" />
+            tools:text="Song Title"
+            android:ellipsize="end"
+            android:maxLength="8"
+            />
 
         <TextView
             android:id="@+id/song_artist"
@@ -41,9 +46,13 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginBottom="16dp"
+            android:breakStrategy="simple"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/imageView"
-            tools:text="Artist Name" />
+            app:layout_constraintStart_toEndOf="@+id/thumbnail"
+            tools:text="Artist Name"
+            android:ellipsize="end"
+            android:maxLength="8"
+            />
 
         <ImageButton
             android:id="@+id/skip_back_button"
@@ -64,7 +73,7 @@
             android:id="@+id/skip_forward_button"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginEnd="16dp"
+            android:layout_marginEnd="8dp"
             android:background="@android:color/transparent"
             android:clickable="true"
             android:src="@drawable/play_skip_forward"
@@ -94,8 +103,6 @@
             android:id="@+id/pause_button"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginStart="5dp"
-            android:layout_marginEnd="4dp"
             android:background="@android:color/transparent"
             android:clickable="true"
             android:src="@drawable/pause"

@@ -78,7 +78,9 @@ class PlayerService() : MediaLibraryService() {
         try {
             player.setMediaItem(mediaItem)
             player.prepare()
-            player.play()
+            if (player.isPlaying){
+                player.play()
+            }
         } catch (e: Exception) {
             Log.w("PLAYER SERVICE", e)
         }
