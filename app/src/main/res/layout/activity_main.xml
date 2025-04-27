@@ -44,13 +44,12 @@
                 android:layout_alignParentBottom="true"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/rounded_bg"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="1.0"
-                app:layout_constraintStart_toEndOf="@+id/navigationBar"
-                android:background="@drawable/rounded_bg"
-                />
+                app:layout_constraintStart_toStartOf="parent" />
 
         <com.google.android.material.navigation.NavigationView
             android:id="@+id/navigationBar"
