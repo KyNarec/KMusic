@@ -52,7 +52,8 @@ class SongAdapter(private val songs: ArrayList<Song>) :
         // Set click listener to handle selection
         holder.itemView.setOnClickListener {
             // Handle click - you can navigate to detailed view or play the song
-            Log.i("Song Adapter", "Song ${song.title} by ${song.artist} was played")
+            Log.i("Song Adapter", "Song ${song.title} by ${song.artist} was played (ID: ${song.id} )")
+
             val intent = Intent(holder.itemView.context, PlayerService::class.java)
             intent.action = "ACTION_PLAY"
             intent.putExtra("SONG_ID", song.id) // Passing string song ID

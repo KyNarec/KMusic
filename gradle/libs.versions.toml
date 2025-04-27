@@ -4,6 +4,7 @@ cardview = "1.0.0"
 compiler = "4.16.0"
 databindingRuntime = "8.9.1"
 exoplayer = "2.19.1"
+innertube = "1.0.1"
 kotlin = "2.0.21"
 coreKtx = "1.10.1"
 junit = "4.13.2"
@@ -27,6 +28,7 @@ androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version
 compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "compiler" }
 exoplayer = { module = "com.google.android.exoplayer:exoplayer", version.ref = "exoplayer" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "compiler" }
+innertube = { module = "com.mewsic:innertube", version.ref = "innertube" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

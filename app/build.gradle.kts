@@ -85,4 +85,6 @@ dependencies {
     implementation (libs.okhttp)
 
     annotationProcessor (libs.compiler)
+
+    implementation(libs.innertube)
 }

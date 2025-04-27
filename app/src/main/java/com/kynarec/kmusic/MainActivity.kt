@@ -13,6 +13,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.kynarec.kmusic.models.Song
+import com.kynarec.kmusic.service.InnerTube
 import com.kynarec.kmusic.service.PlayerService
 import kotlinx.coroutines.DelicateCoroutinesApi
 
@@ -45,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.player_control_bar, PlayerControlBar())
             .commit()
+
     }
 
 
@@ -94,6 +96,7 @@ class MainActivity : AppCompatActivity() {
 
         for (item in pyResult.asList()) {
             CoroutineScope(Dispatchers.Main).launch {
+                //InnerTube().main()
                 songsList.add(
                     Song(
                         id = item.callAttr("get", "id").toString(),
