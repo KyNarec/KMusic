@@ -5,4 +5,5 @@
     <color name="search_bar_background">@color/material_dynamic_neutral_variant20</color>
     <color name="text">@color/white</color>
     <color name="hint">#CBCBCB</color>
+    <color name="background">#212121</color>
 </resources>

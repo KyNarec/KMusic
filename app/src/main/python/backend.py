@@ -11,27 +11,60 @@ PARAMS_TYPE_SONG =      "EgWKAQIIAWoQEAMQBBAJEAoQBRAREBAQFQ%3D%3D"
 print("INNERTUBE HAS BEEN INITIALIZED")
 
 client = InnerTube("WEB_REMIX", "1.20250409.01.00")
+
 def searchSongs(query):
     data = client.search(query=query, params=PARAMS_TYPE_SONG)
 
-    n_data = (data.get('contents')
-              .get('tabbedSearchResultsRenderer')
-              .get('tabs')[0]
-              .get('tabRenderer')  
-              .get('content')
-              .get('sectionListRenderer')
-              .get('contents')[1]  
-              .get('musicShelfRenderer')
-              .get('contents')
+    n_data = (data['contents']
+              ['tabbedSearchResultsRenderer']
+              ['tabs'][0]
+              ['tabRenderer'] 
+              ['content']
+              ['sectionListRenderer']
+              ['contents'][1]  
+              ['musicShelfRenderer']
+              ['contents']
               )
     #print(n_data)
-    video_ids = []
+    #video_ids = []
+    results = []
     for i in n_data:
-        video_id = i.get('musicResponsiveListItemRenderer').get('overlay').get('musicItemThumbnailOverlayRenderer').get('content').get('musicPlayButtonRenderer').get('playNavigationEndpoint').get('watchEndpoint').get('videoId')
+        video_id = i['musicResponsiveListItemRenderer']['playlistItemData']['videoId']
+        # OLD
+        # video_id = i['musicResponsiveListItemRenderer']['overlay']['musicItemThumbnailOverlayRenderer']['content']['musicPlayButtonRenderer']['playNavigationEndpoint']['watchEndpoint']['videoId']
+        
         #print("videoId: ", video_id)
-        video_ids.append(video_id)
+        #print(i['musicResponsiveListItemRenderer']['overlay']['musicItemThumbnailOverlayRenderer']['content']['musicPlayButtonRenderer']['accessibilityPlayData']['accessibilityData']['label'])
+        
+        # for Song title
+        #print(i['musicResponsiveListItemRenderer']['flexColumns'][0]['musicResponsiveListItemFlexColumnRenderer']['text']['runs'][0]['text'])
+        video_title = i['musicResponsiveListItemRenderer']['flexColumns'][0]['musicResponsiveListItemFlexColumnRenderer']['text']['runs'][0]['text']
+        #video_title = ""
+        
+        # for Song duration
+        #pprint(i['musicResponsiveListItemRenderer']['flexColumns'][1]['musicResponsiveListItemFlexColumnRenderer']['text']['runs'][4]['text'])
+        video_duration = i['musicResponsiveListItemRenderer']['flexColumns'][1]['musicResponsiveListItemFlexColumnRenderer']['text']['runs'][4]['text']
+        
+        
+        # for Song artist
+        #pprint(i['musicResponsiveListItemRenderer']['flexColumns'][1]['musicResponsiveListItemFlexColumnRenderer']['text']['runs'][0]['text'])
+        video_artist = i['musicResponsiveListItemRenderer']['flexColumns'][1]['musicResponsiveListItemFlexColumnRenderer']['text']['runs'][0]['text']
+        
+        # for Song thumbnail in 120x120
+        #pprint(i['musicResponsiveListItemRenderer']['thumbnail']['musicThumbnailRenderer']['thumbnail']['thumbnails'][-1]['url'])
+        video_thumbnail = i['musicResponsiveListItemRenderer']['thumbnail']['musicThumbnailRenderer']['thumbnail']['thumbnails'][-1]['url']
+        
 
-    return video_ids
+        # Add as a dictionary
+        results.append({
+            "id": video_id,
+            "title": video_title,
+            "artist": video_artist,
+            "thumbnail": video_thumbnail,
+            "duration": video_duration
+        })
+
+    return results
 
 
 def searchOneSong(songName):
@@ -129,9 +162,10 @@ def playSongById(video_id):
     client2 = InnerTube("ANDROID")
     
     data = client2.player(video_id)
-   #streams = data["streamingData"]["adaptiveFormats"]
-    print("printStreamableUrls")
+    #streams = data["streamingData"]["adaptiveFormats"]
+    #print("printStreamableUrls")
     n_data = (data.get('streamingData').get('adaptiveFormats'))
+    pprint(n_data[-1])
     #print(n_data)
     #pprint(n_data[-1].get('url'))
     return n_data[-1].get('url')
@@ -146,28 +180,33 @@ def searchSongsWithDetails(query):
     print("request came back from api and is now processing")
     results = []
     for i in list_of_song_ids:
+        print("request going to api for song id: ", i)
         t = client.next(video_id = i)
-        data = (t.get('contents')
-              .get('singleColumnMusicWatchNextResultsRenderer')
-              .get('tabbedRenderer')
-              .get('watchNextTabbedResultsRenderer')
-              .get('tabs')[0]
-              .get('tabRenderer')
-              .get('content')
-              .get('musicQueueRenderer')
-              .get('content')
-              .get('playlistPanelRenderer')
-              .get('contents')[0]
-              .get('playlistPanelVideoRenderer')
+        client.search
+        print("request came back from api for song id: ", i)
+        data = (t['contents']
+              ['singleColumnMusicWatchNextResultsRenderer']
+              ['tabbedRenderer']
+              ['watchNextTabbedResultsRenderer']
+              ['tabs']
+              [0]
+              ['tabRenderer']
+              ['content']
+              ['musicQueueRenderer']
+              ['content']
+              ['playlistPanelRenderer']
+              ['contents']
+              [0]
+              ['playlistPanelVideoRenderer']
               )
         
         # Add as a dictionary
         results.append({
             "id": i,
-            "title": data.get('title').get('runs')[0].get('text'),
-            "artist": data.get('longBylineText').get('runs')[0].get('text'),
-            "thumbnail": data.get('thumbnail').get('thumbnails')[-1].get('url'),
-            "duration": data.get('lengthText').get('runs')[0].get('text')
+            "title": data['title']['runs'][0]['text'],
+            "artist": data['longBylineText']['runs'][0]['text'],
+            "thumbnail": data['thumbnail']['thumbnails'][-1]['url'],
+            "duration": data['lengthText']['runs'][0]['text']
         })
     t2 = perf_counter()
     t12 = t2 - t10
@@ -195,8 +234,8 @@ def testing(search_query):
 
 #testing("Somewhere I belong")
 #playSongById(searchOneSong("Numb"))
-playSongById(searchOneSong("Numb"))
+#playSongById(searchOneSong("Numb"))
 
-
-
-    
+#pprint(searchSongsWithDetails("Somewhere I belong"))
+pprint(searchSongs("Somewhere I belong"))
+#searchSongs("Somewhere I belong")

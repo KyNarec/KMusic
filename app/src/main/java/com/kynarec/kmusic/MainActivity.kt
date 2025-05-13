@@ -47,6 +47,12 @@ class MainActivity : AppCompatActivity() {
             .replace(R.id.player_control_bar, PlayerControlBar())
             .commit()
 
+//        val i = InnerTube()
+//        val s = i.searchSong("Numb")
+////        Log.i("INNERTUBE API", InnerTube().getSearchResultsByQuery2("numb").size.toString())
+//
+////        println("Artist by ID" + InnerTube().getArtistById("5qZQEq_C3vc"))
+//        Log.i("INNERTUBE API", s.size.toString())
     }
 
 
@@ -89,14 +95,14 @@ class MainActivity : AppCompatActivity() {
         Log.i("Search Results", "Search Results should be shown")
         val py = Python.getInstance()
         val module = py.getModule("backend")
-        val pyResult = module.callAttr("searchSongsWithDetails", query)
+        val pyResult = module.callAttr("searchSongs", query)
         val songsList = ArrayList<Song>()
 
         var counter = 1
 
         for (item in pyResult.asList()) {
             CoroutineScope(Dispatchers.Main).launch {
-                //InnerTube().main()
+//                InnerTube().main()
                 songsList.add(
                     Song(
                         id = item.callAttr("get", "id").toString(),

@@ -12,6 +12,7 @@ import com.kynarec.innertube.models.SearchSuggestions
 import com.kynarec.innertube.models.SongItem
 import com.kynarec.innertube.models.WatchEndpoint
 import com.kynarec.innertube.models.WatchEndpoint.WatchEndpointMusicSupportedConfigs.WatchEndpointMusicConfig.Companion.MUSIC_VIDEO_TYPE_ATV
+import com.kynarec.innertube.models.YouTubeClient.Companion.ANDROID
 import com.kynarec.innertube.models.YouTubeClient.Companion.ANDROID_MUSIC
 import com.kynarec.innertube.models.YouTubeClient.Companion.TVHTML5
 import com.kynarec.innertube.models.YouTubeClient.Companion.WEB
@@ -413,7 +414,9 @@ object YouTube {
     }
 
     suspend fun player(videoId: String, playlistId: String? = null): Result<PlayerResponse> = runCatching {
-        val playerResponse = innerTube.player(ANDROID_MUSIC, videoId, playlistId).body<PlayerResponse>()
+        //val playerResponse = innerTube.player(ANDROID_MUSIC, videoId, playlistId).body<PlayerResponse>()
+        val playerResponse = innerTube.player(ANDROID, videoId, playlistId).body<PlayerResponse>()
+
         if (playerResponse.playabilityStatus.status == "OK") {
             return@runCatching playerResponse
         }
