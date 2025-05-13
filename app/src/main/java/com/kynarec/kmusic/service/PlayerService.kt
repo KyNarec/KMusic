@@ -48,19 +48,22 @@ class PlayerService() : MediaLibraryService() {
         super.onStartCommand(intent, flags, startId)
         Log.d(TAG, "onStartCommand: Received command")
 
-        if (intent?.action == "ACTION_PLAY") {
-            val songId = intent.getStringExtra("SONG_ID")
-            if (songId != null) {
-                playSongFromSongId(songId)
+        when (intent?.action) {
+            "ACTION_PLAY" -> {
+                val songId = intent.getStringExtra("SONG_ID")
+                if (songId != null) {
+                    playSongFromSongId(songId)
+                }
             }
-        }
 
-        if (intent?.action == "ACTION_RESUME"){
-            player.play()
-        }
+            "ACTION_RESUME" -> player.play()
 
-        if (intent?.action == "ACTION_PAUSE"){
-            player.pause()
+            "ACTION_PAUSE" -> player.pause()
+
+            "REQUEST_PLAYER_STATUS" -> {
+                val statusIntent = Intent("PLAYER_STATUS")
+                statusIntent.putExtra("isPlaying", player.isPlaying)
+            }
         }
 
         return START_NOT_STICKY

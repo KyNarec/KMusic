@@ -92,7 +92,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun navigateSearchResult(view: View, query: String) {
-        Log.i("Search Results", "Search Results should be shown")
+//        Log.i("Search Results", "Search Results should be shown")
         val py = Python.getInstance()
         val module = py.getModule("backend")
         val pyResult = module.callAttr("searchSongs", query)
@@ -102,19 +102,20 @@ class MainActivity : AppCompatActivity() {
 
         for (item in pyResult.asList()) {
             CoroutineScope(Dispatchers.Main).launch {
-//                InnerTube().main()
+
+                val d = item.callAttr("get", "duration").toString()
                 songsList.add(
                     Song(
                         id = item.callAttr("get", "id").toString(),
                         title = item.callAttr("get", "title").toString(),
                         artist = item.callAttr("get", "artist").toString(),
                         thumbnail = item.callAttr("get", "thumbnail").toString(),
-                        duration = item.callAttr("get", "duration").toString()
+                        // filtering out wrong durations here and not in backend, because Kotlin is faster
+                        duration = (if (Regex("""^(\d{1,2}):(\d{1,2})$""").matchEntire(d) == null) "NA" else d ).toString()
                     )
                 )
-                Log.i("Search Result", "This is search result number $counter")
-//                println("This is search result number $count")
-                counter++
+//                Log.i("Search Result", "This is search result number $counter")
+//                counter++
             }
         }
 

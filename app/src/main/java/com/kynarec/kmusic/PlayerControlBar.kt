@@ -1,7 +1,11 @@
 package com.kynarec.kmusic
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +13,7 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
@@ -18,6 +23,7 @@ import com.kynarec.kmusic.service.PlayerService
 
 class PlayerControlBar : Fragment() {
     lateinit var song: Song
+    var isPlaying = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         song = Song(
@@ -62,6 +68,13 @@ class PlayerControlBar : Fragment() {
             }
     }
 
+    private val statusReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            isPlaying = intent?.getBooleanExtra("isPlaying", false) ?: false
+            Log.d("PlayerControlBar", "Is playing: $isPlaying")
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val pauseButton = view.findViewById<ImageButton>(R.id.pause_button)
@@ -72,6 +85,24 @@ class PlayerControlBar : Fragment() {
         val thumbnail: ImageView = view.findViewById(R.id.thumbnail)
 
         val intent = Intent(context, PlayerService::class.java)
+
+
+        context?.let {
+            ContextCompat.registerReceiver(
+                it,
+                statusReceiver,
+                IntentFilter("PLAYER_STATUS"),
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+        }
+
+        val newIntent = intent.apply { action = "REQUEST_PLAYER_STATUS" }
+        context?.startService(newIntent)
+
+        if (!isPlaying) {
+            playButton.visibility = View.INVISIBLE
+            pauseButton.visibility = View.VISIBLE
+        }
 
         // Pauses playback
         playButton.setOnClickListener {

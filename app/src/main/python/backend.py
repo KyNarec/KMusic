@@ -1,6 +1,7 @@
 from innertube import InnerTube
 from time import perf_counter
 from pprint import pprint
+import re
 
 PARAMS_TYPE_VIDEO =     "EgIQAQ%3D%3D"
 PARAMS_TYPE_CHANNEL =   "EgIQAg%3D%3D"
@@ -25,8 +26,7 @@ def searchSongs(query):
               ['musicShelfRenderer']
               ['contents']
               )
-    #print(n_data)
-    #video_ids = []
+    
     results = []
     for i in n_data:
         video_id = i['musicResponsiveListItemRenderer']['playlistItemData']['videoId']
@@ -44,7 +44,7 @@ def searchSongs(query):
         # for Song duration
         #pprint(i['musicResponsiveListItemRenderer']['flexColumns'][1]['musicResponsiveListItemFlexColumnRenderer']['text']['runs'][4]['text'])
         video_duration = i['musicResponsiveListItemRenderer']['flexColumns'][1]['musicResponsiveListItemFlexColumnRenderer']['text']['runs'][4]['text']
-        
+
         
         # for Song artist
         #pprint(i['musicResponsiveListItemRenderer']['flexColumns'][1]['musicResponsiveListItemFlexColumnRenderer']['text']['runs'][0]['text'])
@@ -168,8 +168,10 @@ def playSongById(video_id):
     pprint(n_data[-1])
     #print(n_data)
     #pprint(n_data[-1].get('url'))
+    pprint(n_data[-1])
     return n_data[-1].get('url')
 
+# Pretty much useless now because it is not in use anymore
 def searchSongsWithDetails(query):
     print("request reached python and is sent to api")
     t0 = perf_counter()
@@ -232,10 +234,4 @@ def testing(search_query):
     print("One Song URL: ", thumbnail)
     #print(player)
 
-#testing("Somewhere I belong")
-#playSongById(searchOneSong("Numb"))
-#playSongById(searchOneSong("Numb"))
 
-#pprint(searchSongsWithDetails("Somewhere I belong"))
-pprint(searchSongs("Somewhere I belong"))
-#searchSongs("Somewhere I belong")

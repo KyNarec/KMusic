@@ -59,6 +59,9 @@ class SongAdapter(private val songs: ArrayList<Song>) :
             intent.putExtra("SONG_ID", song.id) // Passing string song ID
             holder.itemView.context.startService(intent)
 
+            intent.action = "ACTION_RESUME" // Starting playback
+            holder.itemView.context.startService(intent)
+
             val context = holder.itemView.context
             if (context is MainActivity) {
                 context.updatePlayerControlBar(song)
