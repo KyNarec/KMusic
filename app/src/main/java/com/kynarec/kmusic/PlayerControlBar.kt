@@ -20,6 +20,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.kynarec.kmusic.models.Song
 import com.kynarec.kmusic.service.PlayerService
 import com.kynarec.kmusic.utils.getPlayerIsPlaying
+import com.kynarec.kmusic.utils.getPlayerJustStartedUp
 
 
 class PlayerControlBar : Fragment() {
@@ -69,12 +70,6 @@ class PlayerControlBar : Fragment() {
             }
     }
 
-    private val statusReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            isPlaying = intent?.getBooleanExtra("isPlaying", false) ?: false
-            Log.d("PlayerControlBar", "Is playing: $isPlaying")
-        }
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -88,24 +83,10 @@ class PlayerControlBar : Fragment() {
         val intent = Intent(context, PlayerService::class.java)
 
 
-        context?.let {
-            ContextCompat.registerReceiver(
-                it,
-                statusReceiver,
-                IntentFilter("PLAYER_STATUS"),
-                ContextCompat.RECEIVER_NOT_EXPORTED
-            )
-        }
-
-        val newIntent = intent.apply { action = "REQUEST_PLAYER_STATUS" }
-        context?.startService(newIntent)
-
         if (context?.getPlayerIsPlaying() == false) {
             playButton.visibility = View.VISIBLE
             pauseButton.visibility = View.INVISIBLE
-        }
-
-        if (context?.getPlayerIsPlaying() == true) {
+        } else {
             playButton.visibility = View.INVISIBLE
             pauseButton.visibility = View.VISIBLE
         }

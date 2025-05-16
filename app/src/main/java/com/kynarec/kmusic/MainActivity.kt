@@ -10,12 +10,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.FragmentContainerView
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.kynarec.kmusic.models.Song
 import com.kynarec.kmusic.service.InnerTube
 import com.kynarec.kmusic.service.PlayerService
+import com.kynarec.kmusic.utils.getPlayerJustStartedUp
 import com.kynarec.kmusic.utils.setPlayerIsPlaying
+import com.kynarec.kmusic.utils.setPlayerJustStartedUp
 import kotlinx.coroutines.DelicateCoroutinesApi
 
 import kotlinx.coroutines.*
@@ -24,8 +27,15 @@ import kotlinx.coroutines.*
 
 class MainActivity : AppCompatActivity() {
 
+    val tag = "MainActivity"
+
+    companion object {
+        var instance: MainActivity? = null
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        instance = this
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -40,7 +50,9 @@ class MainActivity : AppCompatActivity() {
         val py = Python.getInstance()
         val module = py.getModule("backend")
 
-        this.setPlayerIsPlaying(false)
+        this.setPlayerJustStartedUp(true)
+//        this.setPlayerIsPlaying(false)
+        hidePlayerControlBar(true)
 
         val serviceIntent = Intent(this, PlayerService::class.java)
         startService(serviceIntent)
@@ -48,8 +60,19 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.player_control_bar, PlayerControlBar())
             .commit()
+
+//        val playerControlBar = findViewById<FragmentContainerView>(R.id.player_control_bar)
+//        val shouldBeHidden = applicationContext.getPlayerJustStartedUp()
+//
+//        playerControlBar.visibility = if (shouldBeHidden) View.GONE else View.VISIBLE
     }
 
+
+    fun hidePlayerControlBar(value: Boolean) {
+        val playerControlBar = findViewById<FragmentContainerView>(R.id.player_control_bar)
+        playerControlBar.visibility = if (value) View.GONE else View.VISIBLE
+        Log.i(tag, "hidePlayerControlBar was triggered $value")
+    }
 
     fun navigatePlaylists(view: View) {
         Log.i("Playlists", "Playlist button was clicked")
@@ -87,7 +110,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun navigateSearchResult(view: View, query: String) {
-//        Log.i("Search Results", "Search Results should be shown")
         val py = Python.getInstance()
         val module = py.getModule("backend")
         val pyResult = module.callAttr("searchSongs", query)
@@ -109,30 +131,9 @@ class MainActivity : AppCompatActivity() {
                         duration = (if (Regex("""^(\d{1,2}):(\d{1,2})$""").matchEntire(d) == null) "NA" else d ).toString()
                     )
                 )
-//                Log.i("Search Result", "This is search result number $counter")
-//                counter++
             }
         }
 
-//        CoroutineScope(Dispatchers.Main).launch {
-//            // Move the Python calls and processing to a background thread:
-//            val songsList = withContext(Dispatchers.IO) {
-//
-//                val resultList = ArrayList<Song>()
-//                for (item in pyResult.asList()) {
-//                    // Using callAttr("get", ...) to retrieve values from the Python dict.
-//                    resultList.add(
-//                        Song(
-//                            id = item.callAttr("get", "id").toString(),
-//                            title = item.callAttr("get", "title").toString(),
-//                            artist = item.callAttr("get", "artist").toString(),
-//                            thumbnail = item.callAttr("get", "thumbnail").toString(),
-//                            duration = item.callAttr("get", "duration").toString()
-//                        )
-//                    )
-//                }
-//                resultList
-//            }
 
         // Now we're back on the Main thread—prepare the fragment.
         val songsFragment = SongsFragment()

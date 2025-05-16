@@ -8,7 +8,9 @@ import androidx.media3.session.MediaSession
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.google.android.exoplayer2.MediaItem
+import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.utils.setPlayerIsPlaying
+import com.kynarec.kmusic.utils.setPlayerJustStartedUp
 
 
 class PlayerService() : MediaLibraryService() {
@@ -58,6 +60,8 @@ class PlayerService() : MediaLibraryService() {
             "ACTION_RESUME" -> {
                 applicationContext.setPlayerIsPlaying(true)
                 player.play()
+                Log.i("PlayerService", "MainActivity.instance = ${MainActivity.instance}")
+                MainActivity.instance?.hidePlayerControlBar(false)
             }
 
             "ACTION_PAUSE" -> {
@@ -65,12 +69,6 @@ class PlayerService() : MediaLibraryService() {
                 player.pause()
             }
 
-            "REQUEST_PLAYER_STATUS" -> {
-                val statusIntent = Intent("PLAYER_STATUS")
-                statusIntent.putExtra("isPlaying", player.isPlaying)
-                Log.i(tag, "Sending back player Status ${player.isPlaying}")
-                sendBroadcast(statusIntent)
-            }
         }
 
         return START_NOT_STICKY
@@ -85,6 +83,20 @@ class PlayerService() : MediaLibraryService() {
         val uri = module.callAttr("playSongById", id)
 
         val mediaItem = MediaItem.fromUri(uri.toString())
+        // Chatty thinks, that this does not really work and that this is better
+//        player.setMediaItem(mediaItem)
+//        player.prepare()
+//        player.play() // start playback — might still buffer before actually playing
+//
+//        player.addListener(object : Player.Listener {
+//            override fun onIsPlayingChanged(isPlaying: Boolean) {
+//                if (isPlaying) {
+//                    Log.i("PlayerService", "Playback started")
+//                    applicationContext.setPlayerIsPlaying(true)
+//                    MainActivity.instance?.hidePlayerControlBar(false)
+//                }
+//            }
+//        })
         try {
             player.setMediaItem(mediaItem)
             player.prepare()
