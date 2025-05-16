@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     // python support
     id("com.chaquo.python")
+    kotlin("kapt")
 }
 
 android {
@@ -69,6 +70,8 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.room.common.jvm)
+    implementation(libs.androidx.room.runtime.android)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -87,4 +90,7 @@ dependencies {
     annotationProcessor (libs.compiler)
 
     implementation(libs.innertube)
+
+    implementation( libs.androidx.room.runtime)
+    kapt (libs.androidx.room.compiler)
 }

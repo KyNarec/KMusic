@@ -13,13 +13,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentContainerView
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.models.Song
-import com.kynarec.kmusic.service.InnerTube
 import com.kynarec.kmusic.service.PlayerService
-import com.kynarec.kmusic.utils.getPlayerJustStartedUp
-import com.kynarec.kmusic.utils.setPlayerIsPlaying
 import com.kynarec.kmusic.utils.setPlayerJustStartedUp
-import kotlinx.coroutines.DelicateCoroutinesApi
 
 import kotlinx.coroutines.*
 
@@ -27,11 +25,15 @@ import kotlinx.coroutines.*
 
 class MainActivity : AppCompatActivity() {
 
-    val tag = "MainActivity"
+    private val tag = "MainActivity"
 
     companion object {
         var instance: MainActivity? = null
     }
+
+//    private lateinit var db: KmusicDatabase
+//
+//    private lateinit var songDao: SongDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +45,9 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+//        db = KmusicDatabase.getDatabase(applicationContext)
+//        songDao = db.songDao()
 
         if (! Python.isStarted()) {
             Python.start(AndroidPlatform(this));
@@ -93,11 +98,35 @@ class MainActivity : AppCompatActivity() {
 
         val playlistsButton = findViewById<Button>(R.id.playlists)
         playlistsButton.setTextColor(getResources().getColor(R.color.hint))
+        val songsList = ArrayList<Song>()
+
+        val db = (application as MyApp).database
+        val songDao = db.songDao()
+
+
+        CoroutineScope(Dispatchers.Main).launch {
+            val songs = songDao.getSongsWithPlaytime()
+            for (s in songs){
+                songsList.add(Song(
+                    id = s.id,
+                    title = s.title,
+                    artist = s.artist,
+                    thumbnail = s.thumbnail,
+                    duration = s.duration
+                ))
+            }
+        }
+
+        // Now we're back on the Main thread—prepare the fragment.
+        val songsFragment = SongsFragment()
+        val bundle = Bundle().apply {
+            putParcelableArrayList("songs_list", songsList)
+        }
+        songsFragment.arguments = bundle
 
         supportFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, SongsFragment())
+            .replace(R.id.fragmentContainer, songsFragment)
             .commit()
-        //TODO("Display songs from DB")
 
         }
 

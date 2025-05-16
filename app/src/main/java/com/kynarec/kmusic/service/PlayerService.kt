@@ -1,6 +1,8 @@
 package com.kynarec.kmusic.service
 
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.google.android.exoplayer2.ExoPlayer
 import androidx.media3.session.MediaLibraryService
@@ -8,9 +10,14 @@ import androidx.media3.session.MediaSession
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.Player
 import com.kynarec.kmusic.MainActivity
+import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.utils.setPlayerIsPlaying
-import com.kynarec.kmusic.utils.setPlayerJustStartedUp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class PlayerService() : MediaLibraryService() {
@@ -18,17 +25,35 @@ class PlayerService() : MediaLibraryService() {
     private lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaLibrarySession
 
+    private lateinit var database: KmusicDatabase
+    private lateinit var songDao: SongDao
 
+    // Track currently playing song
+    private var currentSongId: String? = null
+    private var playbackStartTime: Long = 0
+    private var accumulatedPlayTime: Long = 0
+
+    // Handler for periodic database updates
+    private val handler = Handler(Looper.getMainLooper())
+    private val updateInterval = 3000L // Update DB every 30 seconds
 
     override fun onCreate() {
         super.onCreate()
         Log.d(tag, "onCreate: Service created")
+
+        database = KmusicDatabase.getDatabase(this)
+        songDao = database.songDao()
 
         player = ExoPlayer.Builder(this).build()
 
         if (! Python.isStarted()) {
             Python.start(AndroidPlatform(this));
         }
+
+        setupPlayerListeners()
+
+        // Start periodic updates
+        startPeriodicUpdates()
 
     }
 
@@ -54,6 +79,7 @@ class PlayerService() : MediaLibraryService() {
                 val songId = intent.getStringExtra("SONG_ID")
                 if (songId != null) {
                     playSongFromSongId(songId)
+                    currentSongId = songId
                 }
             }
 
@@ -107,6 +133,129 @@ class PlayerService() : MediaLibraryService() {
         } catch (e: Exception) {
             Log.w(tag, e)
         }
+    }
+
+    private fun setupPlayerListeners() {
+        player.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                when (playbackState) {
+                    Player.STATE_READY -> {
+                        if (player.isPlaying) {
+                            // Started playing
+                            handlePlaybackStarted()
+                        } else {
+                            // Paused
+                            handlePlaybackPaused()
+                        }
+                    }
+                    Player.STATE_ENDED -> {
+                        // Track ended
+                        handlePlaybackStopped()
+                    }
+                    Player.STATE_IDLE -> {
+                        // Playback stopped
+                        handlePlaybackStopped()
+                    }
+                    // Handle other states as needed
+                }
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                if (isPlaying) {
+                    handlePlaybackStarted()
+                } else {
+                    handlePlaybackPaused()
+                }
+            }
+
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                // Save accumulated time for previous song
+                saveCurrentPlaybackTime()
+
+                // Reset tracking for new song
+                mediaItem?.mediaId?.let { newSongId ->
+                    currentSongId = newSongId
+                    playbackStartTime = System.currentTimeMillis()
+                    accumulatedPlayTime = 0
+                }
+            }
+        })
+    }
+
+    private fun handlePlaybackStarted() {
+        playbackStartTime = System.currentTimeMillis()
+    }
+
+    private fun handlePlaybackPaused() {
+        // Calculate and add elapsed time to accumulated time
+        val now = System.currentTimeMillis()
+        val elapsedTime = now - playbackStartTime
+        accumulatedPlayTime += elapsedTime
+
+        // Save to database
+        saveCurrentPlaybackTime()
+    }
+
+    private fun handlePlaybackStopped() {
+        // Save final playback time when stopping
+        saveCurrentPlaybackTime()
+
+        // Reset tracking data
+        currentSongId = null
+        accumulatedPlayTime = 0
+    }
+
+    private fun saveCurrentPlaybackTime() {
+        val songId = currentSongId ?: return
+
+        // Calculate total playback time including current session
+        val totalTimeToAdd = if (player.isPlaying) {
+            accumulatedPlayTime + (System.currentTimeMillis() - playbackStartTime)
+        } else {
+            accumulatedPlayTime
+        }
+
+        // Skip if no significant playback time
+        if (totalTimeToAdd <= 0) return
+
+        // Update in database using coroutine
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Get current song data
+                val song = songDao.getSongById(songId)
+                Log.i(tag, "Song from Dao is $song")
+
+                // Update the song with new total play time
+                song?.let {
+                    val updatedSong = it.copy(
+                        totalPlayTimeMs = it.totalPlayTimeMs + totalTimeToAdd
+                    )
+                    songDao.updateSong(updatedSong)
+
+                    // Reset accumulated time since we've saved it
+                    accumulatedPlayTime = 0
+                    playbackStartTime = System.currentTimeMillis()
+                }
+            } catch (e: Exception) {
+                Log.e(tag, "Error updating playback time: ${e.message}")
+            }
+        }
+    }
+
+    // Sets up periodic updates during continuous playback
+    private fun startPeriodicUpdates() {
+        val updateRunnable = object : Runnable {
+            override fun run() {
+                if (player.isPlaying && currentSongId != null) {
+                    saveCurrentPlaybackTime()
+                }
+                // Schedule next update
+                handler.postDelayed(this, updateInterval)
+            }
+        }
+
+        // Start the periodic updates
+        handler.postDelayed(updateRunnable, updateInterval)
     }
 
 }
