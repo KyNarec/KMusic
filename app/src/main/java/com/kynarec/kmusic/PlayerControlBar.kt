@@ -76,12 +76,15 @@ class PlayerControlBar : Fragment() {
         val pauseButton = view.findViewById<ImageButton>(R.id.pause_button)
         val playButton = view.findViewById<ImageButton>(R.id.play_button)
 
+        val feedbackCircle = view.findViewById<View>(R.id.feedback_circle)
+
         val titleText: TextView = view.findViewById(R.id.song_title)
         val artistText: TextView = view.findViewById(R.id.song_artist)
         val thumbnail: ImageView = view.findViewById(R.id.thumbnail)
 
         val intent = Intent(context, PlayerService::class.java)
 
+        feedbackCircle.visibility = View.INVISIBLE
 
         if (context?.getPlayerIsPlaying() == false) {
             playButton.visibility = View.VISIBLE
@@ -95,6 +98,7 @@ class PlayerControlBar : Fragment() {
         playButton.setOnClickListener {
             playButton.visibility = View.INVISIBLE
             pauseButton.visibility = View.VISIBLE
+            animateFeedbackButton(feedbackCircle)
             intent.action = "ACTION_RESUME"
             context?.startService(intent)
         }
@@ -103,6 +107,7 @@ class PlayerControlBar : Fragment() {
         pauseButton.setOnClickListener {
             playButton.visibility = View.VISIBLE
             pauseButton.visibility = View.INVISIBLE
+            animateFeedbackButton(feedbackCircle)
             intent.action = "ACTION_PAUSE"
             context?.startService(intent)
         }
@@ -115,5 +120,23 @@ class PlayerControlBar : Fragment() {
             .centerCrop()
             .apply(RequestOptions.bitmapTransform(RoundedCorners(30)))
             .into(thumbnail)
+    }
+
+    fun animateFeedbackButton(feedbackCircle: View){
+        feedbackCircle.alpha = 0f
+        feedbackCircle.visibility = View.VISIBLE
+        feedbackCircle.animate()
+            .alpha(1f)
+            .setDuration(100)
+            .withEndAction {
+                feedbackCircle.animate()
+                    .alpha(0f)
+                    .setDuration(200)
+                    .withEndAction {
+                        feedbackCircle.visibility = View.GONE
+                    }
+                    .start()
+            }
+            .start()
     }
 }
