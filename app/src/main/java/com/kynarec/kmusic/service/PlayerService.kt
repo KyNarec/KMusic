@@ -4,11 +4,11 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.google.android.exoplayer2.ExoPlayer
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.kynarec.kmusic.MainActivity

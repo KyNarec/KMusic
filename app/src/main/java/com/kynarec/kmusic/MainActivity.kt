@@ -1,5 +1,6 @@
 package com.kynarec.kmusic
 
+
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -13,13 +14,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentContainerView
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
-
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerService
-
-
-import kotlinx.coroutines.*
-
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity() {

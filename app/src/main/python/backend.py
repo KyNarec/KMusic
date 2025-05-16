@@ -1,7 +1,7 @@
-from innertube import InnerTube
-from time import perf_counter
-from pprint import pprint
 import re
+from innertube import InnerTube
+from pprint import pprint
+from time import perf_counter
 
 PARAMS_TYPE_VIDEO =     "EgIQAQ%3D%3D"
 PARAMS_TYPE_CHANNEL =   "EgIQAg%3D%3D"

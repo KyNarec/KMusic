@@ -4,34 +4,25 @@ import android.util.Log
 import com.kynarec.innertube.InnerTube
 import com.kynarec.innertube.YouTube
 import com.kynarec.innertube.YouTube.SearchFilter.Companion.FILTER_SONG
-import com.kynarec.innertube.models.Album
-import com.kynarec.innertube.models.Artist
 import com.kynarec.innertube.models.MusicResponsiveListItemRenderer
-import com.kynarec.innertube.models.SongItem
 import com.kynarec.innertube.models.YouTubeClient
 import com.kynarec.innertube.models.YouTubeClient.Companion.WEB_REMIX
 import com.kynarec.innertube.models.oddElements
-import com.kynarec.innertube.models.response.NextResponse
 import com.kynarec.innertube.models.response.PlayerResponse
 import com.kynarec.innertube.models.response.SearchResponse
 import com.kynarec.innertube.models.splitBySeparator
-import com.kynarec.innertube.utils.*
 import com.kynarec.innertube.pages.NextResult
-import com.kynarec.innertube.pages.SearchPage
 import com.kynarec.innertube.pages.SearchResult
+import com.kynarec.innertube.utils.parseTime
 import com.kynarec.kmusic.models.Song
 import com.mewsic.innertube.InnertubeClient
 import com.mewsic.innertube.enums.Client
 import io.ktor.client.call.body
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.HttpResponsePipeline
 import io.ktor.http.cio.Response
 import io.ktor.util.InternalAPI
-import io.ktor.utils.io.readUTF8Line
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.ResponseBody
 
 class InnerTube {
     val web = InnertubeClient(Client.WEB_REMIX)
