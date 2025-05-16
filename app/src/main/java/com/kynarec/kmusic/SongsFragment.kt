@@ -10,7 +10,7 @@ import android.view.ViewGroup
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.kynarec.kmusic.models.Song
+import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerService
 import com.kynarec.kmusic.utils.SongAdapter
 import kotlinx.coroutines.launch
@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
  */
 class SongsFragment : Fragment() {
 
-    private var songsList: ArrayList<Song>? = null
+    private var songsList: List<Song>? = null
     private lateinit var recyclerView: RecyclerView
     private lateinit var songAdapter: SongAdapter
     private val tag = "SongsFragment"
@@ -66,7 +66,7 @@ class SongsFragment : Fragment() {
                     if (songDao.getSongById(song.id) == null) {
                         Log.i(tag, "${song.id} is not in Dap")
                         songDao.insertSong(
-                            com.kynarec.kmusic.data.db.entities.Song(
+                            Song(
                                 id = song.id,
                                 title = song.title,
                                 artist = song.artist,

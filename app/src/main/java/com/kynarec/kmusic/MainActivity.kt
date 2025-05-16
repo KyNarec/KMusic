@@ -14,7 +14,7 @@ import androidx.fragment.app.FragmentContainerView
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 
-import com.kynarec.kmusic.models.Song
+import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerService
 
 

@@ -17,7 +17,7 @@ import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
-import com.kynarec.kmusic.models.Song
+import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
