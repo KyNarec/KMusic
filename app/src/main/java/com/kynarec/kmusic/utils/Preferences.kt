@@ -19,14 +19,3 @@ fun Context.setPlayerIsPlaying(value: Boolean) {
         }
 }
 
-fun Context.getPlayerJustStartedUp(): Boolean {
-    return getSharedPreferences("preferences", Context.MODE_PRIVATE)
-        .getBoolean(JUST_STARTED_UP, false)
-}
-
-fun Context.setPlayerJustStartedUp(value: Boolean) {
-    getSharedPreferences("preferences", Context.MODE_PRIVATE)
-        .edit() {
-            putBoolean(JUST_STARTED_UP, value)
-        }
-}

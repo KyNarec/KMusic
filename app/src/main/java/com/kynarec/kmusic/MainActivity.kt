@@ -13,11 +13,10 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentContainerView
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
-import com.kynarec.kmusic.data.db.KmusicDatabase
-import com.kynarec.kmusic.data.db.dao.SongDao
+
 import com.kynarec.kmusic.models.Song
 import com.kynarec.kmusic.service.PlayerService
-import com.kynarec.kmusic.utils.setPlayerJustStartedUp
+
 
 import kotlinx.coroutines.*
 
@@ -31,9 +30,6 @@ class MainActivity : AppCompatActivity() {
         var instance: MainActivity? = null
     }
 
-//    private lateinit var db: KmusicDatabase
-//
-//    private lateinit var songDao: SongDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,7 +51,7 @@ class MainActivity : AppCompatActivity() {
         val py = Python.getInstance()
         val module = py.getModule("backend")
 
-        this.setPlayerJustStartedUp(true)
+
 //        this.setPlayerIsPlaying(false)
         hidePlayerControlBar(true)
 
