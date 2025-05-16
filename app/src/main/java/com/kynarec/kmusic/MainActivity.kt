@@ -15,6 +15,7 @@ import com.chaquo.python.android.AndroidPlatform
 import com.kynarec.kmusic.models.Song
 import com.kynarec.kmusic.service.InnerTube
 import com.kynarec.kmusic.service.PlayerService
+import com.kynarec.kmusic.utils.setPlayerIsPlaying
 import kotlinx.coroutines.DelicateCoroutinesApi
 
 import kotlinx.coroutines.*
@@ -23,7 +24,6 @@ import kotlinx.coroutines.*
 
 class MainActivity : AppCompatActivity() {
 
-    @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -40,19 +40,14 @@ class MainActivity : AppCompatActivity() {
         val py = Python.getInstance()
         val module = py.getModule("backend")
 
+        this.setPlayerIsPlaying(false)
+
         val serviceIntent = Intent(this, PlayerService::class.java)
         startService(serviceIntent)
 
         supportFragmentManager.beginTransaction()
             .replace(R.id.player_control_bar, PlayerControlBar())
             .commit()
-
-//        val i = InnerTube()
-//        val s = i.searchSong("Numb")
-////        Log.i("INNERTUBE API", InnerTube().getSearchResultsByQuery2("numb").size.toString())
-//
-////        println("Artist by ID" + InnerTube().getArtistById("5qZQEq_C3vc"))
-//        Log.i("INNERTUBE API", s.size.toString())
     }
 
 

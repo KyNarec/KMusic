@@ -1,19 +1,18 @@
 package com.kynarec.kmusic.service
 
-import android.content.Context
 import android.content.Intent
 import android.util.Log
-import androidx.media3.common.util.UnstableApi
 import com.google.android.exoplayer2.ExoPlayer
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.google.android.exoplayer2.MediaItem
+import com.kynarec.kmusic.utils.setPlayerIsPlaying
 
 
 class PlayerService() : MediaLibraryService() {
-    private val TAG = "Player Service"
+    private val tag = "Player Service"
     private lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaLibrarySession
 
@@ -21,7 +20,7 @@ class PlayerService() : MediaLibraryService() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "onCreate: Service created")
+        Log.d(tag, "onCreate: Service created")
 
         player = ExoPlayer.Builder(this).build()
 
@@ -46,7 +45,7 @@ class PlayerService() : MediaLibraryService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        Log.d(TAG, "onStartCommand: Received command")
+        Log.d(tag, "onStartCommand: Received command")
 
         when (intent?.action) {
             "ACTION_PLAY" -> {
@@ -56,13 +55,21 @@ class PlayerService() : MediaLibraryService() {
                 }
             }
 
-            "ACTION_RESUME" -> player.play()
+            "ACTION_RESUME" -> {
+                applicationContext.setPlayerIsPlaying(true)
+                player.play()
+            }
 
-            "ACTION_PAUSE" -> player.pause()
+            "ACTION_PAUSE" -> {
+                applicationContext.setPlayerIsPlaying(false)
+                player.pause()
+            }
 
             "REQUEST_PLAYER_STATUS" -> {
                 val statusIntent = Intent("PLAYER_STATUS")
                 statusIntent.putExtra("isPlaying", player.isPlaying)
+                Log.i(tag, "Sending back player Status ${player.isPlaying}")
+                sendBroadcast(statusIntent)
             }
         }
 
@@ -70,7 +77,7 @@ class PlayerService() : MediaLibraryService() {
     }
 
     private fun playSongFromSongId(id: String) {
-        Log.i(TAG, "playSongFromId was called")
+        Log.i(tag, "playSongFromId was called")
         val py = Python.getInstance()
         val module = py.getModule("backend")
 
@@ -83,9 +90,10 @@ class PlayerService() : MediaLibraryService() {
             player.prepare()
             if (player.isPlaying){
                 player.play()
+                applicationContext.setPlayerIsPlaying(true)
             }
         } catch (e: Exception) {
-            Log.w("PLAYER SERVICE", e)
+            Log.w(tag, e)
         }
     }
 

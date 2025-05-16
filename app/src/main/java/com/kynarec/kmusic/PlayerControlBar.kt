@@ -19,6 +19,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
 import com.kynarec.kmusic.models.Song
 import com.kynarec.kmusic.service.PlayerService
+import com.kynarec.kmusic.utils.getPlayerIsPlaying
 
 
 class PlayerControlBar : Fragment() {
@@ -99,7 +100,12 @@ class PlayerControlBar : Fragment() {
         val newIntent = intent.apply { action = "REQUEST_PLAYER_STATUS" }
         context?.startService(newIntent)
 
-        if (!isPlaying) {
+        if (context?.getPlayerIsPlaying() == false) {
+            playButton.visibility = View.VISIBLE
+            pauseButton.visibility = View.INVISIBLE
+        }
+
+        if (context?.getPlayerIsPlaying() == true) {
             playButton.visibility = View.INVISIBLE
             pauseButton.visibility = View.VISIBLE
         }
