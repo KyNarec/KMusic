@@ -1,29 +1,50 @@
 package com.kynarec.kmusic.service
 
+import android.annotation.SuppressLint
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
+import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import androidx.core.app.NotificationCompat
+import androidx.media.app.NotificationCompat.MediaStyle
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
+import com.bumptech.glide.Glide
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.kynarec.kmusic.MainActivity
+import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.dao.SongDao
+import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.utils.getJustStartedUp
+import com.kynarec.kmusic.utils.setJustStartedUp
 import com.kynarec.kmusic.utils.setPlayerIsPlaying
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
+
+const val ACTION_RESUME = "ACTION_RESUME"
+const val ACTION_PLAY = "ACTION_PLAY"
+const val ACTION_PAUSE = "ACTION_PAUSE"
 
 class PlayerService() : MediaLibraryService() {
     private val tag = "Player Service"
     private lateinit var player: ExoPlayer
-    private lateinit var mediaSession: MediaLibrarySession
+    private lateinit var mediaLibrarySession: MediaLibrarySession
+    private lateinit var mediaSession: MediaSessionCompat
+    private lateinit var notificationManager: MediaNotificationManager
 
     private lateinit var database: KmusicDatabase
     private lateinit var songDao: SongDao
@@ -41,6 +62,12 @@ class PlayerService() : MediaLibraryService() {
         super.onCreate()
         Log.d(tag, "onCreate: Service created")
 
+        mediaSession = MediaSessionCompat(applicationContext, "PlayerService").apply {
+            isActive = true
+        }
+        notificationManager = MediaNotificationManager(this, mediaSession)
+
+
         database = KmusicDatabase.getDatabase(this)
         songDao = database.songDao()
 
@@ -55,9 +82,23 @@ class PlayerService() : MediaLibraryService() {
         // Start periodic updates
         startPeriodicUpdates()
 
+        createNotificationChannel()
+
+        val name = "KMusic Playback"
+        val descriptionText = "Shows playback controls and track info"
+        val importance = NotificationManager.IMPORTANCE_LOW // low importance avoids sound/vibration
+
+        val channel = NotificationChannel(MediaNotificationManager.CHANNEL_ID, name, importance).apply {
+            description = descriptionText
+        }
+
+        val notificationManager: NotificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) : MediaLibrarySession = mediaSession
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) : MediaLibrarySession = mediaLibrarySession
 
     override fun onDestroy() {
 
@@ -70,27 +111,54 @@ class PlayerService() : MediaLibraryService() {
 
     }
 
+    @SuppressLint("MissingPermission")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         Log.d(tag, "onStartCommand: Received command")
-
         when (intent?.action) {
-            "ACTION_PLAY" -> {
-                val songId = intent.getStringExtra("SONG_ID")
-                if (songId != null) {
-                    playSongFromSongId(songId)
-                    currentSongId = songId
+            ACTION_PLAY -> {
+//                val song = intent.getStringExtra("SONG")
+                val song = intent.getParcelableExtra<Song>("SONG")
+                if (song != null) {
+                    playSongFromSongId(song.id)
+                    currentSongId = song.id
+
+                    CoroutineScope(Dispatchers.IO).launch  {
+                        if (applicationContext.getJustStartedUp()) {
+//                            Log.i(tag, "Displaying Notification")
+//                            Log.e(tag, song.duration)
+                            val largeIconBitmap = try {
+                                withContext(Dispatchers.IO) {
+                                    Glide.with(applicationContext)
+                                        .asBitmap()
+                                        .load(song.duration)
+                                        .submit()
+                                        .get()
+                                }
+                            } catch (e: Exception) {
+                                Log.e("GlideLoadError", "Failed to load image: ${song.duration}", e)
+                                null
+                            }
+                            // thumbnail and duration are switched, idk why
+                            notificationManager.updateMetadata(song.title, song.artist, largeIconBitmap, song.thumbnail)
+                            notificationManager.updatePlaybackState(PlaybackStateCompat.STATE_PLAYING, 0)
+
+                            val notification = notificationManager.buildNotification(song.title, song.artist, largeIconBitmap, true)
+                            startForeground(1, notification)
+                        }
+                    }
                 }
             }
 
-            "ACTION_RESUME" -> {
+            ACTION_RESUME -> {
                 applicationContext.setPlayerIsPlaying(true)
                 player.play()
                 Log.i("PlayerService", "MainActivity.instance = ${MainActivity.instance}")
                 MainActivity.instance?.hidePlayerControlBar(false)
+                applicationContext.setJustStartedUp(false)
             }
 
-            "ACTION_PAUSE" -> {
+            ACTION_PAUSE -> {
                 applicationContext.setPlayerIsPlaying(false)
                 player.pause()
             }
@@ -99,6 +167,20 @@ class PlayerService() : MediaLibraryService() {
 
         return START_NOT_STICKY
     }
+
+    private fun createNotificationChannel() {
+        val channel = NotificationChannel(
+            MediaNotificationManager.CHANNEL_ID,
+            "KMusic Playback",
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = "Playback controls"
+        }
+
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.createNotificationChannel(channel)
+    }
+
 
     private fun playSongFromSongId(id: String) {
         Log.i(tag, "playSongFromId was called")

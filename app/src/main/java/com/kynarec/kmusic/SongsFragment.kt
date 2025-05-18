@@ -16,11 +16,6 @@ import com.kynarec.kmusic.utils.SongAdapter
 import kotlinx.coroutines.launch
 
 
-/**
- * A simple [Fragment] subclass.
- * Use the [SongsFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class SongsFragment : Fragment() {
 
     private var songsList: List<Song>? = null
@@ -53,27 +48,11 @@ class SongsFragment : Fragment() {
                 lifecycleScope.launch {
                     if (songDao.getSongById(song.id) == null) {
                         Log.i(tag, "${song.id} is not in Dap")
-                        songDao.insertSong(
-                            com.kynarec.kmusic.data.db.entities.Song(
-                                id = song.id,
-                                title = song.title,
-                                artist = song.artist,
-                                duration = song.duration,
-                                thumbnail = song.thumbnail
-                            )
-                        )
+                        songDao.insertSong(song)
                     }
                     if (songDao.getSongById(song.id) == null) {
                         Log.i(tag, "${song.id} is not in Dap")
-                        songDao.insertSong(
-                            Song(
-                                id = song.id,
-                                title = song.title,
-                                artist = song.artist,
-                                duration = song.duration,
-                                thumbnail = song.thumbnail
-                            )
-                        )
+                        songDao.insertSong(song)
                     }
                     else Log.i(tag, "${song.id} is in Dap")
                 }
@@ -81,7 +60,7 @@ class SongsFragment : Fragment() {
                 val context = requireContext()
                 Intent(context, PlayerService::class.java).apply {
                     action = "ACTION_PLAY"
-                    putExtra("SONG_ID", song.id)
+                    putExtra("SONG", song)
                     context.startService(this)
                 }
 

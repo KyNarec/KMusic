@@ -16,6 +16,7 @@ import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerService
+import com.kynarec.kmusic.utils.setJustStartedUp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -52,6 +53,7 @@ class MainActivity : AppCompatActivity() {
 
 
 //        this.setPlayerIsPlaying(false)
+        this.setJustStartedUp(true)
         hidePlayerControlBar(true)
 
         val serviceIntent = Intent(this, PlayerService::class.java)
@@ -139,7 +141,7 @@ class MainActivity : AppCompatActivity() {
         val pyResult = module.callAttr("searchSongs", query)
         val songsList = ArrayList<Song>()
 
-        var counter = 1
+//        var counter = 1
 
         for (item in pyResult.asList()) {
             CoroutineScope(Dispatchers.Main).launch {
@@ -159,7 +161,6 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        // Now we're back on the Main thread—prepare the fragment.
         val songsFragment = SongsFragment()
         val bundle = Bundle().apply {
             putParcelableArrayList("songs_list", songsList)
