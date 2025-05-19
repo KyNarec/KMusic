@@ -11,8 +11,6 @@ import android.os.Looper
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import androidx.media.app.NotificationCompat.MediaStyle
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import com.bumptech.glide.Glide
@@ -22,11 +20,9 @@ import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.kynarec.kmusic.MainActivity
-import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.data.db.entities.Song
-import com.kynarec.kmusic.utils.getJustStartedUp
 import com.kynarec.kmusic.utils.setJustStartedUp
 import com.kynarec.kmusic.utils.setPlayerIsPlaying
 import kotlinx.coroutines.CoroutineScope
@@ -117,16 +113,12 @@ class PlayerService() : MediaLibraryService() {
         Log.d(tag, "onStartCommand: Received command")
         when (intent?.action) {
             ACTION_PLAY -> {
-//                val song = intent.getStringExtra("SONG")
                 val song = intent.getParcelableExtra<Song>("SONG")
                 if (song != null) {
                     playSongFromSongId(song.id)
                     currentSongId = song.id
 
                     CoroutineScope(Dispatchers.IO).launch  {
-                        if (applicationContext.getJustStartedUp()) {
-//                            Log.i(tag, "Displaying Notification")
-//                            Log.e(tag, song.duration)
                             val largeIconBitmap = try {
                                 withContext(Dispatchers.IO) {
                                     Glide.with(applicationContext)
@@ -145,7 +137,6 @@ class PlayerService() : MediaLibraryService() {
 
                             val notification = notificationManager.buildNotification(song.title, song.artist, largeIconBitmap, true)
                             startForeground(1, notification)
-                        }
                     }
                 }
             }
