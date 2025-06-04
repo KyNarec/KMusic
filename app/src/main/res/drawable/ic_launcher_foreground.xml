@@ -4,14 +4,17 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     <!-- Green K shape (stylized) -->
+<!--    <path-->
+<!--        android:fillColor="#AF8B4C"-->
+<!--        android:pathData="M43,30v48h6v-18l12,18h8l-14,-20 14,-20h-8l-12,18v-18z" />-->
     <path
-        android:fillColor="#AF8B4C"
+        android:fillColor="@color/white"
         android:pathData="M43,30v48h6v-18l12,18h8l-14,-20 14,-20h-8l-12,18v-18z" />
 
-    <!-- Circular border -->
-    <path
-        android:strokeColor="#AF8B4C"
-        android:strokeWidth="4"
-        android:fillColor="@android:color/transparent"
-        android:pathData="M54,18a36,36 0 1,0 0.1,0z" />
+<!--    &lt;!&ndash; Circular border &ndash;&gt;-->
+<!--    <path-->
+<!--        android:strokeColor="#AF8B4C"-->
+<!--        android:strokeWidth="7"-->
+<!--        android:fillColor="@android:color/transparent"-->
+<!--        android:pathData="M54,18a36,36 0 1,0 0.1,0z" />-->
 </vector>
