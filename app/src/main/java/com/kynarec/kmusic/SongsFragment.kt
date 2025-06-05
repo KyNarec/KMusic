@@ -11,9 +11,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.kynarec.kmusic.data.db.entities.Song
-import com.kynarec.kmusic.service.ACTION_PLAY
-import com.kynarec.kmusic.service.ACTION_RESUME
 import com.kynarec.kmusic.service.PlayerService
+import com.kynarec.kmusic.utils.ACTION_PLAY
+import com.kynarec.kmusic.utils.ACTION_RESUME
 import com.kynarec.kmusic.utils.SongAdapter
 import kotlinx.coroutines.launch
 

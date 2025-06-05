@@ -9,6 +9,7 @@ import android.os.Looper
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import com.bumptech.glide.Glide
@@ -21,6 +22,14 @@ import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.utils.ACTION_NEXT
+import com.kynarec.kmusic.utils.ACTION_PAUSE
+import com.kynarec.kmusic.utils.ACTION_PLAY
+import com.kynarec.kmusic.utils.ACTION_PREV
+import com.kynarec.kmusic.utils.ACTION_RESUME
+import com.kynarec.kmusic.utils.IS_PLAYING
+import com.kynarec.kmusic.utils.NOTIFICATION_ID
+import com.kynarec.kmusic.utils.PLAYBACK_STATE_CHANGED
 import com.kynarec.kmusic.utils.setJustStartedUp
 import com.kynarec.kmusic.utils.setPlayerIsPlaying
 import kotlinx.coroutines.CoroutineScope
@@ -29,11 +38,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 
-const val ACTION_RESUME = "ACTION_RESUME"
-const val ACTION_PLAY = "ACTION_PLAY"
-const val ACTION_PAUSE = "ACTION_PAUSE"
-const val ACTION_NEXT = "ACTION_NEXT"
-const val ACTION_PREV = "ACTION_PREV"
+
 
 
 class PlayerService() : MediaLibraryService() {
@@ -212,6 +217,7 @@ class PlayerService() : MediaLibraryService() {
         applicationContext.setPlayerIsPlaying(true)
         player.play()
         notificationManager.updatePlaybackState(PlaybackStateCompat.STATE_PLAYING, player.currentPosition)
+        notifyPlaybackStateChanged(true)
 
         MainActivity.instance?.hidePlayerControlBar(false)
         applicationContext.setJustStartedUp(false)
@@ -221,6 +227,7 @@ class PlayerService() : MediaLibraryService() {
         applicationContext.setPlayerIsPlaying(false)
         player.pause()
         notificationManager.updatePlaybackState(PlaybackStateCompat.STATE_PAUSED, player.currentPosition)
+        notifyPlaybackStateChanged(false)
     }
 
     private fun seekTo(to: Long){
@@ -385,6 +392,13 @@ class PlayerService() : MediaLibraryService() {
 
         // Start the periodic updates
         handler.postDelayed(updateRunnable, updateInterval)
+    }
+
+    private fun notifyPlaybackStateChanged(isPlaying: Boolean) {
+        val intent = Intent(PLAYBACK_STATE_CHANGED).apply {
+            putExtra(IS_PLAYING, isPlaying)
+        }
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
     }
 
 }

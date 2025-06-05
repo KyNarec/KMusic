@@ -9,9 +9,6 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.kynarec.kmusic.R
 
-const val NOTIFICATION_ID = 1596
-
-
 class MediaNotificationManager(
     private val context: Context,
     private val mediaSession: MediaSessionCompat

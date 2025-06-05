@@ -1,6 +1,9 @@
 package com.kynarec.kmusic
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,13 +12,16 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
 import com.kynarec.kmusic.data.db.entities.Song
-import com.kynarec.kmusic.service.ACTION_PAUSE
-import com.kynarec.kmusic.service.ACTION_RESUME
 import com.kynarec.kmusic.service.PlayerService
+import com.kynarec.kmusic.utils.ACTION_PAUSE
+import com.kynarec.kmusic.utils.ACTION_RESUME
+import com.kynarec.kmusic.utils.IS_PLAYING
+import com.kynarec.kmusic.utils.PLAYBACK_STATE_CHANGED
 import com.kynarec.kmusic.utils.getPlayerIsPlaying
 
 
@@ -64,6 +70,38 @@ class PlayerControlBar : Fragment() {
 
                 }
             }
+    }
+
+    private val playbackStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val isPlaying = intent?.getBooleanExtra(IS_PLAYING, false) ?: false
+            if (isPlaying) {
+                val pauseButton = requireView().findViewById<ImageButton>(R.id.pause_button)
+                val playButton = requireView().findViewById<ImageButton>(R.id.play_button)
+
+                playButton.visibility = View.INVISIBLE
+                pauseButton.visibility = View.VISIBLE
+            } else {
+                val pauseButton = requireView().findViewById<ImageButton>(R.id.pause_button)
+                val playButton = requireView().findViewById<ImageButton>(R.id.play_button)
+
+                playButton.visibility = View.VISIBLE
+                pauseButton.visibility = View.INVISIBLE
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val filter = IntentFilter(PLAYBACK_STATE_CHANGED)
+        LocalBroadcastManager.getInstance(requireContext())
+            .registerReceiver(playbackStateReceiver, filter)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        LocalBroadcastManager.getInstance(requireContext())
+            .unregisterReceiver(playbackStateReceiver)
     }
 
 
@@ -116,9 +154,11 @@ class PlayerControlBar : Fragment() {
             .centerCrop()
             .apply(RequestOptions.bitmapTransform(RoundedCorners(30)))
             .into(thumbnail)
+
+
     }
 
-    fun animateFeedbackButton(feedbackCircle: View){
+    private fun animateFeedbackButton(feedbackCircle: View){
         feedbackCircle.alpha = 0f
         feedbackCircle.visibility = View.VISIBLE
         feedbackCircle.animate()
@@ -135,4 +175,6 @@ class PlayerControlBar : Fragment() {
             }
             .start()
     }
+
+
 }

@@ -4,8 +4,7 @@ import android.content.Context
 import androidx.core.content.edit
 
 
-const val PLAYER_IS_PLAYING = "playerIsPlaying"
-const val JUST_STARTED_UP = "justStartedUp"
+
 
 fun Context.getPlayerIsPlaying(): Boolean {
     return getSharedPreferences("preferences", Context.MODE_PRIVATE)
