@@ -1,9 +1,7 @@
 package com.kynarec.kmusic.service
 
-import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Handler
@@ -34,9 +32,12 @@ import kotlinx.coroutines.withContext
 const val ACTION_RESUME = "ACTION_RESUME"
 const val ACTION_PLAY = "ACTION_PLAY"
 const val ACTION_PAUSE = "ACTION_PAUSE"
+const val ACTION_NEXT = "ACTION_NEXT"
+const val ACTION_PREV = "ACTION_PREV"
+
 
 class PlayerService() : MediaLibraryService() {
-    private val tag = "Player Service"
+    private val TAG = "Player Service"
     private lateinit var player: ExoPlayer
     private lateinit var mediaLibrarySession: MediaLibrarySession
     private lateinit var mediaSession: MediaSessionCompat
@@ -54,13 +55,41 @@ class PlayerService() : MediaLibraryService() {
     private val handler = Handler(Looper.getMainLooper())
     private val updateInterval = 3000L // Update DB every 30 seconds
 
+    private val callback = object : MediaSessionCompat.Callback() {
+        override fun onPlay() {
+            Log.i("CALLBACK", "onPlay triggered")
+            resume()
+        }
+
+        override fun onPause() {
+            Log.i("CALLBACK", "onPause triggered")
+            pause()
+        }
+
+        override fun onSkipToNext() {
+            Log.i("CALLBACK", "onSkipToNext triggered")
+//            next()
+        }
+
+        override fun onSkipToPrevious() {
+            Log.i("CALLBACK", "onSkipToPrevious triggered")
+//            previous()
+        }
+
+        override fun onSeekTo(pos: Long) {
+            Log.i("CALLBACK", "onSeekTo triggered")
+            seekTo(pos)
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
-        Log.d(tag, "onCreate: Service created")
+        Log.d(TAG, "onCreate: Service created")
 
         mediaSession = MediaSessionCompat(applicationContext, "PlayerService").apply {
             isActive = true
         }
+        mediaSession.setCallback(callback)
         notificationManager = MediaNotificationManager(this, mediaSession)
 
 
@@ -103,14 +132,17 @@ class PlayerService() : MediaLibraryService() {
             player.release()
         }
 
+        player.stop()
+        player.release()
+
         super.onDestroy()
 
     }
 
-    @SuppressLint("MissingPermission")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        Log.d(tag, "onStartCommand: Received command")
+        //Log.d(tag, "onStartCommand: Received command ${intent?.action}")
+//        SmartMessage("Service received ${intent?.action}", PopupType.Info, false, this)
         when (intent?.action) {
             ACTION_PLAY -> {
                 val song = intent.getParcelableExtra<Song>("SONG")
@@ -133,25 +165,28 @@ class PlayerService() : MediaLibraryService() {
                             }
                             // thumbnail and duration are switched, idk why
                             notificationManager.updateMetadata(song.title, song.artist, largeIconBitmap, song.thumbnail)
-                            notificationManager.updatePlaybackState(PlaybackStateCompat.STATE_PLAYING, 0)
+//                            notificationManager.updatePlaybackState(PlaybackStateCompat.STATE_PLAYING, 1)
 
-                            val notification = notificationManager.buildNotification(song.title, song.artist, largeIconBitmap, true)
-                            startForeground(1, notification)
+                        val notification = notificationManager.buildNotification(song.title, song.artist, largeIconBitmap)
+                            startForeground(NOTIFICATION_ID, notification)
                     }
                 }
             }
 
             ACTION_RESUME -> {
-                applicationContext.setPlayerIsPlaying(true)
-                player.play()
-                Log.i("PlayerService", "MainActivity.instance = ${MainActivity.instance}")
-                MainActivity.instance?.hidePlayerControlBar(false)
-                applicationContext.setJustStartedUp(false)
+                resume()
             }
 
             ACTION_PAUSE -> {
-                applicationContext.setPlayerIsPlaying(false)
-                player.pause()
+                pause()
+            }
+
+            ACTION_NEXT -> {
+
+            }
+
+            ACTION_PREV -> {
+
             }
 
         }
@@ -163,18 +198,39 @@ class PlayerService() : MediaLibraryService() {
         val channel = NotificationChannel(
             MediaNotificationManager.CHANNEL_ID,
             "KMusic Playback",
-            NotificationManager.IMPORTANCE_LOW
+            NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
             description = "Playback controls"
         }
 
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+//        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(channel)
+    }
+
+    private fun resume(){
+        applicationContext.setPlayerIsPlaying(true)
+        player.play()
+        notificationManager.updatePlaybackState(PlaybackStateCompat.STATE_PLAYING, player.currentPosition)
+
+        MainActivity.instance?.hidePlayerControlBar(false)
+        applicationContext.setJustStartedUp(false)
+    }
+
+    private fun pause(){
+        applicationContext.setPlayerIsPlaying(false)
+        player.pause()
+        notificationManager.updatePlaybackState(PlaybackStateCompat.STATE_PAUSED, player.currentPosition)
+    }
+
+    private fun seekTo(to: Long){
+        notificationManager.updatePlaybackPosition(to)
+        player.seekTo(to)
     }
 
 
     private fun playSongFromSongId(id: String) {
-        Log.i(tag, "playSongFromId was called")
+        Log.i(TAG, "playSongFromId was called")
         val py = Python.getInstance()
         val module = py.getModule("backend")
 
@@ -204,7 +260,7 @@ class PlayerService() : MediaLibraryService() {
                 applicationContext.setPlayerIsPlaying(true)
             }
         } catch (e: Exception) {
-            Log.w(tag, e)
+            Log.w(TAG, e)
         }
     }
 
@@ -296,7 +352,7 @@ class PlayerService() : MediaLibraryService() {
             try {
                 // Get current song data
                 val song = songDao.getSongById(songId)
-                Log.i(tag, "Song from Dao is $song")
+                Log.i(TAG, "Song from Dao is $song")
 
                 // Update the song with new total play time
                 song?.let {
@@ -310,7 +366,7 @@ class PlayerService() : MediaLibraryService() {
                     playbackStartTime = System.currentTimeMillis()
                 }
             } catch (e: Exception) {
-                Log.e(tag, "Error updating playback time: ${e.message}")
+                Log.e(TAG, "Error updating playback time: ${e.message}")
             }
         }
     }

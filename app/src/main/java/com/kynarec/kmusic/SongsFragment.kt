@@ -11,6 +11,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.service.ACTION_PLAY
+import com.kynarec.kmusic.service.ACTION_RESUME
 import com.kynarec.kmusic.service.PlayerService
 import com.kynarec.kmusic.utils.SongAdapter
 import kotlinx.coroutines.launch
@@ -59,13 +61,13 @@ class SongsFragment : Fragment() {
 
                 val context = requireContext()
                 Intent(context, PlayerService::class.java).apply {
-                    action = "ACTION_PLAY"
+                    action = ACTION_PLAY
                     putExtra("SONG", song)
                     context.startService(this)
                 }
 
                 Intent(context, PlayerService::class.java).apply {
-                    action = "ACTION_RESUME"
+                    action = ACTION_RESUME
                     context.startService(this)
                 }
 

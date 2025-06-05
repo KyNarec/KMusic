@@ -1,15 +1,16 @@
 package com.kynarec.kmusic.service
 
 import android.app.Notification
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
 import androidx.core.app.NotificationCompat
 import androidx.media.app.NotificationCompat.MediaStyle
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.kynarec.kmusic.R
+
+const val NOTIFICATION_ID = 1596
+
 
 class MediaNotificationManager(
     private val context: Context,
@@ -18,18 +19,20 @@ class MediaNotificationManager(
 
     companion object {
         const val CHANNEL_ID = "kmusic_playback_channel"
+        private const val TAG = "MediaNotificationManager"
     }
+
+    private val playbackState = mediaSession.controller.playbackState
+    private val isPlaying = playbackState?.state == PlaybackStateCompat.STATE_PLAYING
+    private val isPaused = playbackState?.state == PlaybackStateCompat.STATE_PAUSED
+
 
     fun buildNotification(
         title: String,
         artist: String,
         albumArt: Bitmap?,
-        isPlaying: Boolean
     ): Notification {
         // Intents for media buttons
-        val prevIntent = mediaButtonIntent("ACTION_PREV")
-        val playPauseIntent = mediaButtonIntent(if (isPlaying) ACTION_PAUSE else ACTION_RESUME)
-        val nextIntent = mediaButtonIntent("ACTION_NEXT")
 
         // Media style
         val mediaStyle = MediaStyle()
@@ -41,13 +44,14 @@ class MediaNotificationManager(
             .setContentText(artist)
             .setLargeIcon(albumArt)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .addAction(R.drawable.play_skip_back, "Previous", prevIntent)
+            .addAction(R.drawable.play_skip_back, "Previous", null)
             .addAction(
                 if (isPlaying) R.drawable.pause else R.drawable.play,
                 if (isPlaying) "Pause" else "Play",
-                playPauseIntent
+                null
             )
-            .addAction(R.drawable.play_skip_forward, "Next", nextIntent)
+            .addAction(R.drawable.play_skip_forward, "Next", null)
+
             .setStyle(mediaStyle)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOnlyAlertOnce(true)
@@ -77,6 +81,7 @@ class MediaNotificationManager(
             .setActions(
                 PlaybackStateCompat.ACTION_PLAY or
                         PlaybackStateCompat.ACTION_PAUSE or
+                        PlaybackStateCompat.ACTION_PLAY_PAUSE or
                         PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
                         PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
                         PlaybackStateCompat.ACTION_SEEK_TO
@@ -87,16 +92,20 @@ class MediaNotificationManager(
         mediaSession.setPlaybackState(playbackState)
     }
 
-    private fun mediaButtonIntent(action: String): PendingIntent {
-        val intent = Intent(context, PlayerService::class.java).apply {
-            this.action = action
-        }
-        return PendingIntent.getService(
-            context,
-            action.hashCode(),
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+    fun updatePlaybackPosition(position: Long) {
+        val playbackState = PlaybackStateCompat.Builder()
+            .setActions(
+                PlaybackStateCompat.ACTION_PLAY or
+                        PlaybackStateCompat.ACTION_PAUSE or
+                        PlaybackStateCompat.ACTION_PLAY_PAUSE or
+                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
+                        PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
+                        PlaybackStateCompat.ACTION_SEEK_TO
+            )
+            .setState(mediaSession.controller.playbackState.state, position, 1.0f)
+            .build()
+        mediaSession.setPlaybackState(playbackState)
+
     }
 
     private fun parseDurationToMillis(durationStr: String): Long {
