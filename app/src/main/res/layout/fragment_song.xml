@@ -25,25 +25,48 @@
 
         <TextView
             android:id="@+id/song_title"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="32dp"
             android:layout_marginTop="16dp"
+
+            android:ellipsize="marquee"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:scrollHorizontally="true"
+            android:singleLine="true"
+
             android:textSize="24sp"
-            app:layout_constraintBottom_toTopOf="@+id/song_artist"
+
             app:layout_constraintStart_toEndOf="@+id/imageView"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/song_artist"
+
             tools:text="Song Title" />
 
         <TextView
             android:id="@+id/song_artist"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="32dp"
             android:layout_marginBottom="16dp"
-            app:layout_constraintBottom_toBottomOf="parent"
+
+
+            android:ellipsize="marquee"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:scrollHorizontally="true"
+            android:singleLine="true"
+
             app:layout_constraintStart_toEndOf="@+id/imageView"
-            tools:text="Artist Name" />
+            app:layout_constraintEnd_toStartOf="@id/song_duration"
+            app:layout_constraintBottom_toBottomOf="parent"
+            tools:text="Artist Name"
+
+            />
 
         <TextView
             android:id="@+id/song_duration"

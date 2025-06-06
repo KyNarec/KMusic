@@ -12,6 +12,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
@@ -21,8 +22,11 @@ import com.kynarec.kmusic.service.PlayerService
 import com.kynarec.kmusic.utils.ACTION_PAUSE
 import com.kynarec.kmusic.utils.ACTION_RESUME
 import com.kynarec.kmusic.utils.IS_PLAYING
+import com.kynarec.kmusic.utils.MARQUEE_DELAY
 import com.kynarec.kmusic.utils.PLAYBACK_STATE_CHANGED
 import com.kynarec.kmusic.utils.getPlayerIsPlaying
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 class PlayerControlBar : Fragment() {
@@ -109,8 +113,14 @@ class PlayerControlBar : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         val pauseButton = view.findViewById<ImageButton>(R.id.pause_button)
         val playButton = view.findViewById<ImageButton>(R.id.play_button)
+        val skipForwardButton = view.findViewById<ImageButton>(R.id.skip_forward_button)
+        val skipBackButton = view.findViewById<ImageButton>(R.id.skip_back_button)
 
-        val feedbackCircle = view.findViewById<View>(R.id.feedback_circle)
+
+        val feedbackCirclePlayButton = view.findViewById<View>(R.id.feedback_circle_play_button)
+        val feedbackCircleSkipForwardButton = view.findViewById<View>(R.id.feedback_circle_skip_forward)
+        val feedbackCircleSkipBackButton = view.findViewById<View>(R.id.feedback_circle_skip_back)
+
 
         val titleText: TextView = view.findViewById(R.id.song_title)
         val artistText: TextView = view.findViewById(R.id.song_artist)
@@ -118,7 +128,7 @@ class PlayerControlBar : Fragment() {
 
         val intent = Intent(context, PlayerService::class.java)
 
-        feedbackCircle.visibility = View.INVISIBLE
+        feedbackCirclePlayButton.visibility = View.INVISIBLE
 
         if (context?.getPlayerIsPlaying() == false) {
             playButton.visibility = View.VISIBLE
@@ -132,7 +142,7 @@ class PlayerControlBar : Fragment() {
         playButton.setOnClickListener {
             playButton.visibility = View.INVISIBLE
             pauseButton.visibility = View.VISIBLE
-            animateFeedbackButton(feedbackCircle)
+            animateFeedbackButton(feedbackCirclePlayButton)
             intent.action = ACTION_RESUME
             context?.startService(intent)
         }
@@ -141,21 +151,41 @@ class PlayerControlBar : Fragment() {
         pauseButton.setOnClickListener {
             playButton.visibility = View.VISIBLE
             pauseButton.visibility = View.INVISIBLE
-            animateFeedbackButton(feedbackCircle)
+            animateFeedbackButton(feedbackCirclePlayButton)
             intent.action = ACTION_PAUSE
             context?.startService(intent)
         }
 
+        skipForwardButton.setOnClickListener {
+            animateFeedbackButton(feedbackCircleSkipForwardButton)
+        }
+
+        skipBackButton.setOnClickListener {
+            animateFeedbackButton(feedbackCircleSkipBackButton)
+        }
+
         titleText.text = song.title
+        titleText.isSelected = false
+
+        lifecycleScope.launch {
+            delay(MARQUEE_DELAY)
+            titleText.isSelected = true
+        }
+
         artistText.text = song.artist
+        artistText.isSelected = false
+
+        lifecycleScope.launch {
+            delay(MARQUEE_DELAY)
+            artistText.isSelected = true
+        }
+
 
         Glide.with(this)
             .load(song.thumbnail)
             .centerCrop()
             .apply(RequestOptions.bitmapTransform(RoundedCorners(30)))
             .into(thumbnail)
-
-
     }
 
     private fun animateFeedbackButton(feedbackCircle: View){
