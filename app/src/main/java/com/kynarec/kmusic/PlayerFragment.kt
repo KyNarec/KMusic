@@ -18,6 +18,11 @@ import com.kynarec.kmusic.utils.ACTION_RESUME
 import com.kynarec.kmusic.utils.THUMBNAIL_ROUNDNESS
 import com.kynarec.kmusic.utils.getPlayerIsPlaying
 import com.kynarec.kmusic.utils.setPlayerOpen
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.lang.Thread.sleep
 
 class PlayerFragment : Fragment() {
 
@@ -69,18 +74,22 @@ class PlayerFragment : Fragment() {
 
         // Pauses playback
         playButton.setOnClickListener {
-            playButton.visibility = View.INVISIBLE
-            pauseButton.visibility = View.VISIBLE
             intent.action = ACTION_RESUME
             context?.startService(intent)
+            sleep(200)
+            playButton.visibility = View.INVISIBLE
+            pauseButton.visibility = View.VISIBLE
+
         }
 
         // Resumes playback
         pauseButton.setOnClickListener {
-            playButton.visibility = View.VISIBLE
-            pauseButton.visibility = View.INVISIBLE
             intent.action = ACTION_PAUSE
             context?.startService(intent)
+            sleep(200)
+            playButton.visibility = View.VISIBLE
+            pauseButton.visibility = View.INVISIBLE
+
         }
 
         goBackButton.setOnClickListener {
