@@ -1,0 +1,19 @@
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#33FFFFFF">
+
+    <!-- Ripple mask (defines where the ripple is drawn) -->
+    <item android:id="@android:id/mask">
+        <shape android:shape="rectangle">
+            <solid android:color="#33FFFFFF" />
+            <corners android:radius="8dp"/>
+        </shape>
+    </item>
+
+    <!-- Background behind the ripple (transparent in this case) -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+            <corners android:radius="8dp"/>
+        </shape>
+    </item>
+</ripple>
