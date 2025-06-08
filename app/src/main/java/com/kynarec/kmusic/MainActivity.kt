@@ -17,6 +17,7 @@ import com.chaquo.python.android.AndroidPlatform
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerService
 import com.kynarec.kmusic.utils.setJustStartedUp
+import com.kynarec.kmusic.utils.setPlayerOpen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -55,6 +56,7 @@ class MainActivity : AppCompatActivity() {
 //        this.setPlayerIsPlaying(false)
         this.setJustStartedUp(true)
         hidePlayerControlBar(true)
+        this.setPlayerOpen(false)
 
         val serviceIntent = Intent(this, PlayerService::class.java)
         startService(serviceIntent)
@@ -174,12 +176,50 @@ class MainActivity : AppCompatActivity() {
     fun updatePlayerControlBar(song: Song) {
         val playerControlBar = PlayerControlBar()
 
-        val  bundle = Bundle().apply {
+        val bundle = Bundle().apply {
             putParcelable("song", song)
         }
         playerControlBar.arguments = bundle
         supportFragmentManager.beginTransaction()
             .replace(R.id.player_control_bar, playerControlBar)
             .commit()
+    }
+
+    fun navigatePlayer(song: Song) {
+//        Log.i(tag, "navigatePlayer was called")
+        val player = PlayerFragment()
+
+        val bundle = Bundle().apply {
+            putParcelable("song", song)
+        }
+
+        player.arguments = bundle
+        supportFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.slide_in_bottom,  // enter
+                R.anim.fade_out,         // exit (when pushing next)
+                R.anim.fade_in,          // reenter (when popping back)
+                R.anim.slide_out_bottom  // pop exit
+            )
+            .add(R.id.main, player) // <--- don't replace
+            .addToBackStack(null)
+            .commit()
+        hidePlayerControlBar(true)
+    }
+
+//    fun hidePlayer() {
+//        supportFragmentManager.beginTransaction()
+//            .replace(R.id.main, player)
+//            .commit()
+//    }
+
+    @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")
+    override fun onBackPressed() {
+        super.onBackPressed()
+
+        // If no fragments are on top, show the control bar again
+        if (supportFragmentManager.backStackEntryCount == 0) {
+            hidePlayerControlBar(false)
+        }
     }
 }

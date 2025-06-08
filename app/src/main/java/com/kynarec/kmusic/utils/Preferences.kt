@@ -30,3 +30,15 @@ fun Context.setJustStartedUp(value: Boolean) {
         }
 }
 
+fun Context.getPlayerOpen(): Boolean {
+    return getSharedPreferences("preferences", Context.MODE_PRIVATE)
+        .getBoolean(PLAYER_IS_OPEN, false)
+}
+
+fun Context.setPlayerOpen(value: Boolean) {
+    getSharedPreferences("preferences", Context.MODE_PRIVATE)
+        .edit() {
+            putBoolean(PLAYER_IS_OPEN, value)
+        }
+}
+

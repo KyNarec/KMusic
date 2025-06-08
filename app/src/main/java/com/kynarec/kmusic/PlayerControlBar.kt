@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
@@ -24,6 +25,7 @@ import com.kynarec.kmusic.utils.ACTION_RESUME
 import com.kynarec.kmusic.utils.IS_PLAYING
 import com.kynarec.kmusic.utils.MARQUEE_DELAY
 import com.kynarec.kmusic.utils.PLAYBACK_STATE_CHANGED
+import com.kynarec.kmusic.utils.THUMBNAIL_ROUNDNESS
 import com.kynarec.kmusic.utils.getPlayerIsPlaying
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -126,6 +128,8 @@ class PlayerControlBar : Fragment() {
         val artistText: TextView = view.findViewById(R.id.song_artist)
         val thumbnail: ImageView = view.findViewById(R.id.thumbnail)
 
+        val playerControlBar = view.findViewById<FrameLayout>(R.id.control_bar)
+
         val intent = Intent(context, PlayerService::class.java)
 
         feedbackCirclePlayButton.visibility = View.INVISIBLE
@@ -184,8 +188,14 @@ class PlayerControlBar : Fragment() {
         Glide.with(this)
             .load(song.thumbnail)
             .centerCrop()
-            .apply(RequestOptions.bitmapTransform(RoundedCorners(30)))
+            .apply(RequestOptions.bitmapTransform(RoundedCorners(THUMBNAIL_ROUNDNESS)))
             .into(thumbnail)
+
+        playerControlBar.setOnClickListener {
+            if (activity is MainActivity) {
+                (activity as MainActivity).navigatePlayer(song)
+            }
+        }
     }
 
     private fun animateFeedbackButton(feedbackCircle: View){

@@ -30,6 +30,7 @@ import com.kynarec.kmusic.utils.ACTION_RESUME
 import com.kynarec.kmusic.utils.IS_PLAYING
 import com.kynarec.kmusic.utils.NOTIFICATION_ID
 import com.kynarec.kmusic.utils.PLAYBACK_STATE_CHANGED
+import com.kynarec.kmusic.utils.getPlayerOpen
 import com.kynarec.kmusic.utils.setJustStartedUp
 import com.kynarec.kmusic.utils.setPlayerIsPlaying
 import kotlinx.coroutines.CoroutineScope
@@ -218,8 +219,8 @@ class PlayerService() : MediaLibraryService() {
         player.play()
         notificationManager.updatePlaybackState(PlaybackStateCompat.STATE_PLAYING, player.currentPosition)
         notifyPlaybackStateChanged(true)
-
-        MainActivity.instance?.hidePlayerControlBar(false)
+        if (MainActivity.instance?.getPlayerOpen() == true) MainActivity.instance?.hidePlayerControlBar(true)
+        else MainActivity.instance?.hidePlayerControlBar(false)
         applicationContext.setJustStartedUp(false)
     }
 
