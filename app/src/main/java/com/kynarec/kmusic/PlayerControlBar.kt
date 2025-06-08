@@ -67,17 +67,6 @@ class PlayerControlBar : Fragment() {
         return inflater.inflate(R.layout.fragment_player_control_bar, container, false)
     }
 
-    companion object {
-
-        @JvmStatic
-        fun newInstance() =
-            PlayerControlBar().apply {
-                arguments = Bundle().apply {
-
-                }
-            }
-    }
-
     private val playbackStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val isPlaying = intent?.getBooleanExtra(IS_PLAYING, false) ?: false

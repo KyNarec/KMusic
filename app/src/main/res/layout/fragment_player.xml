@@ -115,9 +115,9 @@
             android:layout_marginTop="8dp"
             android:background="@drawable/ripple_circle_33"
             android:src="@drawable/chevron_down"
-            android:tint="@color/white"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/white" />
 
         <ImageButton
             android:id="@+id/song_thumbnail"

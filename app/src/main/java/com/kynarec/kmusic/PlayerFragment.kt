@@ -1,9 +1,12 @@
 package com.kynarec.kmusic
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.view.GestureDetector
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -43,6 +46,7 @@ class PlayerFragment : Fragment() {
 
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -93,11 +97,7 @@ class PlayerFragment : Fragment() {
         }
 
         goBackButton.setOnClickListener {
-            requireActivity().onBackPressedDispatcher.onBackPressed()
-            context?.setPlayerOpen(false)
-            if (activity is MainActivity) {
-                (activity as MainActivity).hidePlayerControlBar(false)
-            }
+            goBack()
         }
 
         Glide.with(this)
@@ -106,6 +106,35 @@ class PlayerFragment : Fragment() {
             .apply(RequestOptions.bitmapTransform(RoundedCorners(THUMBNAIL_ROUNDNESS)))
             .into(songThumbnail)
 
+        val gestureDetector = GestureDetector(requireContext(), object : GestureDetector.SimpleOnGestureListener() {
+            private val SWIPE_THRESHOLD = 100
+            private val SWIPE_VELOCITY_THRESHOLD = 100
+
+            override fun onFling(
+                e1: MotionEvent?,
+                e2: MotionEvent,
+                velocityX: Float,
+                velocityY: Float
+            ): Boolean {
+                if (e1 == null || e2 == null) return false
+
+                val diffY = e2.y - e1.y
+                val diffX = e2.x - e1.x
+
+                if (Math.abs(diffY) > Math.abs(diffX) && diffY > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                    // Swipe down detected
+                    goBack()
+                    return true
+                }
+                return false
+            }
+        })
+
+        // Set the gesture detector on the fragment root view
+        view.setOnTouchListener { _, event ->
+            gestureDetector.onTouchEvent(event)
+            true
+        }
     }
 
     override fun onDestroyView() {
@@ -113,14 +142,12 @@ class PlayerFragment : Fragment() {
         context?.setPlayerOpen(false)
     }
 
-//    companion object {
-//
-//        @JvmStatic
-//        fun newInstance() =
-//            PlayerFragment().apply {
-//                arguments = Bundle().apply {
-//
-//                }
-//            }
-//    }
+    private fun goBack() {
+        requireActivity().onBackPressedDispatcher.onBackPressed()
+        context?.setPlayerOpen(false)
+        if (activity is MainActivity) {
+            (activity as MainActivity).hidePlayerControlBar(false)
+        }
+    }
+
 }
