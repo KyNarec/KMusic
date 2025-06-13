@@ -19,6 +19,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.KMusic"
         android:name=".MyApp"
+        android:enableOnBackInvokedCallback="true"
         >
         <activity
             android:name=".MainActivity"

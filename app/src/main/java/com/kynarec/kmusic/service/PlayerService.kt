@@ -9,6 +9,7 @@ import android.os.Looper
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import androidx.annotation.LongDef
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
@@ -22,14 +23,20 @@ import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.utils.ACTION_NEXT
 import com.kynarec.kmusic.utils.ACTION_PAUSE
 import com.kynarec.kmusic.utils.ACTION_PLAY
 import com.kynarec.kmusic.utils.ACTION_PREV
 import com.kynarec.kmusic.utils.ACTION_RESUME
+import com.kynarec.kmusic.utils.ACTION_RESUME_UPDATES
+import com.kynarec.kmusic.utils.ACTION_SEEK
+import com.kynarec.kmusic.utils.ACTION_STOP_UPDATES
 import com.kynarec.kmusic.utils.IS_PLAYING
 import com.kynarec.kmusic.utils.NOTIFICATION_ID
 import com.kynarec.kmusic.utils.PLAYBACK_STATE_CHANGED
+import com.kynarec.kmusic.utils.PLAYER_PROGRESS_UPDATE
+import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.getPlayerOpen
 import com.kynarec.kmusic.utils.setJustStartedUp
 import com.kynarec.kmusic.utils.setPlayerIsPlaying
@@ -56,6 +63,8 @@ class PlayerService() : MediaLibraryService() {
     private var currentSongId: String? = null
     private var playbackStartTime: Long = 0
     private var accumulatedPlayTime: Long = 0
+
+    private var progressRunnable: Runnable? = null
 
     // Handler for periodic database updates
     private val handler = Handler(Looper.getMainLooper())
@@ -104,6 +113,7 @@ class PlayerService() : MediaLibraryService() {
 
         player = ExoPlayer.Builder(this).build()
 
+
         if (! Python.isStarted()) {
             Python.start(AndroidPlatform(this));
         }
@@ -143,6 +153,8 @@ class PlayerService() : MediaLibraryService() {
 
         super.onDestroy()
 
+        stopProgressUpdates()
+
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -177,6 +189,7 @@ class PlayerService() : MediaLibraryService() {
                             startForeground(NOTIFICATION_ID, notification)
                     }
                 }
+                startProgressUpdates() // Start sending updates when playing
             }
 
             ACTION_RESUME -> {
@@ -193,6 +206,19 @@ class PlayerService() : MediaLibraryService() {
 
             ACTION_PREV -> {
 
+            }
+
+            ACTION_SEEK -> {
+                val seekPosition = intent.getLongExtra("seek_position", 0)
+                SmartMessage(seekPosition.toString(), PopupType.Warning, false, this)
+                seekTo(seekPosition)
+            }
+
+            ACTION_STOP_UPDATES -> {
+                stopProgressUpdates()
+            }
+            ACTION_RESUME_UPDATES -> {
+                startProgressUpdates()
             }
 
         }
@@ -222,6 +248,7 @@ class PlayerService() : MediaLibraryService() {
         if (MainActivity.instance?.getPlayerOpen() == true) MainActivity.instance?.hidePlayerControlBar(true)
         else MainActivity.instance?.hidePlayerControlBar(false)
         applicationContext.setJustStartedUp(false)
+        startProgressUpdates() // Resume updates
     }
 
     private fun pause(){
@@ -229,11 +256,15 @@ class PlayerService() : MediaLibraryService() {
         player.pause()
         notificationManager.updatePlaybackState(PlaybackStateCompat.STATE_PAUSED, player.currentPosition)
         notifyPlaybackStateChanged(false)
+        stopProgressUpdates() // Stop updates when paused
+
     }
 
     private fun seekTo(to: Long){
         notificationManager.updatePlaybackPosition(to)
         player.seekTo(to)
+        sendProgressUpdate()
+
     }
 
 
@@ -402,5 +433,30 @@ class PlayerService() : MediaLibraryService() {
         }
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
     }
+
+    private fun sendProgressUpdate() {
+        val intent = Intent(PLAYER_PROGRESS_UPDATE)
+        intent.putExtra("current_position", player.currentPosition)
+        intent.putExtra("duration", player.duration)
+        Log.i("PlayerSeekbar", player.duration.toString())
+        intent.putExtra("is_playing", player.isPlaying)
+        sendBroadcast(intent)
+    }
+
+    private fun startProgressUpdates() {
+        stopProgressUpdates() // Stop any existing updates
+        progressRunnable = object : Runnable {
+            override fun run() {
+                sendProgressUpdate()
+                handler.postDelayed(this, 1000) // Update every second
+            }
+        }
+        handler.post(progressRunnable!!)
+    }
+
+    private fun stopProgressUpdates() {
+        progressRunnable?.let { handler.removeCallbacks(it) }
+    }
+
 
 }
