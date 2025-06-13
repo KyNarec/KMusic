@@ -56,7 +56,7 @@
             </ImageButton>
 
             <ImageButton
-                android:id="@+id/play_button"
+                android:id="@+id/player_play_button"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="4dp"
@@ -74,7 +74,7 @@
             </ImageButton>
 
             <ImageButton
-                android:id="@+id/pause_button"
+                android:id="@+id/player_pause_button"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="4dp"

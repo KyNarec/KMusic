@@ -243,7 +243,7 @@ class PlayerService() : MediaLibraryService() {
         val module = py.getModule("backend")
 
 
-        val uri = module.callAttr("playSongById", id)
+        val uri = module.callAttr("playSongByIdWithBestBitrate", id)
 
         val mediaItem = MediaItem.fromUri(uri.toString())
         // Chatty thinks, that this does not really work and that this is better
@@ -260,6 +260,7 @@ class PlayerService() : MediaLibraryService() {
 //                }
 //            }
 //        })
+        Log.i(TAG, "The link ExoPlayer should be playing: $uri")
         try {
             player.setMediaItem(mediaItem)
             player.prepare()

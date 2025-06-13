@@ -191,7 +191,7 @@ class PlayerControlBar : Fragment() {
         feedbackCircle.alpha = 0f
         feedbackCircle.visibility = View.VISIBLE
         feedbackCircle.animate()
-            .alpha(1f)
+            .alpha(.5f)
             .setDuration(100)
             .withEndAction {
                 feedbackCircle.animate()

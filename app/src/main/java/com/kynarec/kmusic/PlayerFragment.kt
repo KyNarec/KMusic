@@ -52,8 +52,8 @@ class PlayerFragment : Fragment() {
 
         context?.setPlayerOpen(true)
 
-        val pauseButton = view.findViewById<ImageButton>(R.id.pause_button)
-        val playButton = view.findViewById<ImageButton>(R.id.play_button)
+        val pauseButton = view.findViewById<ImageButton>(R.id.player_pause_button)
+        val playButton = view.findViewById<ImageButton>(R.id.player_play_button)
         val skipForwardButton = view.findViewById<ImageButton>(R.id.skip_forward_button)
         val skipBackButton = view.findViewById<ImageButton>(R.id.skip_back_button)
 
