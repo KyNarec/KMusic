@@ -1,5 +1,6 @@
 package com.kynarec.kmusic
 
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -15,6 +16,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.LinearInterpolator
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.SeekBar
@@ -55,10 +57,12 @@ class PlayerFragment : Fragment() {
 
     private val progressReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
+            Log.d("PlayerSeekbar", "BroadcastReceiver.onReceive called with action: ${intent?.action}")
+
             if (intent?.action == PLAYER_PROGRESS_UPDATE) {
                 val currentPosition = intent.getLongExtra("current_position", 0)
                 val duration = intent.getLongExtra("duration", 0)
-                Log.d("PlayerFragment", "Received update - Position: $currentPosition, Duration: $duration")
+                Log.d("PlayerSeekbar", "Received update - Position: $currentPosition, Duration: $duration")
 
                 currentDuration = duration // Store duration
                 updateSeekBar(currentPosition, duration)
@@ -112,12 +116,15 @@ class PlayerFragment : Fragment() {
         totalTimeText.text = song.duration
 
         val filter = IntentFilter(PLAYER_PROGRESS_UPDATE)
+
         LocalBroadcastManager.getInstance(requireContext())
             .registerReceiver(progressReceiver, filter)
+        Log.d("PlayerSeekbar", "BroadcastReceiver registered")
+
 
         val intent = Intent(context, PlayerService::class.java)
 
-// Set up SeekBar listener
+        // Set up SeekBar listener
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
@@ -244,7 +251,7 @@ class PlayerFragment : Fragment() {
             val progress = ((currentPosition * 100) / duration).toInt()
             Log.d("PlayerFragment", "Updating SeekBar - Progress: $progress")
 
-            seekBar.progress = progress
+            seekBar.setProgress(progress, true)
 
             currentTimeText.text = formatTime(currentPosition)
             totalTimeText.text = formatTime(duration)

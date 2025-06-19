@@ -440,18 +440,21 @@ class PlayerService() : MediaLibraryService() {
         intent.putExtra("duration", player.duration)
         Log.i("PlayerSeekbar", player.duration.toString())
         intent.putExtra("is_playing", player.isPlaying)
-        sendBroadcast(intent)
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
     }
 
     private fun startProgressUpdates() {
+        Log.i("PlayerSeekbar", "startProgressUpdates is called")
         stopProgressUpdates() // Stop any existing updates
         progressRunnable = object : Runnable {
             override fun run() {
+                Log.d("PlayerSeekbar", "Runnable executing - this should appear every second")
                 sendProgressUpdate()
-                handler.postDelayed(this, 1000) // Update every second
+                handler.postDelayed(this, 16)
             }
         }
-        handler.post(progressRunnable!!)
+        val posted = handler.post(progressRunnable!!)
+        Log.d("PlayerSeekbar", "Handler.post() returned: $posted")
     }
 
     private fun stopProgressUpdates() {
