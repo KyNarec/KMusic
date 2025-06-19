@@ -16,58 +16,62 @@ client = InnerTube("WEB_REMIX", "1.20250409.01.00")
 
 
 def searchSongs(query):
-    data = client.search(query=query, params=PARAMS_TYPE_SONG)
+    try:
+        data = client.search(query=query, params=PARAMS_TYPE_SONG)
 
-    n_data = data["contents"]["tabbedSearchResultsRenderer"]["tabs"][0]["tabRenderer"][
-        "content"
-    ]["sectionListRenderer"]["contents"][1]["musicShelfRenderer"]["contents"]
+        contents = data.get("contents", {}).get("tabbedSearchResultsRenderer", {}) \
+            .get("tabs", [])[0].get("tabRenderer", {}).get("content", {}) \
+            .get("sectionListRenderer", {}).get("contents", [])
 
-    results = []
-    for i in n_data:
-        video_id = i["musicResponsiveListItemRenderer"]["playlistItemData"]["videoId"]
-        # OLD
-        # video_id = i['musicResponsiveListItemRenderer']['overlay']['musicItemThumbnailOverlayRenderer']['content']['musicPlayButtonRenderer']['playNavigationEndpoint']['watchEndpoint']['videoId']
+        # Find the dict that contains 'musicShelfRenderer'
+        music_shelf = None
+        for section in contents:
+            if 'musicShelfRenderer' in section:
+                music_shelf = section['musicShelfRenderer']
+                break
 
-        # print("videoId: ", video_id)
-        # print(i['musicResponsiveListItemRenderer']['overlay']['musicItemThumbnailOverlayRenderer']['content']['musicPlayButtonRenderer']['accessibilityPlayData']['accessibilityData']['label'])
+        if music_shelf is None:
+            print("musicShelfRenderer not found!")
+            return []  # or handle however you like
 
-        # for Song title
-        # print(i['musicResponsiveListItemRenderer']['flexColumns'][0]['musicResponsiveListItemFlexColumnRenderer']['text']['runs'][0]['text'])
-        video_title = i["musicResponsiveListItemRenderer"]["flexColumns"][0][
-            "musicResponsiveListItemFlexColumnRenderer"
-        ]["text"]["runs"][0]["text"]
-        # video_title = ""
+        n_data = music_shelf.get("contents", [])
 
-        # for Song duration
-        # pprint(i['musicResponsiveListItemRenderer']['flexColumns'][1]['musicResponsiveListItemFlexColumnRenderer']['text']['runs'][4]['text'])
-        video_duration = i["musicResponsiveListItemRenderer"]["flexColumns"][1][
-            "musicResponsiveListItemFlexColumnRenderer"
-        ]["text"]["runs"][4]["text"]
+        results = []
+        for i in n_data:
+            renderer = i.get("musicResponsiveListItemRenderer", {})
 
-        # for Song artist
-        # pprint(i['musicResponsiveListItemRenderer']['flexColumns'][1]['musicResponsiveListItemFlexColumnRenderer']['text']['runs'][0]['text'])
-        video_artist = i["musicResponsiveListItemRenderer"]["flexColumns"][1][
-            "musicResponsiveListItemFlexColumnRenderer"
-        ]["text"]["runs"][0]["text"]
+            video_id = renderer.get("playlistItemData", {}).get("videoId", "UnknownID")
 
-        # for Song thumbnail in 120x120
-        # pprint(i['musicResponsiveListItemRenderer']['thumbnail']['musicThumbnailRenderer']['thumbnail']['thumbnails'][-1]['url'])
-        video_thumbnail = i["musicResponsiveListItemRenderer"]["thumbnail"][
-            "musicThumbnailRenderer"
-        ]["thumbnail"]["thumbnails"][-1]["url"]
+            flexColumns = renderer.get("flexColumns", [])
+            video_title = flexColumns[0].get("musicResponsiveListItemFlexColumnRenderer", {}) \
+                .get("text", {}).get("runs", [{}])[0].get("text", "Unknown Title")
 
-        # Add as a dictionary
-        results.append(
-            {
+            artist_data = flexColumns[1].get("musicResponsiveListItemFlexColumnRenderer", {}) \
+                .get("text", {}).get("runs", [{}])
+            video_artist = artist_data[0].get("text", "Unknown Artist")
+
+            # Duration — be careful, some entries may have fewer runs
+            try:
+                video_duration = artist_data[4].get("text", "Unknown Duration")
+            except IndexError:
+                video_duration = "Unknown Duration"
+
+            video_thumbnail = f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
+
+            results.append({
                 "id": video_id,
                 "title": video_title,
                 "artist": video_artist,
                 "thumbnail": video_thumbnail,
                 "duration": video_duration,
-            }
-        )
+            })
 
-    return results
+        return results
+
+    except Exception as e:
+        print(f"Error parsing song data: {e}")
+        return []  # Return empty list if things fail
+
 
 
 def searchOneSong(songName):

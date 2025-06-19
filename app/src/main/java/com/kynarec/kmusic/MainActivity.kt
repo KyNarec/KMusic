@@ -12,10 +12,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentContainerView
+import com.chaquo.python.PyObject
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.service.PlayerService
+import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.setJustStartedUp
 import com.kynarec.kmusic.utils.setPlayerOpen
 import kotlinx.coroutines.CoroutineScope
@@ -145,20 +148,25 @@ class MainActivity : AppCompatActivity() {
 
 //        var counter = 1
 
-        for (item in pyResult.asList()) {
-            CoroutineScope(Dispatchers.Main).launch {
+        if (pyResult == emptyList<PyObject>()) {
+            SmartMessage("Error while fetching", PopupType.Warning, false, this)
+        }
+        else {
+            for (item in pyResult.asList()) {
+                CoroutineScope(Dispatchers.Main).launch {
 
-                val d = item.callAttr("get", "duration").toString()
-                songsList.add(
-                    Song(
-                        id = item.callAttr("get", "id").toString(),
-                        title = item.callAttr("get", "title").toString(),
-                        artist = item.callAttr("get", "artist").toString(),
-                        thumbnail = item.callAttr("get", "thumbnail").toString(),
-                        // filtering out wrong durations here and not in backend, because Kotlin is faster
-                        duration = (if (Regex("""^(\d{1,2}):(\d{1,2})$""").matchEntire(d) == null) "NA" else d ).toString()
+                    val d = item.callAttr("get", "duration").toString()
+                    songsList.add(
+                        Song(
+                            id = item.callAttr("get", "id").toString(),
+                            title = item.callAttr("get", "title").toString(),
+                            artist = item.callAttr("get", "artist").toString(),
+                            thumbnail = item.callAttr("get", "thumbnail").toString(),
+                            // filtering out wrong durations here and not in backend, because Kotlin is faster
+                            duration = (if (Regex("""^(\d{1,2}):(\d{1,2})$""").matchEntire(d) == null) "NA" else d).toString()
+                        )
                     )
-                )
+                }
             }
         }
 

@@ -16,6 +16,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.MultiTransformation
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
 import com.kynarec.kmusic.data.db.entities.Song
@@ -176,8 +178,14 @@ class PlayerControlBar : Fragment() {
 
         Glide.with(this)
             .load(song.thumbnail)
-            .centerCrop()
-            .apply(RequestOptions.bitmapTransform(RoundedCorners(THUMBNAIL_ROUNDNESS)))
+            .apply(
+                RequestOptions.bitmapTransform(
+                    MultiTransformation(
+                        CenterCrop(),
+                        RoundedCorners(THUMBNAIL_ROUNDNESS)
+                    )
+                )
+            )
             .into(thumbnail)
 
         playerControlBar.setOnClickListener {

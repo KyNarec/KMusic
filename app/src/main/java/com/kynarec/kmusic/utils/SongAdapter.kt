@@ -15,6 +15,8 @@ import com.kynarec.kmusic.data.db.entities.Song
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.load.MultiTransformation
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
 
 
 class SongAdapter(
@@ -63,8 +65,14 @@ class SongAdapter(
 
             Glide.with(itemView.context)
                 .load(song.thumbnail)
-                .centerCrop()
-                .apply(RequestOptions.bitmapTransform(RoundedCorners(THUMBNAIL_ROUNDNESS)))
+                .apply(
+                    RequestOptions.bitmapTransform(
+                        MultiTransformation(
+                            CenterCrop(),
+                            RoundedCorners(THUMBNAIL_ROUNDNESS)
+                        )
+                    )
+                )
                 .into(thumbnailImageView)
 
             itemView.setOnClickListener {

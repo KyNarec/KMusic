@@ -13,12 +13,12 @@ import androidx.annotation.LongDef
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import com.bumptech.glide.Glide
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.Player
 import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.dao.SongDao
@@ -111,7 +111,8 @@ class PlayerService() : MediaLibraryService() {
         database = KmusicDatabase.getDatabase(this)
         songDao = database.songDao()
 
-        player = ExoPlayer.Builder(this).build()
+        player = ExoPlayer.Builder(this)
+            .build()
 
 
         if (! Python.isStarted()) {
@@ -210,7 +211,7 @@ class PlayerService() : MediaLibraryService() {
 
             ACTION_SEEK -> {
                 val seekPosition = intent.getLongExtra("seek_position", 0)
-                SmartMessage(seekPosition.toString(), PopupType.Warning, false, this)
+                //SmartMessage(seekPosition.toString(), PopupType.Warning, false, this)
                 seekTo(seekPosition)
             }
 
@@ -392,7 +393,7 @@ class PlayerService() : MediaLibraryService() {
             try {
                 // Get current song data
                 val song = songDao.getSongById(songId)
-                Log.i(TAG, "Song from Dao is $song")
+                //Log.i(TAG, "Song from Dao is $song")
 
                 // Update the song with new total play time
                 song?.let {
@@ -438,13 +439,13 @@ class PlayerService() : MediaLibraryService() {
         val intent = Intent(PLAYER_PROGRESS_UPDATE)
         intent.putExtra("current_position", player.currentPosition)
         intent.putExtra("duration", player.duration)
-        Log.i("PlayerSeekbar", player.duration.toString())
+        //Log.i("PlayerSeekbar", player.duration.toString())
         intent.putExtra("is_playing", player.isPlaying)
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
     }
 
     private fun startProgressUpdates() {
-        Log.i("PlayerSeekbar", "startProgressUpdates is called")
+        //Log.i("PlayerSeekbar", "startProgressUpdates is called")
         stopProgressUpdates() // Stop any existing updates
         progressRunnable = object : Runnable {
             override fun run() {
@@ -454,7 +455,7 @@ class PlayerService() : MediaLibraryService() {
             }
         }
         val posted = handler.post(progressRunnable!!)
-        Log.d("PlayerSeekbar", "Handler.post() returned: $posted")
+        //Log.d("PlayerSeekbar", "Handler.post() returned: $posted")
     }
 
     private fun stopProgressUpdates() {

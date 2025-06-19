@@ -70,6 +70,7 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.room.common.jvm)
     implementation(libs.androidx.room.runtime.android)
 
