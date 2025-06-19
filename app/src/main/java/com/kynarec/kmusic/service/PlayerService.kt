@@ -109,7 +109,10 @@ class PlayerService() : MediaLibraryService() {
 
 
         database = KmusicDatabase.getDatabase(this)
-        songDao = database.songDao()
+        CoroutineScope(Dispatchers.IO).launch {
+            database.songDao().getAllSongs()
+        }
+
 
         player = ExoPlayer.Builder(this)
             .build()

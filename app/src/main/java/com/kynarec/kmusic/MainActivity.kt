@@ -15,6 +15,7 @@ import androidx.fragment.app.FragmentContainerView
 import com.chaquo.python.PyObject
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.service.PlayerService
@@ -146,14 +147,12 @@ class MainActivity : AppCompatActivity() {
         val pyResult = module.callAttr("searchSongs", query)
         val songsList = ArrayList<Song>()
 
-//        var counter = 1
-
-        if (pyResult == emptyList<PyObject>()) {
+        if (pyResult.asList() == emptyList<PyObject>()) {
             SmartMessage("Error while fetching", PopupType.Warning, false, this)
         }
         else {
             for (item in pyResult.asList()) {
-                CoroutineScope(Dispatchers.Main).launch {
+                CoroutineScope(Dispatchers.IO).launch {
 
                     val d = item.callAttr("get", "duration").toString()
                     songsList.add(
