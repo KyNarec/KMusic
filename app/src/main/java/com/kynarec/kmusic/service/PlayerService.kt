@@ -261,7 +261,14 @@ class PlayerService() : MediaLibraryService() {
         notificationManager.updatePlaybackState(PlaybackStateCompat.STATE_PAUSED, player.currentPosition)
         notifyPlaybackStateChanged(false)
         stopProgressUpdates() // Stop updates when paused
+    }
 
+    private fun stop(){
+        applicationContext.setPlayerIsPlaying(false)
+        player.pause()
+        notificationManager.updatePlaybackState(PlaybackStateCompat.STATE_PAUSED, player.currentPosition)
+        notifyPlaybackStateChanged(false)
+        stopProgressUpdates() // Stop updates when paused
     }
 
     private fun seekTo(to: Long){
@@ -376,6 +383,13 @@ class PlayerService() : MediaLibraryService() {
         // Reset tracking data
         currentSongId = null
         accumulatedPlayTime = 0
+
+        // SmartMessage("Playback ended", PopupType.Info, false, this)
+
+        // TODO: if there is no more queue, pause playing
+        //if ( ...) {
+        stop()
+        //}
     }
 
     private fun saveCurrentPlaybackTime() {
