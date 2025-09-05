@@ -75,7 +75,7 @@ class MainActivity : AppCompatActivity() {
 
 //        this.setPlayerIsPlaying(false)
         this.setJustStartedUp(true)
-        //hidePlayerControlBar(true)
+//        hidePlayerControlBar(true)
         this.setPlayerOpen(false)
 
         val serviceIntent = Intent(this, PlayerServiceModern::class.java)
@@ -93,9 +93,9 @@ class MainActivity : AppCompatActivity() {
         // The player control bar is now controlled by the player's state.
         // It's still a good practice to initialize it here, but it should be
         // a stateless fragment that listens to MediaController.
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.player_control_bar, PlayerControlBar())
-            .commit()
+//        supportFragmentManager.beginTransaction()
+//            .replace(R.id.player_control_bar, PlayerControlBar())
+//            .commit()
     }
 
     override fun onStart() {
