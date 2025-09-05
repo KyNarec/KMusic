@@ -1,5 +1,12 @@
 package com.kynarec.kmusic.utils
 
+import android.util.Log
+import androidx.core.net.toUri
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import com.chaquo.python.Python
+import com.kynarec.kmusic.data.db.entities.Song
+
 fun parseDurationToMillis(durationStr: String): Long {
     val parts = durationStr.split(":")
     return when (parts.size) {
@@ -16,4 +23,32 @@ fun parseDurationToMillis(durationStr: String): Long {
         }
         else -> 0L
     }
+}
+
+fun createMediaItemFromSong(song: Song): MediaItem {
+    var mediaItem = MediaItem.Builder().build()
+    val py = Python.getInstance()
+    val module = py.getModule("backend")
+    val uri = module.callAttr("playSongByIdWithBestBitrate", song.id) // Your Python call
+    Log.i("Main Activity", "ExoPlayer URI: $uri")
+
+    uri?.toString()?.let { playbackUriString ->
+        if (playbackUriString.isNotBlank()) {
+            mediaItem = MediaItem.Builder()
+                .setMediaId(song.id) // Important: Set mediaId on ExoPlayer's MediaItem
+                .setUri(playbackUriString)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(song.title)
+                        .setArtist(song.artist)
+                        .setArtworkUri(song.thumbnail.toUri())
+                        .build()
+                )
+                .build()
+        } else {
+            Log.w("Main Activity", "Python backend returned empty or null URI for song ID: $song.id")
+        }
+
+    }
+    return mediaItem
 }

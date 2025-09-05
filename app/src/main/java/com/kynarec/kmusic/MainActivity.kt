@@ -1,6 +1,7 @@
 package com.kynarec.kmusic
 
 
+//import com.kynarec.kmusic.service.PlayerService
 import android.content.ComponentName
 import android.content.Intent
 import android.graphics.Color
@@ -10,12 +11,9 @@ import android.view.View
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentContainerView
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -25,9 +23,9 @@ import com.chaquo.python.android.AndroidPlatform
 import com.google.common.util.concurrent.MoreExecutors
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.enums.PopupType
-//import com.kynarec.kmusic.service.PlayerService
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.utils.SmartMessage
+import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.setJustStartedUp
 import com.kynarec.kmusic.utils.setPlayerOpen
 import kotlinx.coroutines.CoroutineScope
@@ -271,34 +269,6 @@ class MainActivity : AppCompatActivity() {
         hidePlayerControlBar(true)
     }
 
-    // Helper function to convert your Song data class to a Media3 MediaItem.
-    private fun createMediaItemFromSong(song: Song): MediaItem {
-        var mediaItem = MediaItem.Builder().build()
-        val py = Python.getInstance()
-        val module = py.getModule("backend")
-        val uri = module.callAttr("playSongByIdWithBestBitrate", song.id) // Your Python call
-        Log.i("Main Activity", "ExoPlayer URI: $uri")
-
-        uri?.toString()?.let { playbackUriString ->
-            if (playbackUriString.isNotBlank()) {
-                mediaItem = MediaItem.Builder()
-                    .setMediaId(song.id) // Important: Set mediaId on ExoPlayer's MediaItem
-                    .setUri(playbackUriString)
-                    .setMediaMetadata(
-                        MediaMetadata.Builder()
-                            .setTitle(song.title)
-                            .setArtist(song.artist)
-                            .setArtworkUri(song.thumbnail.toUri())
-                            .build()
-                    )
-                    .build()
-            } else {
-                Log.w("Main Activity", "Python backend returned empty or null URI for song ID: $song.id")
-            }
-
-        }
-        return mediaItem
-    }
 
     @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")
     override fun onBackPressed() {

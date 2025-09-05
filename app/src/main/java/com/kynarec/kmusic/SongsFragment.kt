@@ -1,6 +1,6 @@
 package com.kynarec.kmusic
 
-import android.content.Intent
+import android.content.ComponentName
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -8,14 +8,15 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.common.util.concurrent.MoreExecutors
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerServiceModern
-//import com.kynarec.kmusic.service.PlayerService
-import com.kynarec.kmusic.utils.ACTION_PLAY
-import com.kynarec.kmusic.utils.ACTION_RESUME
 import com.kynarec.kmusic.utils.SongAdapter
+import com.kynarec.kmusic.utils.createMediaItemFromSong
 import kotlinx.coroutines.launch
 
 
@@ -53,24 +54,32 @@ class SongsFragment : Fragment() {
                         Log.i(tag, "${song.id} is not in Dap")
                         songDao.insertSong(song)
                     }
-                    if (songDao.getSongById(song.id) == null) {
-                        Log.i(tag, "${song.id} is not in Dap")
-                        songDao.insertSong(song)
-                    }
                     else Log.i(tag, "${song.id} is in Dap")
                 }
 
                 val context = requireContext()
-                Intent(context, PlayerServiceModern::class.java).apply {
-                    action = ACTION_PLAY
-                    putExtra("SONG", song)
-                    context.startService(this)
-                }
+                val sessionToken =
+                    SessionToken(context, ComponentName(context, PlayerServiceModern::class.java))
+                val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
 
-                Intent(context, PlayerServiceModern::class.java).apply {
-                    action = ACTION_RESUME
-                    context.startService(this)
-                }
+                controllerFuture.addListener(
+                    {
+                        // Step 2: Once connected, retrieve the controller and send the command
+                        val mediaController = controllerFuture.get()
+
+                        // Create a MediaItem from your Song data class
+                        val mediaItem = createMediaItemFromSong(song)
+
+                        // Use the MediaController to set the media item and start playback.
+                        mediaController.setMediaItem(mediaItem)
+                        mediaController.prepare()
+                        mediaController.play()
+
+                        // Optional: You could now navigate to the PlayerFragment
+//                        (activity as? MainActivity)?.navigatePlayer()
+                    },
+                    MoreExecutors.directExecutor()
+                )
 
                 if (activity is MainActivity) {
                     (activity as MainActivity).updatePlayerControlBar(song)
@@ -82,6 +91,5 @@ class SongsFragment : Fragment() {
 
         return view
     }
-
 
 }
