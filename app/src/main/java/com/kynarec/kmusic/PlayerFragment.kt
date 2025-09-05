@@ -1,392 +1,162 @@
 package com.kynarec.kmusic
 
-import android.animation.ValueAnimator
-import android.annotation.SuppressLint
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.ComponentName
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
-import android.view.GestureDetector
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
-import android.view.animation.LinearInterpolator
-import android.widget.Button
 import android.widget.ImageButton
 import android.widget.SeekBar
 import android.widget.TextView
-import androidx.core.content.ContextCompat
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.MultiTransformation
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners
-import com.bumptech.glide.request.RequestOptions
-import com.kynarec.kmusic.data.db.entities.Song
-import com.kynarec.kmusic.service.PlayerService
-import com.kynarec.kmusic.utils.ACTION_PAUSE
-import com.kynarec.kmusic.utils.ACTION_RESUME
-import com.kynarec.kmusic.utils.ACTION_RESUME_UPDATES
-import com.kynarec.kmusic.utils.ACTION_SEEK
-import com.kynarec.kmusic.utils.ACTION_STOP_UPDATES
-import com.kynarec.kmusic.utils.IS_PLAYING
-import com.kynarec.kmusic.utils.PLAYBACK_STATE_CHANGED
-import com.kynarec.kmusic.utils.PLAYER_PROGRESS_UPDATE
-import com.kynarec.kmusic.utils.THUMBNAIL_ROUNDNESS
-import com.kynarec.kmusic.utils.getPlayerIsPlaying
-import com.kynarec.kmusic.utils.parseDurationToMillis
-import com.kynarec.kmusic.utils.setPlayerOpen
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.lang.Thread.sleep
+import androidx.fragment.app.Fragment
+import androidx.media3.common.Player
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.MoreExecutors
+import com.kynarec.kmusic.service.PlayerServiceModern
 
-class PlayerFragment : Fragment() {
+class PlayerFragment : Fragment(R.layout.fragment_player) {
 
-    lateinit var song: Song
+    private var mediaController: MediaController? = null
 
-    private lateinit var seekBar: SeekBar
-    private lateinit var currentTimeText: TextView
-    private lateinit var totalTimeText: TextView
+    // View references
+    private var playButton: ImageButton? = null
+    private var pauseButton: ImageButton? = null
+    private var skipForwardButton: ImageButton? = null
+    private var skipBackButton: ImageButton? = null
+    private var seekBar: SeekBar? = null
+    private var currentTimeTextView: TextView? = null
+    private var totalTimeTextView: TextView? = null
 
-    private var currentDuration: Long = 0 // Track current duration
-
-    // Smooth SeekBar Animation Variables
-    private var currentAnimator: ValueAnimator? = null
-    private var isUserSeeking = false
-    private var lastPosition: Long = 0
-    private var isPlaying = false
-
-    private val progressReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            Log.d("PlayerSeekbar", "BroadcastReceiver.onReceive called with action: ${intent?.action}")
-
-            if (intent?.action == PLAYER_PROGRESS_UPDATE) {
-                val currentPosition = intent.getLongExtra("current_position", 0)
-                val duration = intent.getLongExtra("duration", 0)
-                isPlaying = intent.getBooleanExtra("is_playing", false)
-
-                Log.d("PlayerSeekbar", "Received update - Position: $currentPosition, Duration: $duration, Playing: $isPlaying")
-
-                currentDuration = duration // Store duration
-                updateSeekBarSmooth(currentPosition, duration, isPlaying)
+    // Handler and Runnable for updating the seek bar
+    private val handler = Handler(Looper.getMainLooper())
+    private val updateSeekBarRunnable = object : Runnable {
+        override fun run() {
+            mediaController?.let { controller ->
+                val currentPosition = controller.currentPosition
+                val totalDuration = controller.duration
+                seekBar?.progress = currentPosition.toInt()
+                currentTimeTextView?.text = formatTime(currentPosition)
+                totalTimeTextView?.text = formatTime(totalDuration)
             }
+            handler.postDelayed(this, 1000)
         }
     }
 
-    private val playbackStateReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val isPlaying = intent?.getBooleanExtra(IS_PLAYING, false) ?: false
+    // Listener to handle player state changes
+    private val playerListener = object : Player.Listener {
+        // This is called when the playback state changes (e.g., from playing to paused)
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            super.onIsPlayingChanged(isPlaying)
             if (isPlaying) {
-                val pauseButton = requireView().findViewById<ImageButton>(R.id.player_pause_button)
-                val playButton = requireView().findViewById<ImageButton>(R.id.player_play_button)
-
-                playButton.visibility = View.INVISIBLE
-                pauseButton.visibility = View.VISIBLE
+                // If the player is playing, show the pause button and hide the play button
+                playButton?.visibility = View.INVISIBLE
+                pauseButton?.visibility = View.VISIBLE
             } else {
-                val pauseButton = requireView().findViewById<ImageButton>(R.id.player_pause_button)
-                val playButton = requireView().findViewById<ImageButton>(R.id.player_play_button)
+                // If the player is paused, show the play button and hide the pause button
+                playButton?.visibility = View.VISIBLE
+                pauseButton?.visibility = View.INVISIBLE
+            }
+        }
 
-                playButton.visibility = View.VISIBLE
-                pauseButton.visibility = View.INVISIBLE
+        // This is called when the playback state changes (e.g., from buffering to ready)
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            super.onPlaybackStateChanged(playbackState)
+            if (playbackState == Player.STATE_READY) {
+                // Once the player is ready, set the max value of the seek bar
+                mediaController?.let { controller ->
+                    seekBar?.max = controller.duration.toInt()
+                }
             }
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            song = it.getParcelable("song")!!
-        }
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_player, container, false)
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        context?.setPlayerOpen(true)
-
-        val pauseButton = view.findViewById<ImageButton>(R.id.player_pause_button)
-        val playButton = view.findViewById<ImageButton>(R.id.player_play_button)
-        val skipForwardButton = view.findViewById<ImageButton>(R.id.skip_forward_button)
-        val skipBackButton = view.findViewById<ImageButton>(R.id.skip_back_button)
-
-        val songThumbnail = view.findViewById<ImageButton>(R.id.song_thumbnail)
-        val songTitle = view.findViewById<Button>(R.id.player_song_title)
-        val songArtist = view.findViewById<Button>(R.id.player_song_artist)
-
-        // Add SeekBar components
-        seekBar = view.findViewById<SeekBar>(R.id.seek_bar)
-        currentTimeText = view.findViewById<TextView>(R.id.current_time)
-        totalTimeText = view.findViewById<TextView>(R.id.total_time)
-
-        val goBackButton = view.findViewById<ImageButton>(R.id.button_down)
-
-        songTitle.text = song.title
-        songArtist.text = song.artist
-
-        currentDuration = parseDurationToMillis(song.duration)
-        totalTimeText.text = song.duration
-
-
-        //Log.d("PlayerSeekbar", "BroadcastReceiver registered")
-
-        val intent = Intent(context, PlayerService::class.java)
-
-        // Set up SeekBar listener with smooth animation support
-        setupSeekBarListener(intent)
-
-        if (context?.getPlayerIsPlaying() == false) {
-            playButton.visibility = View.VISIBLE
-            pauseButton.visibility = View.INVISIBLE
-        } else {
-            playButton.visibility = View.INVISIBLE
-            pauseButton.visibility = View.VISIBLE
-        }
-
-        // Pauses playback
-        playButton.setOnClickListener {
-            intent.action = ACTION_RESUME
-            context?.startService(intent)
-            sleep(200)
-            playButton.visibility = View.INVISIBLE
-            pauseButton.visibility = View.VISIBLE
-        }
-
-        // Resumes playback
-        pauseButton.setOnClickListener {
-            intent.action = ACTION_PAUSE
-            context?.startService(intent)
-            sleep(200)
-            playButton.visibility = View.VISIBLE
-            pauseButton.visibility = View.INVISIBLE
-        }
-
-        goBackButton.setOnClickListener {
-            goBack()
-        }
-
-        Glide.with(this)
-            .load(song.thumbnail)
-            .apply(
-                RequestOptions.bitmapTransform(
-                    MultiTransformation(
-                        CenterCrop(),
-                        RoundedCorners(THUMBNAIL_ROUNDNESS)
-                    )
-                )
-            )
-            .into(songThumbnail)
-
-        val gestureDetector = GestureDetector(requireContext(), object : GestureDetector.SimpleOnGestureListener() {
-            private val SWIPE_THRESHOLD = 100
-            private val SWIPE_VELOCITY_THRESHOLD = 100
-
-            override fun onFling(
-                e1: MotionEvent?,
-                e2: MotionEvent,
-                velocityX: Float,
-                velocityY: Float
-            ): Boolean {
-                if (e1 == null || e2 == null) return false
-
-                val diffY = e2.y - e1.y
-                val diffX = e2.x - e1.x
-
-                if (Math.abs(diffY) > Math.abs(diffX) && diffY > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-                    // Swipe down detected
-                    goBack()
-                    return true
-                }
-                return false
-            }
-        })
-
-        // Set the gesture detector on the fragment root view
-        view.setOnTouchListener { _, event ->
-            gestureDetector.onTouchEvent(event)
-            true
-        }
-    }
-
-    private fun setupSeekBarListener(intent: Intent) {
-        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) {
-                    // Calculate the time based on progress percentage and current duration
-                    val estimatedTime = (progress * currentDuration) / 100
-                    currentTimeText.text = formatTime(estimatedTime)
-                }
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                isUserSeeking = true
-                currentAnimator?.cancel() // Stop any ongoing animation
-
-                // Tell the service to stop sending updates while user is dragging
-                intent.action = ACTION_STOP_UPDATES
-                context?.startService(intent)
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                // Seek to the new position
-                seekBar?.let { bar ->
-                    val seekPosition = (bar.progress * currentDuration) / 100
-                    Log.i(tag, "${bar.progress} * $currentDuration / 100 = $seekPosition")
-                    val seekIntent = Intent(context, PlayerService::class.java)
-                    seekIntent.action = ACTION_SEEK
-                    seekIntent.putExtra("seek_position", seekPosition)
-                    context?.startService(seekIntent)
-                }
-
-                // Tell the service to resume sending updates
-                val resumeIntent = Intent(context, PlayerService::class.java)
-                resumeIntent.action = ACTION_RESUME_UPDATES
-                context?.startService(resumeIntent)
-
-                isUserSeeking = false
-            }
-        })
+        // Find and store references to your views from the XML
+        playButton = view.findViewById(R.id.player_play_button)
+        pauseButton = view.findViewById(R.id.player_pause_button)
+        skipForwardButton = view.findViewById(R.id.skip_forward_button)
+        skipBackButton = view.findViewById(R.id.skip_back_button)
+        seekBar = view.findViewById(R.id.seek_bar)
+        currentTimeTextView = view.findViewById(R.id.current_time)
+        totalTimeTextView = view.findViewById(R.id.total_time)
     }
 
     override fun onStart() {
         super.onStart()
+        // Create a SessionToken that uniquely identifies your service.
+        val sessionToken = SessionToken(requireContext(), ComponentName(requireContext(), PlayerServiceModern::class.java))
 
-        LocalBroadcastManager.getInstance(requireContext())
-            .registerReceiver(progressReceiver, IntentFilter(PLAYER_PROGRESS_UPDATE))
+        // Build the MediaController asynchronously to avoid blocking the UI thread.
+        val controllerFuture = MediaController.Builder(requireContext(), sessionToken).buildAsync()
 
-        LocalBroadcastManager.getInstance(requireContext())
-            .registerReceiver(playbackStateReceiver, IntentFilter(PLAYBACK_STATE_CHANGED))
+        // Use a listener to retrieve the controller once it's ready.
+        controllerFuture.addListener(
+            {
+                mediaController = controllerFuture.get()
+                // Now that we have the controller, we can set up the UI listeners and state.
+                setupUIListeners()
+                // Add the Player.Listener to the controller to get state updates.
+                mediaController?.addListener(playerListener)
+                // Begin updating the seek bar and time labels.
+                handler.post(updateSeekBarRunnable)
+            },
+            MoreExecutors.directExecutor()
+        )
+    }
+
+    private fun setupUIListeners() {
+        // Use the MediaController to send playback commands to the service.
+        playButton?.setOnClickListener { mediaController?.play() }
+        pauseButton?.setOnClickListener { mediaController?.pause() }
+        skipForwardButton?.setOnClickListener { mediaController?.seekToNextMediaItem() }
+        skipBackButton?.setOnClickListener { mediaController?.seekToPreviousMediaItem() }
+
+        // Handle seek bar changes by seeking the player.
+        seekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    mediaController?.seekTo(progress.toLong())
+                }
+            }
+            // These methods are not needed for simple seeking.
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // It's crucial to release the controller when the fragment is not visible to
+        // prevent resource leaks and avoid unnecessary connections.
+        handler.removeCallbacks(updateSeekBarRunnable)
+        mediaController?.removeListener(playerListener)
+        mediaController?.release()
+        mediaController = null
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Null out view references to prevent memory leaks in fragments.
+        playButton = null
+        pauseButton = null
+        skipForwardButton = null
+        skipBackButton = null
+        seekBar = null
+        currentTimeTextView = null
+        totalTimeTextView = null
+    }
 
-        // Clean up animation
-        currentAnimator?.cancel()
-
-        context?.setPlayerOpen(false)
-
-        if (activity is MainActivity) {
-            (activity as MainActivity).hidePlayerControlBar(false)
+    private fun formatTime(milliseconds: Long): String {
+        val seconds = (milliseconds / 1000) % 60
+        val minutes = (milliseconds / (1000 * 60)) % 60
+        val hours = (milliseconds / (1000 * 60 * 60))
+        return if (hours > 0) {
+            String.format("%d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            String.format("%02d:%02d", minutes, seconds)
         }
-
-        LocalBroadcastManager.getInstance(requireContext())
-            .unregisterReceiver(progressReceiver)
-
-        LocalBroadcastManager.getInstance(requireContext())
-            .unregisterReceiver(playbackStateReceiver)
-    }
-
-    private fun goBack() {
-        requireActivity().onBackPressedDispatcher.onBackPressed()
-        context?.setPlayerOpen(false)
-        if (activity is MainActivity) {
-            (activity as MainActivity).hidePlayerControlBar(false)
-        }
-    }
-
-    private fun updateSeekBarSmooth(currentPosition: Long, duration: Long, isPlaying: Boolean) {
-        if (duration <= 0 || isUserSeeking) return
-
-        // Calculate the target progress percentage
-        val targetProgress = ((currentPosition * 100) / duration).toInt()
-
-        // Only animate if there's a meaningful change and we're playing
-        val positionDiff = Math.abs(currentPosition - lastPosition)
-
-        if (isPlaying && positionDiff > 500) { // Only animate if position changed by more than 500ms
-            animateToPosition(targetProgress, currentPosition, duration)
-        } else if (!isPlaying) {
-            // If paused, set position directly
-            seekBar.progress = targetProgress
-            updateTimeTexts(currentPosition, duration)
-        } else if (positionDiff <= 500) {
-            // Small change, set directly to avoid jitter
-            seekBar.progress = targetProgress
-            updateTimeTexts(currentPosition, duration)
-        }
-
-        lastPosition = currentPosition
-    }
-
-    private fun animateToPosition(targetProgress: Int, currentPosition: Long, duration: Long) {
-        currentAnimator?.cancel()
-
-        val currentProgress = seekBar.progress
-        val progressDiff = Math.abs(targetProgress - currentProgress)
-
-        // Skip animation for tiny changes
-        if (progressDiff <= 1) {
-            seekBar.progress = targetProgress
-            updateTimeTexts(currentPosition, duration)
-            return
-        }
-
-        // Adjust animation duration based on how far we need to move
-        // Shorter animations for smaller movements, longer for bigger jumps
-        val animationDuration = (progressDiff * 15).coerceIn(200, 1000) // 200ms to 1000ms
-
-        currentAnimator = ValueAnimator.ofInt(currentProgress, targetProgress).apply {
-            this.duration = animationDuration.toLong()
-            interpolator = LinearInterpolator()
-
-            addUpdateListener { animation ->
-                if (!isUserSeeking) {
-                    val animatedProgress = animation.animatedValue as Int
-                    seekBar.progress = animatedProgress
-
-                    // Update time text during animation
-                    val animatedTime = (animatedProgress * duration) / 100
-                    currentTimeText.text = formatTime(animatedTime)
-                }
-            }
-
-            // Update final time texts when animation completes
-            doOnEnd {
-                if (!isUserSeeking) {
-                    updateTimeTexts(currentPosition, duration)
-                }
-            }
-
-            start()
-        }
-    }
-
-    private fun updateTimeTexts(currentPosition: Long, duration: Long) {
-        currentTimeText.text = formatTime(currentPosition)
-        totalTimeText.text = formatTime(duration)
-    }
-
-    private fun formatTime(timeMs: Long): String {
-        val seconds = (timeMs / 1000).toInt()
-        val minutes = seconds / 60
-        val remainingSeconds = seconds % 60
-        return String.format("%d:%02d", minutes, remainingSeconds)
-    }
-
-    // Extension function for ValueAnimator (add this at the end of the class or as a separate utility)
-    private fun ValueAnimator.doOnEnd(action: () -> Unit) {
-        addListener(object : android.animation.Animator.AnimatorListener {
-            override fun onAnimationStart(animation: android.animation.Animator) {}
-            override fun onAnimationEnd(animation: android.animation.Animator) { action() }
-            override fun onAnimationCancel(animation: android.animation.Animator) {}
-            override fun onAnimationRepeat(animation: android.animation.Animator) {}
-        })
     }
 }

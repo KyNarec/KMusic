@@ -49,17 +49,6 @@ android {
     }
 }
 
-//chaquopy {
-//    defaultConfig {
-//        pip {
-//            install("innertube==2.1.19")  // Use == for exact version
-//
-//        }
-//    }
-//    productFlavors { }
-//    sourceSets { }
-//}
-
 chaquopy {
     defaultConfig {
         pip {
@@ -78,8 +67,12 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.common)
+
     implementation(libs.androidx.room.common.jvm)
     implementation(libs.androidx.room.runtime.android)
 

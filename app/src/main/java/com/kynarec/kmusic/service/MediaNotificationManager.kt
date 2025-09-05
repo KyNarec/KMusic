@@ -5,10 +5,10 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import androidx.core.app.NotificationCompat
-import androidx.media.app.NotificationCompat.MediaStyle
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import androidx.core.app.NotificationCompat
+import androidx.media.app.NotificationCompat.MediaStyle
 import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.utils.parseDurationToMillis
