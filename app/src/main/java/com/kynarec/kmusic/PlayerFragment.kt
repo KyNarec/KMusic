@@ -9,11 +9,16 @@ import android.widget.ImageButton
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.bumptech.glide.request.RequestOptions
 import com.google.common.util.concurrent.MoreExecutors
 import com.kynarec.kmusic.service.PlayerServiceModern
+import com.kynarec.kmusic.utils.THUMBNAIL_ROUNDNESS
 
 class PlayerFragment : Fragment(R.layout.fragment_player) {
 
@@ -27,6 +32,11 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
     private var seekBar: SeekBar? = null
     private var currentTimeTextView: TextView? = null
     private var totalTimeTextView: TextView? = null
+
+    // UI elements to display song metadata
+    private var songThumbnail: ImageButton? = null
+    private var songTitleButton: TextView? = null
+    private var songArtistButton: TextView? = null
 
     // Handler and Runnable for updating the seek bar
     private val handler = Handler(Looper.getMainLooper())
@@ -45,29 +55,32 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
     // Listener to handle player state changes
     private val playerListener = object : Player.Listener {
-        // This is called when the playback state changes (e.g., from playing to paused)
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
             if (isPlaying) {
-                // If the player is playing, show the pause button and hide the play button
                 playButton?.visibility = View.INVISIBLE
                 pauseButton?.visibility = View.VISIBLE
             } else {
-                // If the player is paused, show the play button and hide the pause button
                 playButton?.visibility = View.VISIBLE
                 pauseButton?.visibility = View.INVISIBLE
             }
+            // Also update the UI when playback state changes.
+            updateUIForMediaItem(mediaController?.currentMediaItem)
         }
 
-        // This is called when the playback state changes (e.g., from buffering to ready)
         override fun onPlaybackStateChanged(playbackState: Int) {
             super.onPlaybackStateChanged(playbackState)
             if (playbackState == Player.STATE_READY) {
-                // Once the player is ready, set the max value of the seek bar
                 mediaController?.let { controller ->
                     seekBar?.max = controller.duration.toInt()
                 }
             }
+        }
+
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            super.onMediaItemTransition(mediaItem, reason)
+            // This is the key callback. When the song changes, this is where we get the new data.
+            updateUIForMediaItem(mediaItem)
         }
     }
 
@@ -82,55 +95,71 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         seekBar = view.findViewById(R.id.seek_bar)
         currentTimeTextView = view.findViewById(R.id.current_time)
         totalTimeTextView = view.findViewById(R.id.total_time)
+
+        // Find the new views to update
+        songThumbnail = view.findViewById(R.id.song_thumbnail)
+        songTitleButton = view.findViewById(R.id.player_song_title)
+        songArtistButton = view.findViewById(R.id.player_song_artist)
     }
 
     override fun onStart() {
         super.onStart()
-        // Create a SessionToken that uniquely identifies your service.
         val sessionToken = SessionToken(requireContext(), ComponentName(requireContext(), PlayerServiceModern::class.java))
-
-        // Build the MediaController asynchronously to avoid blocking the UI thread.
         val controllerFuture = MediaController.Builder(requireContext(), sessionToken).buildAsync()
 
-        // Use a listener to retrieve the controller once it's ready.
         controllerFuture.addListener(
             {
                 mediaController = controllerFuture.get()
-                // Now that we have the controller, we can set up the UI listeners and state.
                 setupUIListeners()
-                // Add the Player.Listener to the controller to get state updates.
                 mediaController?.addListener(playerListener)
-                // Begin updating the seek bar and time labels.
                 handler.post(updateSeekBarRunnable)
+
+                // Get the initial media item and update the UI when the connection is established.
+                updateUIForMediaItem(mediaController?.currentMediaItem)
             },
             MoreExecutors.directExecutor()
         )
     }
 
     private fun setupUIListeners() {
-        // Use the MediaController to send playback commands to the service.
         playButton?.setOnClickListener { mediaController?.play() }
         pauseButton?.setOnClickListener { mediaController?.pause() }
         skipForwardButton?.setOnClickListener { mediaController?.seekToNextMediaItem() }
         skipBackButton?.setOnClickListener { mediaController?.seekToPreviousMediaItem() }
 
-        // Handle seek bar changes by seeking the player.
         seekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
                     mediaController?.seekTo(progress.toLong())
                 }
             }
-            // These methods are not needed for simple seeking.
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
     }
 
+    // New function to handle updating the UI with song metadata
+    private fun updateUIForMediaItem(mediaItem: MediaItem?) {
+        mediaItem?.mediaMetadata?.let { metadata ->
+            // Use the metadata from the MediaItem to set the views
+            songTitleButton?.text = metadata.title
+            songArtistButton?.text = metadata.artist
+
+            // For the thumbnail, you would use an image loading library like Glide or Coil
+            // For now, this is a placeholder. You'll need to implement your own image loading logic here.
+            metadata.artworkUri?.let { uri ->
+                // Your image loading library here, e.g., Glide.with(this).load(uri).into(songThumbnail)
+                Glide.with(this)
+                    .load(uri)
+                    .centerCrop()
+                    .apply(RequestOptions.bitmapTransform(RoundedCorners(THUMBNAIL_ROUNDNESS)))
+                    .into(songThumbnail!!)
+            }
+        }
+    }
+
     override fun onStop() {
         super.onStop()
-        // It's crucial to release the controller when the fragment is not visible to
-        // prevent resource leaks and avoid unnecessary connections.
         handler.removeCallbacks(updateSeekBarRunnable)
         mediaController?.removeListener(playerListener)
         mediaController?.release()
@@ -139,7 +168,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        // Null out view references to prevent memory leaks in fragments.
         playButton = null
         pauseButton = null
         skipForwardButton = null
@@ -147,6 +175,9 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         seekBar = null
         currentTimeTextView = null
         totalTimeTextView = null
+        songThumbnail = null
+        songTitleButton = null
+        songArtistButton = null
     }
 
     private fun formatTime(milliseconds: Long): String {
