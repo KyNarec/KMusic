@@ -49,15 +49,24 @@ android {
     }
 }
 
+//chaquopy {
+//    defaultConfig {
+//        pip {
+//            install("innertube==2.1.19")  // Use == for exact version
+//
+//        }
+//    }
+//    productFlavors { }
+//    sourceSets { }
+//}
+
 chaquopy {
     defaultConfig {
         pip {
             install("innertube==2.1.19")  // Use == for exact version
-
         }
+        version = "3.10"
     }
-    productFlavors { }
-    sourceSets { }
 }
 
 dependencies {

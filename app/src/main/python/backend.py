@@ -17,7 +17,7 @@ client = InnerTube("WEB_REMIX", "1.20250409.01.00")
 
 def searchSongs(query):
     try:
-        data = client.search(query=query, params=PARAMS_TYPE_SONG)
+        data = InnerTube("WEB_REMIX", "1.20250409.01.00").search(query=query, params=PARAMS_TYPE_SONG)
 
         contents = data.get("contents", {}).get("tabbedSearchResultsRenderer", {}) \
             .get("tabs", [])[0].get("tabRenderer", {}).get("content", {}) \
