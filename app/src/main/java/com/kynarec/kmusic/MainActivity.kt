@@ -15,6 +15,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentContainerView
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.chaquo.python.PyObject
@@ -40,18 +41,22 @@ class MainActivity : AppCompatActivity() {
     // Player.Listener to handle state changes and update the UI accordingly.
     private val playerListener = object : Player.Listener {
         // This callback is triggered whenever the player's state changes.
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            super.onPlaybackStateChanged(playbackState)
-            when (playbackState) {
-                Player.STATE_READY, Player.STATE_BUFFERING -> {
-                    // Show the control bar whenever the player is ready or buffering.
-                    hidePlayerControlBar(false)
-                }
-                else -> {
-                    // Hide the control bar when playback is stopped, ended, or has an error.
-                    hidePlayerControlBar(true)
-                }
-            }
+//        override fun onPlaybackStateChanged(playbackState: Int) {
+//            super.onPlaybackStateChanged(playbackState)
+//            when (playbackState) {
+//                Player.STATE_READY, Player.STATE_BUFFERING -> {
+//                    // Show the control bar whenever the player is ready or buffering.
+//                    hidePlayerControlBar(false)
+//                }
+//                else -> {
+//                    // Hide the control bar when playback is stopped, ended, or has an error.
+//                    hidePlayerControlBar(true)
+//                }
+//            }
+//        }
+        override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+            // Hide the control bar if the playlist is empty, show it if not.
+            hidePlayerControlBar(timeline.isEmpty)
         }
     }
 
@@ -64,6 +69,8 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        hidePlayerControlBar(true)
 
 
         if (! Python.isStarted()) {
@@ -93,9 +100,11 @@ class MainActivity : AppCompatActivity() {
         // The player control bar is now controlled by the player's state.
         // It's still a good practice to initialize it here, but it should be
         // a stateless fragment that listens to MediaController.
-//        supportFragmentManager.beginTransaction()
-//            .replace(R.id.player_control_bar, PlayerControlBar())
-//            .commit()
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.player_control_bar, PlayerControlBar())
+            .commit()
+
+        initializeMediaController()
     }
 
     override fun onStart() {
@@ -118,8 +127,24 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         // It's important to release the MediaController when the app is no longer in the foreground.
+        mediaController?.removeListener(playerListener)
         mediaController?.release()
         mediaController = null
+    }
+
+    private fun initializeMediaController() {
+        val sessionToken = SessionToken(this, ComponentName(this, PlayerServiceModern::class.java))
+        val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
+        controllerFuture.addListener({
+            mediaController = controllerFuture.get()
+            mediaController?.addListener(playerListener)
+
+            // Perform an initial check when the controller connects.
+            // mediaItemCount is the number of songs in the queue.
+            val isQueueEmpty = mediaController?.mediaItemCount == 0
+            hidePlayerControlBar(isQueueEmpty)
+
+        }, MoreExecutors.directExecutor())
     }
 
 
