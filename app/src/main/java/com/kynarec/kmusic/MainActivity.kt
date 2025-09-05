@@ -25,7 +25,6 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.utils.SmartMessage
-import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.setJustStartedUp
 import com.kynarec.kmusic.utils.setPlayerOpen
 import kotlinx.coroutines.CoroutineScope
@@ -241,32 +240,18 @@ class MainActivity : AppCompatActivity() {
             .commit()
     }
 
-    fun navigatePlayer(song: Song) {
-//        Log.i(tag, "navigatePlayer was called")
-
-        val mediaItem = createMediaItemFromSong(song)
-        mediaController?.setMediaItem(mediaItem)
-        mediaController?.prepare()
-        mediaController?.play()
-
+    fun navigatePlayer() {
         val player = PlayerFragment()
-
-        val bundle = Bundle().apply {
-            putParcelable("song", song)
-        }
-
-        player.arguments = bundle
         supportFragmentManager.beginTransaction()
             .setCustomAnimations(
-                R.anim.slide_in_bottom,  // enter
-                R.anim.fade_out,         // exit (when pushing next)
-                R.anim.fade_in,          // reenter (when popping back)
-                R.anim.slide_out_bottom  // pop exit
+                R.anim.slide_in_bottom,
+                R.anim.fade_out,
+                R.anim.fade_in,
+                R.anim.slide_out_bottom
             )
-            .add(R.id.main, player) // <--- don't replace
+            .add(R.id.main, player)
             .addToBackStack(null)
             .commit()
-        hidePlayerControlBar(true)
     }
 
 

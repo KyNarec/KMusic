@@ -191,7 +191,7 @@ class PlayerControlBar : Fragment() {
 
         playerControlBar.setOnClickListener {
             if (activity is MainActivity) {
-                (activity as MainActivity).navigatePlayer(song)
+                (activity as MainActivity).navigatePlayer()
             }
         }
     }
@@ -213,6 +213,4 @@ class PlayerControlBar : Fragment() {
             }
             .start()
     }
-
-
 }
