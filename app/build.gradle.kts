@@ -71,7 +71,7 @@ chaquopy {
 
 dependencies {
 
-    implementation(project(":innertube"))
+//    implementation(project(":innertube"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
