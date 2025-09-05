@@ -4,17 +4,21 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.kynarec.kmusic.data.db.dao.PersistedQueueDao
 import com.kynarec.kmusic.data.db.dao.QueuedMediaItemDao
 import com.kynarec.kmusic.data.db.dao.SongDao
+import com.kynarec.kmusic.data.db.entities.PersistedQueueItem
+import com.kynarec.kmusic.data.db.entities.QueuedMediaItem
 import com.kynarec.kmusic.data.db.entities.Song
 
 @Database(
-    entities = [Song::class],  // add others as needed
+    entities = [Song::class, PersistedQueueItem::class],  // add others as needed
     version = 1
 )
 abstract class KmusicDatabase : RoomDatabase() {
     abstract fun songDao(): SongDao
-    abstract fun queuedMediaItemDao(): QueuedMediaItemDao
+//    abstract fun queuedMediaItemDao(): QueuedMediaItemDao
+    abstract fun persistedQueueDao(): PersistedQueueDao
 
 
     companion object {

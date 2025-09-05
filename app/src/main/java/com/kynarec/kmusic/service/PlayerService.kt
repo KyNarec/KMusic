@@ -113,7 +113,7 @@ class PlayerService() : MediaLibraryService() {
         database = KmusicDatabase.getDatabase(this)
         CoroutineScope(Dispatchers.IO).launch {
             database.songDao().getAllSongs()
-            database.queuedMediaItemDao().getAllQueuedMediaItems()
+            database.persistedQueueDao().getPersistedQueue()
         }
 
 
