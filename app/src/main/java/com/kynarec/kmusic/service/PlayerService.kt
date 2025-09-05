@@ -17,11 +17,13 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import com.bumptech.glide.Glide
+import com.chaquo.python.PyObject
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.dao.SongDao
+import com.kynarec.kmusic.data.db.entities.QueuedMediaItem
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.utils.ACTION_NEXT
@@ -111,6 +113,7 @@ class PlayerService() : MediaLibraryService() {
         database = KmusicDatabase.getDatabase(this)
         CoroutineScope(Dispatchers.IO).launch {
             database.songDao().getAllSongs()
+            database.queuedMediaItemDao().getAllQueuedMediaItems()
         }
 
 
@@ -138,7 +141,7 @@ class PlayerService() : MediaLibraryService() {
         }
 
         val notificationManager: NotificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
 
     }
@@ -479,5 +482,42 @@ class PlayerService() : MediaLibraryService() {
         progressRunnable?.let { handler.removeCallbacks(it) }
     }
 
+    private fun addNewQueue(id: String): ArrayList<QueuedMediaItem>{
+        val py = Python.getInstance()
+        val module = py.getModule("backend")
+        val pyResult = module.callAttr("getRadio",id)
+
+        val queuedMediaItemList = ArrayList<QueuedMediaItem>()
+
+        if (pyResult.asList() == emptyList<PyObject>()) {
+            SmartMessage("Error while fetching Queue", PopupType.Warning, false, this)
+        }
+        else {
+            var i = 0
+            for (item in pyResult.asList()) {
+                CoroutineScope(Dispatchers.IO).launch {
+
+                    val d = item.callAttr("get", "duration").toString()
+                    queuedMediaItemList.add(
+                        QueuedMediaItem(
+                            songId = item.callAttr("get", "id").toString(),
+                            position = i,
+//                            title = item.callAttr("get", "title").toString(),
+//                            artist = item.callAttr("get", "artist").toString(),
+//                            thumbnail = item.callAttr("get", "thumbnail").toString(),
+                            // filtering out wrong durations here and not in backend, because Kotlin is faster
+//                            duration = (if (Regex("""^(\d{1,2}):(\d{1,2})$""").matchEntire(d) == null) "NA" else d).toString(),
+                        )
+                    )
+                }
+                i++
+            }
+        }
+
+
+
+        return queuedMediaItemList
+
+    }
 
 }

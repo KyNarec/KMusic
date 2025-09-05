@@ -9,29 +9,32 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "QueuedMediaItem")
 data class QueuedMediaItem(
-    @PrimaryKey val id: String,
-    // something is weird here in sql lite this should be a Blob but It can't, idk why TODO??
-    val mediaItem: ByteArray?,
-    val position: Int
-)  : Parcelable {
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @PrimaryKey(autoGenerate = true) val queueId: Long = 0,
+    val songId: String,  // Foreign key to Song table
+    val position: Int,
+    val queueTimestamp: Long = System.currentTimeMillis(),
+    val isCurrentlyPlaying: Boolean = false
+)
+    : Parcelable {
     constructor(parcel: Parcel) : this(
+        parcel.readLong(),
         parcel.readString() ?: "",
-        parcel.readBlob(),
-        parcel.readInt()
+        parcel.readInt(),
+        parcel.readLong(),
+        parcel.readBoolean()
     )
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(id)
-        parcel.writeBlob(mediaItem)
+        parcel.writeLong(queueId)
+        parcel.writeString(songId)
         parcel.writeInt(position)
+        parcel.writeLong(queueTimestamp)
+        parcel.writeBoolean(isCurrentlyPlaying)
     }
 
     override fun describeContents(): Int = 0
 
     companion object CREATOR : Parcelable.Creator<QueuedMediaItem> {
-        @RequiresApi(Build.VERSION_CODES.TIRAMISU)
         override fun createFromParcel(parcel: Parcel): QueuedMediaItem = QueuedMediaItem(parcel)
         override fun newArray(size: Int): Array<QueuedMediaItem?> = arrayOfNulls(size)
     }

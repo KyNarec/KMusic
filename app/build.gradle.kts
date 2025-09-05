@@ -52,7 +52,7 @@ android {
 chaquopy {
     defaultConfig {
         pip {
-            install("innertube")
+            install("innertube==2.1.19")  // Use == for exact version
 
         }
     }

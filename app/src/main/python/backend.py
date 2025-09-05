@@ -73,11 +73,84 @@ def searchSongs(query):
         return []  # Return empty list if things fail
 
 
+#def getRadio(video_id):
+    client = InnerTube("WEB_REMIX")
+    data = client.music_get_queue(video_ids=video_id)
+    #data = client.next(video_id=video_id)
+    #data = data = client("search", body={"browseId": video_id})
+    #data = client.music_get_queue(video_ids=video_id)
+    #n_data = client("browse", body={"browseId": video_id})
+    n_data = data.get('queueDatas')[-1].get('content').get('playlistPanelVideoRenderer').get('menu').get('menuRenderer').get('items')[0]
+    
+    #n_data = data  
 
+    
+    #n_data = data
+    
+    pprint(n_data)
+    print(n_data.keys())
+
+#getRadio("A__cH65WRvE")
+#print(pkg_resources.get_distribution("InnerTube").version)
+
+def getRadio(video_id):
+    client = InnerTube("IOS_MUSIC")
+    data = client.next(video_id=video_id, playlist_id="RDAMVMA__cH65WRvE", params=PARAMS_TYPE_SONG)
+    playlist = (data.get('contents').get('singleColumnMusicWatchNextResultsRenderer').get('playlist').get('playlistPanelRenderer').get('contents'))
+    
+    
+    results = []
+    
+    for i in playlist:
+        t = i.get('playlistPanelVideoRenderer')
+        #print(t.keys())
+        #print(i.get('playlistPanelVideoRenderer').get('videoId'))
+        
+        video_id = i.get('playlistPanelVideoRenderer').get('videoId')
+        video_title = i.get('playlistPanelVideoRenderer').get('title').get('runs')[0].get('text')
+        video_artist = i.get('playlistPanelVideoRenderer').get('longBylineText').get('runs')[0].get('text')
+        video_thumbnail = f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
+        #video_duration = i.get('playlistPanelVideoRenderer').get('lengthText').get('runs')[0].get('text')
+        
+        try:
+            video_duration = i.get('playlistPanelVideoRenderer').get('lengthText').get('runs')[0].get('text')
+        except IndexError:
+            video_duration = "NA"
+        
+        #print(video_artist)
+        
+        results.append({
+                "id": video_id,
+                "title": video_title,
+                "artist": video_artist,
+                "thumbnail": video_thumbnail,
+                "duration": video_duration,
+            })
+    
+    #pprint(n_data)
+    #print(n_data.keys())
+
+    #pprint(results)
+    return results
+    
+    
+pprint(getRadio("A__cH65WRvE"))
+
+def searchPlaylist(query):
+    data = client.search(query=query)
+    
+    n_data= data
+    
+    pprint(n_data)
+    print(n_data.keys())
+
+#searchPlaylist("RDAMVMA__cH65WRvE")
+
+# not in use
 def searchOneSong(songName):
     return searchSongs(songName)[0]
 
-
+#not in use
 def getSongTitle(video_id):
     data = client.next(video_id=video_id)
     # print("client.next")
@@ -100,7 +173,7 @@ def getSongTitle(video_id):
     # print(title)
     return title
 
-
+# not in use
 def getSongArtistName(video_id):
     data = client.next(video_id=video_id)
     n_data = (
@@ -123,7 +196,7 @@ def getSongArtistName(video_id):
     # print(artist)
     return artist
 
-
+# not in use
 def getSongThumbnailURL(video_id):
     data = client.next(video_id=video_id)
     # print("client.next")
@@ -149,7 +222,7 @@ def getSongThumbnailURL(video_id):
 
     return thumbnail
 
-
+# not in use
 def getSongDuration(video_id):
     data = client.next(video_id=video_id)
     n_data = (
@@ -171,7 +244,7 @@ def getSongDuration(video_id):
     duration = n_data.get("lengthText").get("runs")[0].get("text")
     return duration
 
-
+#not in use
 def playSongById(video_id):
     client2 = InnerTube("ANDROID")
 
@@ -185,7 +258,7 @@ def playSongById(video_id):
     pprint(n_data[-1])
     return n_data[-1].get("url")
 
-
+#not in use
 # Pretty much useless now because it is not in use anymore
 def searchSongsWithDetails(query):
     print("request reached python and is sent to api")
@@ -233,7 +306,7 @@ def searchSongsWithDetails(query):
     print("Processing done")
     return results
 
-
+# not in use
 def testing(search_query):
     one_song = searchOneSong(search_query)
     many_songs = searchSongs(search_query)
@@ -251,7 +324,7 @@ def testing(search_query):
     print("One Song URL: ", thumbnail)
     # print(player)
 
-
+# not in use
 def playSongByIdWithBestQuality(video_id):
     client2 = InnerTube("WEB_REMIX")
 
@@ -306,7 +379,7 @@ def playSongByIdWithBestBitrate(video_id):
     print("Highest bitrate URL: ", currentHighestBitrateUrl)
     return currentHighestBitrateUrl
 
-
+# not in use
 def tester(video_id):
     client2 = InnerTube("ANDROID")
     data = client2.player(video_id)
@@ -316,5 +389,5 @@ def tester(video_id):
     # pprint(n_data.keys())
 
 
-playSongByIdWithBestBitrate("A__cH65WRvE")
+#playSongByIdWithBestBitrate("A__cH65WRvE")
 # tester("A__cH65WRvE")

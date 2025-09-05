@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.kynarec.kmusic.data.db.dao.QueuedMediaItemDao
 import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.data.db.entities.Song
 
@@ -13,6 +14,7 @@ import com.kynarec.kmusic.data.db.entities.Song
 )
 abstract class KmusicDatabase : RoomDatabase() {
     abstract fun songDao(): SongDao
+    abstract fun queuedMediaItemDao(): QueuedMediaItemDao
 
 
     companion object {
