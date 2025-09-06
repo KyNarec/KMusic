@@ -97,12 +97,13 @@ dependencies {
     implementation(libs.innertube)
 
     implementation( libs.androidx.room.runtime)
+    debugImplementation(libs.androidx.compose.ui.tooling)
     kapt (libs.androidx.room.compiler)
 
     implementation( libs.toasty)
 
     implementation(libs.androidx.navigation.compose)
-    implementation(platform(libs.androidx.compose.bom))
+//    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui)

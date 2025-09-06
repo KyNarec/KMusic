@@ -81,7 +81,7 @@ class PlayerControlBar : Fragment(R.layout.fragment_player_control_bar) {
         skipForwardButton?.setOnClickListener { mediaController?.seekToNextMediaItem() }
 
         playerControlBarLayout?.setOnClickListener {
-            (activity as? MainActivity)?.navigatePlayer()
+//            (activity as? MainActivity)?.navigatePlayer()
         }
     }
 

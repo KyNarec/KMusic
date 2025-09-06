@@ -82,7 +82,7 @@ class SongsFragment : Fragment() {
                 )
 
                 if (activity is MainActivity) {
-                    (activity as MainActivity).updatePlayerControlBar(song)
+//                    (activity as MainActivity).updatePlayerControlBar(song)
                 }
             }
 

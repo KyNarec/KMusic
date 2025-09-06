@@ -55,7 +55,7 @@ class SearchFragment : Fragment() {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 val query = searchField.text.toString()
                 println(query)
-                (activity as? MainActivity)?.navigateSearchResult(requireView(), query)
+//                (activity as? MainActivity)?.navigateSearchResult(requireView(), query)
                 // closing Keyboard
                 val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                 imm.hideSoftInputFromWindow(searchField.windowToken, 0)
