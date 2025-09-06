@@ -41,9 +41,11 @@ fun TopBar() {
             text = stringResource(R.string.app_name),
             color = MaterialTheme.colorScheme.onPrimary,
             fontSize = 18.sp,
-            modifier = Modifier.padding(0.dp, 16.dp)
+            modifier = Modifier
+                .padding(0.dp, 16.dp)
         )
-        Spacer(modifier = Modifier.width(200.dp))
+        Spacer(modifier = Modifier.width(240.dp)
+        )
         IconButton(
             onClick = { /*TODO*/ }
         ) {
