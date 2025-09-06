@@ -1,6 +1,8 @@
 package com.kynarec.kmusic.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -35,28 +37,38 @@ fun TopBar() {
             .background(MaterialTheme.colorScheme.background)
             .fillMaxHeight(0.1f)
     ){
-        IconButton(
-            onClick = { /*TODO*/ },
+        Box(
             modifier = Modifier
                 .align(Alignment.CenterVertically)
-                .size(60.dp)
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = "Logo",
-                tint = MaterialTheme.colorScheme.onBackground
+                .clickable(true, onClick = {
+                    /*TODO*/
+                })
+//                .fillMaxWidth()
+        ){
+            Row() {
+                IconButton(
+                    onClick = { /*TODO*/ },
+                    modifier = Modifier
+                        .size(60.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                        contentDescription = "Logo",
+                        tint = MaterialTheme.colorScheme.onBackground
 
-            )
+                    )
+                }
+                Text(
+                    text = stringResource(R.string.app_name),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize = 35.sp,
+                    modifier = Modifier
+                        .padding(0.dp, 0.dp)
+                        .align(Alignment.CenterVertically)
+                )
+            }
         }
-        Text(
-            text = stringResource(R.string.app_name),
-            color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 35.sp,
-            modifier = Modifier
-                .padding(0.dp, 0.dp)
-                .align(Alignment.CenterVertically)
 
-        )
         Spacer(modifier = Modifier.weight(1f)
         )
         IconButton(
