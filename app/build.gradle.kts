@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.compose.compiler)
     // python support
     id("com.chaquo.python")
     kotlin("kapt")
@@ -43,6 +44,7 @@ android {
         jvmTarget = "11"
     }
     buildFeatures{
+        compose = true
         dataBinding {
             enable = true
         }
@@ -64,7 +66,6 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
 
@@ -75,6 +76,7 @@ dependencies {
 
     implementation(libs.androidx.room.common.jvm)
     implementation(libs.androidx.room.runtime.android)
+    implementation(libs.androidx.ui)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -98,4 +100,14 @@ dependencies {
     kapt (libs.androidx.room.compiler)
 
     implementation( libs.toasty)
+
+    implementation(libs.androidx.navigation.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+
+
 }
