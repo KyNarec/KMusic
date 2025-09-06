@@ -1,9 +1,12 @@
 package com.kynarec.kmusic.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -13,6 +16,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -26,34 +30,47 @@ import com.kynarec.kmusic.R
 @Composable
 fun TopBar() {
     Row(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
+            .fillMaxHeight(0.1f)
     ){
         IconButton(
-            onClick = { /*TODO*/ }
+            onClick = { /*TODO*/ },
+            modifier = Modifier
+                .align(Alignment.CenterVertically)
+                .size(60.dp)
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = "Logo",
-                tint = MaterialTheme.colorScheme.onPrimary
+                tint = MaterialTheme.colorScheme.onBackground
+
             )
         }
         Text(
             text = stringResource(R.string.app_name),
-            color = MaterialTheme.colorScheme.onPrimary,
-            fontSize = 18.sp,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 35.sp,
             modifier = Modifier
-                .padding(0.dp, 16.dp)
+                .padding(0.dp, 0.dp)
+                .align(Alignment.CenterVertically)
+
         )
-        Spacer(modifier = Modifier.width(240.dp)
+        Spacer(modifier = Modifier.weight(1f)
         )
         IconButton(
-            onClick = { /*TODO*/ }
+            onClick = { /*TODO*/ },
+            modifier = Modifier
+                .align(Alignment.CenterVertically)
+                .size(60.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Search",
-                tint = MaterialTheme.colorScheme.onPrimary
+                tint = MaterialTheme.colorScheme.onBackground
             )
         }
+        Spacer(modifier = Modifier.width(16.dp))
     }
 }

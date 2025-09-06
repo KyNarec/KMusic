@@ -109,6 +109,7 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
-
+    implementation(libs.material)
+// Or the latest version
 
 }
