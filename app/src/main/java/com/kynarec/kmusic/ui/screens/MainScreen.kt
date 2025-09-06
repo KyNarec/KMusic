@@ -8,17 +8,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import com.kynarec.kmusic.ui.components.ThemedNavigationRail
-import com.kynarec.kmusic.ui.components.TopBar
+import androidx.navigation.compose.rememberNavController
+import com.kynarec.kmusic.ui.Navigation
+import com.kynarec.kmusic.ui.components.MyNavigationRailComponent
+import com.kynarec.kmusic.ui.components.TopBarComponent
 import com.kynarec.kmusic.ui.theme.KMusicTheme
 
 @Composable
 fun MainScreen() {
     val scope = rememberCoroutineScope()
     KMusicTheme {
+        val navController = rememberNavController()
         Scaffold(
             topBar = {
-                TopBar()
+                TopBarComponent(navController)
             }
         ) { contentPadding ->
             // contentPadding automatically accounts for the TopBar height
@@ -27,12 +30,13 @@ fun MainScreen() {
                     .fillMaxSize()
                     .padding(contentPadding)
             ) {
-                ThemedNavigationRail()
+                MyNavigationRailComponent(navController)
                 // The Box for app screens goes here
                 Box(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     // This is where app screens will be placed
+                    Navigation(navController)
                 }
             }
         }

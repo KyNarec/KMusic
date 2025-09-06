@@ -5,6 +5,8 @@ plugins {
     // python support
     id("com.chaquo.python")
     kotlin("kapt")
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.2.10"
+
 }
 
 android {
@@ -110,6 +112,11 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.material)
-// Or the latest version
+    implementation(libs.coil.compose)
+    // Add the Kotlinx Serialization library dependency here
+    implementation(libs.kotlinx.serialization.json)
+
+    // Navigation with Serializable objects
+    //implementation(libs.androidx.navigation.serialization)
 
 }

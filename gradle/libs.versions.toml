@@ -1,7 +1,8 @@
 [versions]
 agp = "8.9.1"
 cardview = "1.0.0"
-compiler = "4.16.0"
+coilCompose = "2.7.0"
+compiler = "5.0.4"
 composeBom = "2025.09.01"
 databindingRuntime = "8.9.1"
 exoplayer = "2.19.1"
@@ -12,6 +13,8 @@ junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
+kotlinxSerializationJson = "1.9.0"
+kotlinx-serialization = "1.9.0"
 material = "1.12.0"
 activity = "1.10.1"
 constraintlayout = "2.1.4"
@@ -19,6 +22,8 @@ ktor = "2.3.12"
 materialVersion = "1.13.0"
 media3Common = "1.8.0"
 navigationCompose = "2.9.3"
+# Align this version with navigationCompose
+navigationSerialization = "2.7.7"
 newpipeextractor = "0.24.4"
 okhttp = "4.12.0"
 recyclerview = "1.4.0"
@@ -43,9 +48,11 @@ androidx-databinding-runtime = { module = "androidx.databinding:databinding-runt
 androidx-media3-common = { module = "androidx.media3:media3-common", version.ref = "media3Common" }
 androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Common" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+androidx-navigation-serialization = { module = "androidx.navigation:navigation-serialization", version.ref = "navigationSerialization" }
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCommonJvm" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomCommonJvm" }
+coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "compiler" }
 exoplayer = { module = "com.google.android.exoplayer:exoplayer", version.ref = "exoplayer" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "compiler" }
@@ -56,6 +63,7 @@ androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-co
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version = "2.2.1" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 ktor-serialization-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
@@ -79,5 +87,3 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-
-

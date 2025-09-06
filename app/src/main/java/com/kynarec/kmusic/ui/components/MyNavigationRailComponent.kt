@@ -20,36 +20,37 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.kynarec.kmusic.R
+import com.kynarec.kmusic.ui.AlbumsScreen
+import com.kynarec.kmusic.ui.ArtistsScreen
+import com.kynarec.kmusic.ui.HomeScreen
+import com.kynarec.kmusic.ui.PlaylistScreen
+import com.kynarec.kmusic.ui.SongsScreen
 
 // Define data for navigation destinations
 data class NavigationDestination(
     val title: String,
-    val icon: @Composable () -> Unit
+    val icon: @Composable () -> Unit,
+    val navigationScreen: Any
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ThemedNavigationRail() {
+fun MyNavigationRailComponent(
+    navController: NavHostController
+) {
     val destinations = listOf(
-        NavigationDestination("Home", { Icon(Icons.Default.Home, contentDescription = "Home") }),
-        NavigationDestination("Songs", { Icon(Icons.Default.MusicNote, contentDescription = "Songs") }),
-        NavigationDestination("Artists", { Icon(painterResource(androidx.media3.session.R.drawable.media3_icon_artist), contentDescription = "Artists") }),
-        NavigationDestination("Albums", { Icon(painterResource(R.drawable.album), contentDescription = "Albums") }),
-        NavigationDestination("Playlists", { Icon(painterResource(R.drawable.library), contentDescription = "Playlists") })
+        NavigationDestination("Home", { Icon(Icons.Default.Home, contentDescription = "Home") }, HomeScreen),
+        NavigationDestination("Songs", { Icon(Icons.Default.MusicNote, contentDescription = "Songs") }, SongsScreen),
+        NavigationDestination("Artists", { Icon(painterResource(androidx.media3.session.R.drawable.media3_icon_artist), contentDescription = "Artists") }, ArtistsScreen),
+        NavigationDestination("Albums", { Icon(painterResource(R.drawable.album), contentDescription = "Albums") }, AlbumsScreen),
+        NavigationDestination("Playlists", { Icon(painterResource(R.drawable.library), contentDescription = "Playlists") }, PlaylistScreen)
     )
 
     var selectedDestination by rememberSaveable { mutableIntStateOf(0) }
-//    Column (
-//        modifier = Modifier.width(50.dp)
-//    ){
-//        destinations.forEachIndexed {
-//            index, destination ->
-//            destination.icon()
-//        }
-//    }
+
     Column {
         NavigationRail(
             containerColor = MaterialTheme.colorScheme.background,
@@ -57,10 +58,14 @@ fun ThemedNavigationRail() {
         ) {
             destinations.forEachIndexed { index, destination ->
                 NavigationRailItem(
-                    modifier = Modifier.graphicsLayer { rotationZ =  270f }
-                        .padding(0.dp,14.dp),
+                    modifier = Modifier
+                        .graphicsLayer { rotationZ = 270f }
+                        .padding(0.dp, 14.dp),
                     selected = selectedDestination == index,
-                    onClick = { selectedDestination = index },
+                    onClick = {
+                        selectedDestination = index
+                        navController.navigate(destination.navigationScreen)
+                              },
                     icon = {
 //                         Conditionally display the icon
                         if (selectedDestination == index) {
@@ -84,8 +89,3 @@ fun ThemedNavigationRail() {
 
 }
 
-@Preview(showBackground = true)
-@Composable
-fun ThemedNavigationRailPreview() {
-    ThemedNavigationRail()
-}
