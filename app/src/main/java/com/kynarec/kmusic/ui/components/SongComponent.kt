@@ -99,7 +99,8 @@ fun SongComponent(
         Text(
             text = duration,
             fontSize = 11.sp,
-            modifier = Modifier.padding(end = 16.dp)
+            modifier = Modifier.padding(end = 16.dp, bottom = 4.dp)
+                .align(Alignment.Bottom)
         )
     }
 }
