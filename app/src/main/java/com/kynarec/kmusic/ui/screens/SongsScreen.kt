@@ -1,10 +1,12 @@
 package com.kynarec.kmusic.ui.screens
 
 import android.content.ComponentName
+import androidx.annotation.OptIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
@@ -13,6 +15,7 @@ import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 
+@OptIn(UnstableApi::class)
 @Composable
 fun SongsScreen(
     songs: List<Song>,
@@ -33,7 +36,7 @@ fun SongsScreen(
                         val mediaController = controllerFuture.get()
 
                         // Create a MediaItem from your Song data class
-                        val mediaItem = createMediaItemFromSong(song)
+                        val mediaItem = createMediaItemFromSong(song, context)
 
                         // Use the MediaController to set the media item and start playback.
                         mediaController.setMediaItem(mediaItem)

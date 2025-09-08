@@ -1,6 +1,7 @@
 package com.kynarec.kmusic.ui.screens
 
 import android.content.ComponentName
+import androidx.annotation.OptIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -10,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.chaquo.python.PyObject
@@ -22,6 +24,7 @@ import com.kynarec.kmusic.utils.createMediaItemFromSong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+@OptIn(UnstableApi::class)
 @Composable
 fun SearchResultScreen(
     query: String,
@@ -87,7 +90,7 @@ fun SearchResultScreen(
                         val mediaController = controllerFuture.get()
 
                         // Create a MediaItem from your Song data class
-                        val mediaItem = createMediaItemFromSong(song)
+                        val mediaItem = createMediaItemFromSong(song, context)
 
                         // Use the MediaController to set the media item and start playback.
                         mediaController.setMediaItem(mediaItem)

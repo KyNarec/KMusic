@@ -68,7 +68,7 @@ class SongsFragment : Fragment() {
                         val mediaController = controllerFuture.get()
 
                         // Create a MediaItem from your Song data class
-                        val mediaItem = createMediaItemFromSong(song)
+                        val mediaItem = createMediaItemFromSong(song, context)
 
                         // Use the MediaController to set the media item and start playback.
                         mediaController.setMediaItem(mediaItem)
