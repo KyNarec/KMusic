@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.ui.HomeScreen
+import com.kynarec.kmusic.ui.SearchScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +75,7 @@ fun TopBarComponent(
         Spacer(modifier = Modifier.weight(1f)
         )
         IconButton(
-            onClick = { /*TODO*/ },
+            onClick = { navController.navigate(SearchScreen) },
             modifier = Modifier
                 .align(Alignment.CenterVertically)
                 .size(60.dp)

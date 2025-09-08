@@ -9,12 +9,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.ui.screens.AlbumsScreen
 import com.kynarec.kmusic.ui.screens.ArtistsScreen
 import com.kynarec.kmusic.ui.screens.HomeScreen
 import com.kynarec.kmusic.ui.screens.PlayerScreen
 import com.kynarec.kmusic.ui.screens.PlaylistScreen
+import com.kynarec.kmusic.ui.screens.SearchResultScreen
+import com.kynarec.kmusic.ui.screens.SearchScreen
 import com.kynarec.kmusic.ui.screens.SongsScreen
 import com.kynarec.kmusic.ui.viewModels.SongViewModel
 import com.kynarec.kmusic.ui.viewModels.SongViewModelFactory
@@ -60,6 +63,13 @@ fun Navigation(
         composable<AlbumsScreen> {
             AlbumsScreen()
         }
+        composable<SearchScreen> {
+            SearchScreen(navController)
+        }
+        composable<SearchResultScreen> {
+            val args = it.toRoute<SearchResultScreen>()
+            SearchResultScreen(args.query)
+        }
     }
 }
 
@@ -84,6 +94,13 @@ object AlbumsScreen
 @Serializable
 object PlaylistScreen
 
+@Serializable
+object SearchScreen
+
+@Serializable
+data class SearchResultScreen(
+     val query: String
+)
 
 
 
