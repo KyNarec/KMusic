@@ -14,14 +14,17 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kynarec.kmusic.ui.Navigation
 import com.kynarec.kmusic.ui.PlayerScreen
+import com.kynarec.kmusic.ui.SearchScreen
 import com.kynarec.kmusic.ui.components.MyNavigationRailComponent
 import com.kynarec.kmusic.ui.components.PlayerControlBar
 import com.kynarec.kmusic.ui.components.TopBarComponent
@@ -33,8 +36,17 @@ fun MainScreen() {
     val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModel.Factory(LocalContext.current))
     val showControlBar by playerViewModel.showControlBar.collectAsState()
 
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    // Determine if we are on a screen that should hide the navigation rail and player bar
+    val shouldHideNavElements = remember(currentRoute) {
+        currentRoute == SearchScreen::class.qualifiedName
+    }
+
     KMusicTheme {
-        val navController = rememberNavController()
+
         // We use a top-level Box to contain both the main Scaffold and the floating player bar
         Box(
             modifier = Modifier.fillMaxSize()
@@ -45,7 +57,8 @@ fun MainScreen() {
             ) {
                 Scaffold(
                     topBar = {
-                        TopBarComponent(navController)
+                        TopBarComponent(shouldHideNavElements,
+                            navController)
                     },
                     // We remove the bottomBar slot here, as it will be placed separately
                 ) { contentPadding ->
@@ -54,7 +67,9 @@ fun MainScreen() {
                             .fillMaxSize()
                             .padding(contentPadding)
                     ) {
-                        MyNavigationRailComponent(navController)
+                        if (!shouldHideNavElements) {
+                            MyNavigationRailComponent(navController)
+                        }
                         Box(
                             modifier = Modifier.fillMaxSize()
                         ) {

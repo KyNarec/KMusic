@@ -22,7 +22,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -37,7 +36,7 @@ import androidx.navigation.NavHostController
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.ui.SearchResultScreen
 
-@OptIn(ExperimentalComposeUiApi::class)
+//@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SearchScreen(
     navController: NavHostController

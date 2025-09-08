@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -32,6 +33,7 @@ import com.kynarec.kmusic.ui.SearchScreen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBarComponent(
+    isSearchScreen: Boolean,
     navController: NavHostController
 ) {
     Row(
@@ -49,6 +51,18 @@ fun TopBarComponent(
 //                .fillMaxWidth()
         ){
             Row() {
+                if (isSearchScreen) {
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier
+                            .align(Alignment.CenterVertically)
+                            .size(60.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back")
+                    }
+                }
                 IconButton(
                     onClick = { /*TODO*/ },
                     modifier = Modifier
