@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,7 +45,7 @@ fun MyNavigationRailComponent(
     val destinations = listOf(
         NavigationDestination("Home", { Icon(Icons.Default.Home, contentDescription = "Home") }, HomeScreen),
         NavigationDestination("Songs", { Icon(Icons.Default.MusicNote, contentDescription = "Songs") }, SongsScreen),
-        NavigationDestination("Artists", { Icon(painterResource(R.drawable.artist), contentDescription = "Artists") }, ArtistsScreen),
+        NavigationDestination("Artists", { Icon(Icons.Default.People, contentDescription = "Artists") }, ArtistsScreen),
         NavigationDestination("Albums", { Icon(painterResource(R.drawable.album), contentDescription = "Albums") }, AlbumsScreen),
         NavigationDestination("Playlists", { Icon(painterResource(R.drawable.library), contentDescription = "Playlists") }, PlaylistScreen)
     )
