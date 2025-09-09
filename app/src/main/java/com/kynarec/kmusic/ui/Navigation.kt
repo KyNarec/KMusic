@@ -1,6 +1,9 @@
 package com.kynarec.kmusic.ui
 
 import android.app.Application
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -39,7 +42,13 @@ fun Navigation(
 
     NavHost(
         navController = navController,
-        startDestination = HomeScreen
+        startDestination = HomeScreen,
+        enterTransition = {
+            slideIntoContainer(towards = AnimatedContentTransitionScope.SlideDirection.Start) + fadeIn()
+        },
+        exitTransition = {
+            slideOutOfContainer(towards = AnimatedContentTransitionScope.SlideDirection.End) + fadeOut()
+        }
     ) {
         composable<HomeScreen> {
             HomeScreen()

@@ -63,7 +63,9 @@ fun MainScreen() {
                 // Main UI Scaffold, including the NavHost
                 Scaffold(
                     topBar = {
-                        TopBarComponent(shouldHideNavElements, navController)
+                        Box(modifier = Modifier.padding(top = 8.dp)) {
+                            TopBarComponent(shouldHideNavElements, navController)
+                        }
                     },
                 ) { contentPadding ->
                     Row(

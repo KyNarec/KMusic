@@ -108,7 +108,7 @@ fun PlayerScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(60.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         // Album art
         AsyncImage(
