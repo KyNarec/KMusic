@@ -3,11 +3,11 @@ package com.kynarec.kmusic.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +27,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -38,6 +39,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -70,7 +72,7 @@ fun PlayerScreen(
         }
     })
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
@@ -80,7 +82,8 @@ fun PlayerScreen(
                 onDragStarted = { /* Optional: can be used to add visual feedback */ },
                 onDragStopped = { /* Optional: can be used to add a 'snap to close' animation */ }
             )
-            .padding(16.dp)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Top section with back button and app icon
         Row(
@@ -105,92 +108,121 @@ fun PlayerScreen(
             )
         }
 
-        // Main content column, centered
-        Column(
+        Spacer(modifier = Modifier.height(60.dp))
+
+        // Album art
+        AsyncImage(
+            model = uiState.albumArtUri,
+            contentDescription = "Album art",
+            contentScale = ContentScale.Crop,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 60.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .size(300.dp)
+                .clip(MaterialTheme.shapes.medium)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Song title
+        Button(
+            onClick = { /* TODO: Navigate to song details */ },
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.background)
         ) {
-            // Album art
-            AsyncImage(
-                model = uiState.albumArtUri,
-                contentDescription = "Album art",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(250.dp)
-                    .clip(MaterialTheme.shapes.medium)
+            Text(
+                text = uiState.title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.basicMarquee()
             )
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        // Song artist
+        Button(
+            onClick = { /* TODO: Navigate to artist details */ },
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.background)
+        ) {
+            Text(
+                text = uiState.artist,
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.basicMarquee()
+            )
+        }
 
-            // Song title
-            Button(
-                onClick = { /* TODO: Navigate to song details */ },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.background)
-            ) {
-                Text(
-                    text = uiState.title,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
+        Spacer(modifier = Modifier.height(24.dp))
 
-            // Song artist
-            Button(
-                onClick = { /* TODO: Navigate to artist details */ },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.background)
-            ) {
-                Text(
-                    text = uiState.artist,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Player controls
+        // Seek bar and time display
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
+        ) {
+            Slider(
+                value = if (uiState.totalDuration > 0) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,
+                onValueChange = { newValue ->
+                    playerViewModel.seekTo((newValue * uiState.totalDuration).toLong())
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
             Row(
-                modifier = Modifier
-                    .width(260.dp),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                IconButton(
-                    onClick = { playerViewModel.skipToPrevious() },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.SkipPrevious,
-                        contentDescription = "Skip back",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-                IconButton(
-                    onClick = {
-                        if (uiState.isPlaying) viewModel.pause() else viewModel.play()
-                    },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = if (uiState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (uiState.isPlaying) "Pause" else "Play",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-                IconButton(
-                    onClick = { playerViewModel.skipToNext() },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.SkipNext,
-                        contentDescription = "Skip forward",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
-                }
+                Text(
+                    text = "${uiState.currentPosition / 1000 / 60}:${(uiState.currentPosition / 1000 % 60).toString().padStart(2, '0')}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+                Text(
+                    text = "${uiState.totalDuration / 1000 / 60}:${(uiState.totalDuration / 1000 % 60).toString().padStart(2, '0')}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Player controls
+        Row(
+            modifier = Modifier
+                .width(260.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = { playerViewModel.skipToPrevious() },
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.SkipPrevious,
+                    contentDescription = "Skip back",
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
+            }
+            IconButton(
+                onClick = {
+                    if (uiState.isPlaying) viewModel.pause() else viewModel.play()
+                },
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = if (uiState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    contentDescription = if (uiState.isPlaying) "Pause" else "Play",
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
+            }
+            IconButton(
+                onClick = { playerViewModel.skipToNext() },
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.SkipNext,
+                    contentDescription = "Skip forward",
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
             }
         }
     }

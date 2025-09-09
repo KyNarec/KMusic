@@ -4,15 +4,19 @@ import android.content.ComponentName
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.kynarec.kmusic.service.PlayerServiceModern
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 // Represents the state of the player UI
 data class PlayerUiState(
@@ -20,7 +24,9 @@ data class PlayerUiState(
     val artist: String = "N/A",
     val albumArtUri: String? = null,
     val isPlaying: Boolean = false,
-    val mediaController: MediaController? = null
+    val mediaController: MediaController? = null,
+    val currentPosition: Long = 0,
+    val totalDuration: Long = 0,
 )
 
 class PlayerViewModel(context: Context) : ViewModel() {
@@ -38,7 +44,6 @@ class PlayerViewModel(context: Context) : ViewModel() {
             )
         }
 
-        // Add this callback to handle timeline changes
         override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
             _showControlBar.value = !timeline.isEmpty
         }
@@ -57,7 +62,43 @@ class PlayerViewModel(context: Context) : ViewModel() {
         mediaControllerFuture.addListener({
             _uiState.value = _uiState.value.copy(mediaController = mediaControllerFuture.get())
             _uiState.value.mediaController?.addListener(playerListener)
+            updatePosition()
         }, { it.run() }) // Using a direct executor for immediate execution
+    }
+
+    private fun updatePosition() {
+        // We're switching this to the main dispatcher. The MediaController API requires
+        // all of its methods to be called from the main thread.
+        viewModelScope.launch(Dispatchers.Main) {
+            while(true) {
+                // Ensure the media controller is not null before trying to get its properties.
+                val mediaController = _uiState.value.mediaController
+                if (mediaController != null) {
+                    val duration = mediaController.duration
+                    if (duration > 0) {
+                        // This is the key fix: we only update the state if a valid duration exists.
+                        _uiState.value = _uiState.value.copy(
+                            currentPosition = mediaController.currentPosition,
+                            totalDuration = duration
+                        )
+                    } else {
+                        // If there is no valid duration yet, we explicitly set the duration to 0
+                        // to prevent the UI from trying to divide by zero and throwing an error.
+                        _uiState.value = _uiState.value.copy(
+                            currentPosition = 0,
+                            totalDuration = 0
+                        )
+                    }
+                }
+                // Update the current position much more frequently for a smooth UI.
+                // A 16ms delay roughly corresponds to a 60fps refresh rate.
+                delay(16)
+            }
+        }
+    }
+
+    fun seekTo(position: Long) {
+        _uiState.value.mediaController?.seekTo(position)
     }
 
     fun play() {

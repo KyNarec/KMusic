@@ -4,6 +4,11 @@ import android.content.ComponentName
 import androidx.annotation.OptIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.media3.common.util.UnstableApi
@@ -22,32 +27,39 @@ fun SongsScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+
+    var mediaController by remember { mutableStateOf<MediaController?>(null) }
+
+    LaunchedEffect(Unit) {
+        val sessionToken = SessionToken(context, ComponentName(context, PlayerServiceModern::class.java))
+        val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
+        controllerFuture.addListener({
+            mediaController = controllerFuture.get()
+        }, MoreExecutors.directExecutor())
+    }
+
     LazyColumn {
-        items(songs.size) { index ->
+        items(
+            songs.size,
+            key = { index -> songs[index].id }
+        ) { index ->
             val song = songs[index]
-            SongComponent(song = song, onClick = {
-                val sessionToken =
-                    SessionToken(context, ComponentName(context, PlayerServiceModern::class.java))
-                val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
-
-                controllerFuture.addListener(
-                    {
-                        // Step 2: Once connected, retrieve the controller and send the command
-                        val mediaController = controllerFuture.get()
-
-                        // Create a MediaItem from your Song data class
+            // Create stable onClick callback
+            val onSongClick = remember(song.id) {
+                {
+                    mediaController?.let { controller ->
                         val mediaItem = createMediaItemFromSong(song, context)
+                        controller.setMediaItem(mediaItem)
+                        controller.prepare()
+                        controller.play()
+                    }
+                }
+            }
 
-                        // Use the MediaController to set the media item and start playback.
-                        mediaController.setMediaItem(mediaItem)
-                        mediaController.prepare()
-                        mediaController.play()
-
-                        // Optional: You could now navigate to the PlayerFragment
-//                        (activity as? MainActivity)?.navigatePlayer()
-                    },
-                    MoreExecutors.directExecutor()
-                ) })
+            SongComponent(
+                song = song,
+                onClick = onSongClick as () -> Unit
+            )
         }
     }
 }

@@ -2,7 +2,6 @@ package com.kynarec.kmusic.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,6 +28,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.transform.RoundedCornersTransformation
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import com.kynarec.kmusic.utils.THUMBNAIL_ROUNDNESS
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -77,29 +76,26 @@ fun SongComponent(
                 .fillMaxHeight(),
             verticalArrangement = Arrangement.Center
         ) {
-            // Song Title Text View
-            Text(
+            // Smart marquee for title - only scrolls if text is too long
+            ConditionalMarqueeText(
                 text = title,
                 fontSize = 24.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.basicMarquee()
+                maxLines = 1
             )
 
-            // Song Artist Text View
-            Text(
+            // Smart marquee for artist - only scrolls if text is too long
+            ConditionalMarqueeText(
                 text = artist,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.basicMarquee()
+                fontSize = 14.sp,
+                maxLines = 1
             )
         }
 
-        // Song Duration Text View
         Text(
             text = duration,
             fontSize = 11.sp,
-            modifier = Modifier.padding(end = 16.dp, bottom = 4.dp)
+            modifier = Modifier
+                .padding(end = 16.dp, bottom = 4.dp)
                 .align(Alignment.Bottom)
         )
     }

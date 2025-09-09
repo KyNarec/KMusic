@@ -2,6 +2,17 @@ package com.kynarec.kmusic.utils
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.foundation.MarqueeAnimationMode
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -12,6 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+
 
 fun parseDurationToMillis(durationStr: String): Long {
     val parts = durationStr.split(":")
@@ -29,6 +41,12 @@ fun parseDurationToMillis(durationStr: String): Long {
         }
         else -> 0L
     }
+}
+
+fun parseMillisToDuration(timeMs: Long): String {
+    val minutes = timeMs / 1000 / 60
+    val seconds = (timeMs / 1000 % 60).toString().padStart(2, '0')
+    return "$minutes:$seconds"
 }
 
 fun createMediaItemFromSong(song: Song, context: Context): MediaItem {
@@ -65,4 +83,43 @@ fun createMediaItemFromSong(song: Song, context: Context): MediaItem {
         }
     }
     return mediaItem
+}
+
+
+@Composable
+fun ConditionalMarqueeText(
+    text: String,
+    fontSize: androidx.compose.ui.unit.TextUnit,
+    maxLines: Int = 1,
+    modifier: Modifier = Modifier
+) {
+    // Make state more stable
+    var isTextOverflowing by remember(text) { mutableStateOf(false) }
+    var hasCheckedOverflow by remember(text) { mutableStateOf(false) }
+
+    Text(
+        text = text,
+        fontSize = fontSize,
+        maxLines = maxLines,
+        overflow = TextOverflow.Ellipsis,
+        onTextLayout = { textLayoutResult ->
+            if (!hasCheckedOverflow) {
+                isTextOverflowing = textLayoutResult.hasVisualOverflow
+                hasCheckedOverflow = true
+            }
+        },
+        modifier = modifier.then(
+            // Only apply marquee after we've determined overflow AND text is long enough
+            if (isTextOverflowing && hasCheckedOverflow && text.length > 30) {
+                Modifier.basicMarquee(
+                    animationMode = MarqueeAnimationMode.Immediately,
+//                    delayMillis = 1000,
+                    initialDelayMillis = 1000,
+                    velocity = 30.dp
+                )
+            } else {
+                Modifier
+            }
+        )
+    )
 }
