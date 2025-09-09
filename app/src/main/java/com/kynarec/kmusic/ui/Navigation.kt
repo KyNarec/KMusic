@@ -14,7 +14,6 @@ import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.ui.screens.AlbumsScreen
 import com.kynarec.kmusic.ui.screens.ArtistsScreen
 import com.kynarec.kmusic.ui.screens.HomeScreen
-import com.kynarec.kmusic.ui.screens.PlayerScreen
 import com.kynarec.kmusic.ui.screens.PlaylistScreen
 import com.kynarec.kmusic.ui.screens.SearchResultScreen
 import com.kynarec.kmusic.ui.screens.SearchScreen
@@ -38,7 +37,6 @@ fun Navigation(
         )
     )
 
-//    val navController = rememberNavController()
     NavHost(
         navController = navController,
         startDestination = HomeScreen
@@ -53,9 +51,6 @@ fun Navigation(
         }
         composable<ArtistsScreen> {
             ArtistsScreen()
-        }
-        composable<PlayerScreen> {
-            PlayerScreen()
         }
         composable<PlaylistScreen> {
             PlaylistScreen()
@@ -99,8 +94,5 @@ object SearchScreen
 
 @Serializable
 data class SearchResultScreen(
-     val query: String
+    val query: String
 )
-
-
-

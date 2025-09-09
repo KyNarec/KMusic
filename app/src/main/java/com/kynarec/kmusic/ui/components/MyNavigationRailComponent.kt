@@ -44,7 +44,7 @@ fun MyNavigationRailComponent(
     val destinations = listOf(
         NavigationDestination("Home", { Icon(Icons.Default.Home, contentDescription = "Home") }, HomeScreen),
         NavigationDestination("Songs", { Icon(Icons.Default.MusicNote, contentDescription = "Songs") }, SongsScreen),
-        NavigationDestination("Artists", { Icon(painterResource(androidx.media3.session.R.drawable.media3_icon_artist), contentDescription = "Artists") }, ArtistsScreen),
+        NavigationDestination("Artists", { Icon(painterResource(R.drawable.artist), contentDescription = "Artists") }, ArtistsScreen),
         NavigationDestination("Albums", { Icon(painterResource(R.drawable.album), contentDescription = "Albums") }, AlbumsScreen),
         NavigationDestination("Playlists", { Icon(painterResource(R.drawable.library), contentDescription = "Playlists") }, PlaylistScreen)
     )
