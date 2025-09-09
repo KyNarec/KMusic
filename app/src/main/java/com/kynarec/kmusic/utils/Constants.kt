@@ -18,3 +18,4 @@ const val JUST_STARTED_UP = "justStartedUp"
 const val PLAYER_IS_OPEN = "playerIsOpen"
 const val THUMBNAIL_ROUNDNESS = 30
 const val MARQUEE_DELAY = 1000L
+const val transitionEffectKey = "transitionEffect"
