@@ -116,7 +116,8 @@ dependencies {
     // Add the Kotlinx Serialization library dependency here
     implementation(libs.kotlinx.serialization.json)
 
-    // Navigation with Serializable objects
-    //implementation(libs.androidx.navigation.serialization)
+    // wavy seekbar
+    implementation(libs.wavy.slider)
+
 
 }

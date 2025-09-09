@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.SliderDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -24,10 +25,10 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -35,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -46,12 +48,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
+import ir.mahozad.multiplatform.wavyslider.WaveDirection
+import ir.mahozad.multiplatform.wavyslider.material.WavySlider
 
 /**
  * The full-screen music player composable.
  *
  * @param onClose A callback function to be invoked when the user requests to close the screen.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerScreen(
     onClose: () -> Unit,
@@ -157,15 +162,78 @@ fun PlayerScreen(
 
         // Seek bar and time display
         Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
         ) {
-            Slider(
+//            Slider(
+//                value = if (uiState.totalDuration > 0) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,
+//                onValueChange = { newValue ->
+//                    playerViewModel.seekTo((newValue * uiState.totalDuration).toLong())
+//                },
+//                modifier = Modifier.fillMaxWidth()
+//            )
+
+            val customSliderColors  = SliderDefaults.colors(
+            activeTrackColor = Color(0xFFD4B67C),
+            inactiveTrackColor = Color(0xFF8E8A81),
+            activeTickColor = Color.Transparent,
+            inactiveTickColor = Color.Transparent,
+            thumbColor = Color(0xFFD4B67C)
+            )
+
+            WavySlider(
                 value = if (uiState.totalDuration > 0) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,
                 onValueChange = { newValue ->
                     playerViewModel.seekTo((newValue * uiState.totalDuration).toLong())
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                waveHeight = if (uiState.isPlaying) 4.dp else 0.dp,
+                waveLength = 32.dp,
+                waveVelocity = 12.dp to WaveDirection.TAIL,
+                waveThickness = 2.dp,
+                trackThickness = 2.dp,
+                incremental = false,
+                colors = customSliderColors,
+//                thumb = {
+//                    SliderDefaults.Thumb(
+//                        interactionSource = remember { MutableInteractionSource() },
+//                        colors = customSliderColors,
+//                        thumbSize = DpSize(12.dp, 12.dp),
+//                        modifier = Modifier
+//                            .align(Alignment.CenterHorizontally)
+//                            .shadow(1.dp, CircleShape, clip = false)
+//                            .indication(
+//                                interactionSource = remember { MutableInteractionSource() },
+//                                indication = ripple(bounded = false, radius = 12.dp)
+////                        .align(Arrangement.Center as Alignment.Horizontal)
+//                            )
+//                    )
+//                },
+//                track = {
+//                    SliderDefaults.Track(
+//                        sliderState = it,
+////                        modifier = Modifier.height(trackHeight),
+//                        thumbTrackGapSize = 0.dp,
+//                        trackInsideCornerSize = 0.dp,
+//                        drawStopIndicator = null,
+//                    )
+//                }
             )
+//            WavySlider(
+//                value = if (uiState.totalDuration > 0) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,
+//                onValueChange = { newValue ->
+//                    playerViewModel.seekTo((newValue * uiState.totalDuration).toLong())
+//                },
+//                modifier = Modifier.fillMaxWidth(),
+//                waveHeight = if (uiState.isPlaying) 8.dp else 0.dp,
+//                waveLength = 32.dp,
+//                waveVelocity = 12.dp to WaveDirection.TAIL,
+//                waveThickness = 2.dp,
+//                trackThickness = 2.dp,
+//                incremental = false,
+//                thumbRadius = 8.dp, // <--- Add this line and adjust the value
+//            )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
