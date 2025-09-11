@@ -28,7 +28,7 @@ data class PlayerUiState(
     val currentPosition: Long = 0,
     val totalDuration: Long = 0,
 )
-
+@Deprecated("Use new MusicViewModel")
 class PlayerViewModel(context: Context) : ViewModel() {
     private var mediaControllerFuture: ListenableFuture<MediaController>
     private val playerListener: Player.Listener = object : Player.Listener {
@@ -123,7 +123,7 @@ class PlayerViewModel(context: Context) : ViewModel() {
         _uiState.value.mediaController?.removeListener(playerListener)
         MediaController.releaseFuture(mediaControllerFuture)
     }
-
+    @Deprecated("Use new MusicViewModel")
     class Factory(private val context: Context) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(PlayerViewModel::class.java)) {

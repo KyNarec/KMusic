@@ -10,6 +10,7 @@ import com.kynarec.kmusic.data.db.dao.SongDao
  *
  * @param songDao The SongDao instance to be injected.
  */
+@Deprecated("Use new MusicViewModel")
 class SongViewModelFactory(
     private val songDao: SongDao
 ) : ViewModelProvider.Factory {

@@ -7,7 +7,7 @@ import com.kynarec.kmusic.data.db.entities.Song
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-
+@Deprecated("Use new MusicViewModel")
 class SongViewModel(private val songDao: SongDao) : ViewModel() {
 
     private val _songsList = MutableStateFlow<List<Song>>(emptyList())
