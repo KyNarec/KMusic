@@ -6,14 +6,21 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
+import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.upstream.DefaultAllocator
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import com.google.common.util.concurrent.ListenableFuture
 import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.data.db.dao.SongDao
+import io.ktor.http.ContentDisposition.Companion.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,6 +29,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 @UnstableApi
 class PlayerServiceModern : MediaLibraryService() {
@@ -90,6 +98,24 @@ class PlayerServiceModern : MediaLibraryService() {
         }
     }
 
+    // Add this inside your PlayerServiceModern class
+    companion object {
+        private const val CACHE_DIR = "kmusic_cache"
+        private const val MAX_CACHE_SIZE_BYTES = 100 * 1024 * 1024L // 100MB
+        private var cache: SimpleCache? = null
+    }
+
+    // Function to initialize the cache
+    @Synchronized
+    private fun getCache(): SimpleCache {
+        if (cache == null) {
+            val cacheDirectory = File(this.cacheDir, CACHE_DIR)
+            val evictor = LeastRecentlyUsedCacheEvictor(MAX_CACHE_SIZE_BYTES)
+            cache = SimpleCache(cacheDirectory, evictor, StandaloneDatabaseProvider(this))
+        }
+        return cache!!
+    }
+
 
     override fun onCreate() {
         super.onCreate()
@@ -98,7 +124,15 @@ class PlayerServiceModern : MediaLibraryService() {
         songDao = (application as MyApp).database.songDao()
         Log.i("PlayerService", "songDao has been initialized.")
 
+        val cacheDataSourceFactory = CacheDataSource.Factory()
+            .setCache(getCache())
+            .setUpstreamDataSourceFactory(DefaultDataSource.Factory(this))
+
+        val mediaSourceFactory = DefaultMediaSourceFactory(this)
+            .setDataSourceFactory(cacheDataSourceFactory)
+
         player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(mediaSourceFactory) // used for cashing
             .setAudioAttributes(
                 AudioAttributes.DEFAULT, true
             )
@@ -121,6 +155,9 @@ class PlayerServiceModern : MediaLibraryService() {
 
     override fun onDestroy() {
         serviceScope.cancel()
+
+        cache?.release()
+        cache = null
 
         mediaLibrarySession?.run {
             player.release()
