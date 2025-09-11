@@ -2,6 +2,7 @@ package com.kynarec.kmusic.ui.components
 
 import android.app.Application
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -54,14 +55,14 @@ fun PlayerControlBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(75.dp)
+            .height(70.dp)
 //            .background(MaterialTheme.colorScheme.surface)
             .clip(RoundedCornerShape(THUMBNAIL_ROUNDNESS.toFloat()))
 
             .background(customBackgroundColor)
             .clickable(onClick = onBarClick)
 //            .padding()
-            .padding(16.dp, 8.dp),
+            .padding(8.dp, 8.dp),
 
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -87,21 +88,29 @@ fun PlayerControlBar(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 8.dp),
         ) {
             Text(
                 text = uiState.currentSong?.title ?: "NA",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.basicMarquee(
+                    repeatDelayMillis = 1000,
+                    initialDelayMillis = 1000,
+                )
             )
             Text(
                 text = uiState.currentSong?.artist ?: "NA",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.basicMarquee(
+                    repeatDelayMillis = 1000,
+                    initialDelayMillis = 1000,
+                )
             )
         }
 
