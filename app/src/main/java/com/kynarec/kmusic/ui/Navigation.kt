@@ -32,6 +32,7 @@ import com.kynarec.kmusic.ui.screens.PlaylistScreen
 import com.kynarec.kmusic.ui.screens.SearchResultScreen
 import com.kynarec.kmusic.ui.screens.SearchScreen
 import com.kynarec.kmusic.ui.screens.SongsScreen
+import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.SongViewModel
 import com.kynarec.kmusic.ui.viewModels.SongViewModelFactory
 import com.kynarec.kmusic.utils.rememberPreference
@@ -47,9 +48,10 @@ fun Navigation(
     val application = LocalContext.current.applicationContext as Application
 
     // Use a custom ViewModel factory to inject the database DAO.
-    val viewModel: SongViewModel = viewModel(
-        factory = SongViewModelFactory(
-            (application as MyApp).database.songDao()
+    val viewModel: MusicViewModel = viewModel(
+        factory = MusicViewModel.Factory(
+            (application as MyApp).database.songDao(),
+            LocalContext.current
         )
     )
 
@@ -104,7 +106,8 @@ fun Navigation(
         }
 
         composable<SongsScreen> {
-            val songs by viewModel.songsList.collectAsState()
+//            val songs = viewModel.songsList.collectAsState()
+            val songs = viewModel.uiState.collectAsState().value.songsList
             SongsScreen(songs = songs)
         }
         composable<ArtistsScreen> {
@@ -121,7 +124,7 @@ fun Navigation(
         }
         composable<SearchResultScreen> {
             val args = it.toRoute<SearchResultScreen>()
-            SearchResultScreen(args.query)
+            SearchResultScreen(args.query, viewModel)
         }
     }
 }

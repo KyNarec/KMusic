@@ -134,7 +134,7 @@ def getRadio(video_id):
     return results
     
     
-pprint(getRadio("A__cH65WRvE"))
+#pprint(getRadio("A__cH65WRvE"))
 
 def searchPlaylist(query):
     data = client.search(query=query)
@@ -357,7 +357,7 @@ def playSongByIdWithBestBitrate(video_id):
     hBitrate = 0
     currentHighestBitrateUrl = ""
     n_data = data.get("streamingData").get("adaptiveFormats")
-    pprint(n_data)
+    #pprint(n_data)
     for i in n_data:
         if (
             i.get("audioQuality") == "AUDIO_QUALITY_HIGH"

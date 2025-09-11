@@ -6,9 +6,7 @@ import androidx.annotation.OptIn
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.C
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
@@ -24,8 +22,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
-import androidx.core.net.toUri
+import androidx.media3.common.util.Log
+import com.chaquo.python.Python
+import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.parseDurationToMillis
+import kotlinx.coroutines.withContext
 
 // A single state class for the entire music screen
 data class MusicUiState(
@@ -43,8 +44,9 @@ data class MusicUiState(
 class MusicViewModel
     (
     private val songDao: SongDao,
-    context: Context
+    val context: Context
 ) : ViewModel() {
+    private val tag = "MusicViewModel"
 
     private val _uiState = MutableStateFlow(MusicUiState())
     val uiState: StateFlow<MusicUiState> = _uiState.asStateFlow()
@@ -61,10 +63,13 @@ class MusicViewModel
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             // When the song changes, find it in our list and update the state
             val currentSong = _uiState.value.songsList.find { it.id == mediaItem?.mediaId }
+            val newTotalDuration = mediaController?.duration ?: 0L
+            val newCurrentDuration = parseDurationToMillis(currentSong?.duration ?: "0")
+
             _uiState.value = _uiState.value.copy(
                 currentSong = currentSong,
-                totalDuration = mediaController?.duration ?: 0L,
-                currentDuration = parseDurationToMillis(currentSong?.duration ?: "0")
+                totalDuration = if (newTotalDuration > 0) newTotalDuration else 0L,
+                currentDuration = newCurrentDuration
             )
         }
 
@@ -107,33 +112,59 @@ class MusicViewModel
     }
 
     // This is the key function that connects the song list to the player
-    fun play(tappedSong: Song) {
+    fun playSong(tappedSong: Song) {
+        Log.i(tag, "playSong called")
         val controller = mediaController ?: return
         val songList = _uiState.value.songsList
 
         // Find the index of the tapped song
         val startIndex = songList.indexOf(tappedSong)
-        if (startIndex == -1) return // Song not found
 
-        // Create a playlist of MediaItems from our song list
-        val mediaItems = songList.map { song ->
-            MediaItem.Builder()
-                .setMediaId(song.id)
-                .setUri(song.thumbnail) // Assuming thumbnail URL is the song URL
-                .setMediaMetadata(
-                    MediaMetadata.Builder()
-                        .setTitle(song.title)
-                        .setArtist(song.artist)
-                        .setArtworkUri(song.thumbnail.toUri())
-                        .build()
-                )
-                .build()
-        }
-
-        // Set the full playlist on the controller, starting at the tapped song
-        controller.setMediaItems(mediaItems, startIndex, C.TIME_UNSET)
+        val mediaItem = createMediaItemFromSong(tappedSong, context)
+        controller.setMediaItem(mediaItem)
         controller.prepare()
         controller.play()
+    }
+
+    fun playSongByIdWithRadio(song: Song) {
+        Log.i(tag, "playSongByIdWithRadio called with songId: ${song.id}")
+        playSong(song)
+        viewModelScope.launch {
+            val radioSongs = withContext(Dispatchers.IO) {
+                try {
+                    val py = Python.getInstance()
+                    val module = py.getModule("backend")
+                    val pyResult = module.callAttr("getRadio", song.id)
+                    pyResult.asList().map { item ->
+                        val d = item.callAttr("get", "duration").toString()
+                        val s = Song(
+                            id = item.callAttr("get", "id").toString(),
+                            title = item.callAttr("get", "title").toString(),
+                            artist = item.callAttr("get", "artist").toString(),
+                            thumbnail = item.callAttr("get", "thumbnail").toString(),
+                            duration = if (Regex("""^(\d{1,2}):(\d{1,2})$""").matches(d)) d else "NA"
+                        )
+                        if (s.id != song.id) {
+
+                            val mediaItem = createMediaItemFromSong(s, context)
+
+                            withContext(Dispatchers.Main) {
+                                _uiState.value = _uiState.value.copy(
+                                    songsList = _uiState.value.songsList + s
+                                )
+
+                                mediaController?.addMediaItem(mediaItem)
+                            }
+
+                            s
+                        } else null
+
+                    }
+                } catch (e: Exception) {
+                    emptyList()
+                }
+            }
+        }
     }
 
     fun pause() {

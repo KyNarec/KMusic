@@ -1,5 +1,6 @@
 package com.kynarec.kmusic.ui.screens
 
+import android.app.Application
 import android.content.ComponentName
 import androidx.annotation.OptIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,16 +12,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.chaquo.python.PyObject
 import com.chaquo.python.Python
 import com.google.common.util.concurrent.MoreExecutors
+import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.ui.components.SongComponent
-import com.kynarec.kmusic.utils.createMediaItemFromSong
+import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -28,6 +32,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun SearchResultScreen(
     query: String,
+    viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as MyApp).database.songDao(),LocalContext.current)),
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -99,12 +104,15 @@ fun SearchResultScreen(
             // Create stable onClick callback
             val onSongClick = remember(song.id) {
                 {
-                    mediaController?.let { controller ->
-                        val mediaItem = createMediaItemFromSong(song, context)
-                        controller.setMediaItem(mediaItem)
-                        controller.prepare()
-                        controller.play()
-                    }
+//                    mediaController?.let { controller ->
+//                        val mediaItem = createMediaItemFromSong(song, context)
+//                        controller.setMediaItem(mediaItem)
+//                        controller.prepare()
+//                        controller.playSong()
+//                    }
+                    Log.d("SongClick", "Song clicked: ${song.title}")
+                    //viewModel.playSong(song)
+                    viewModel.playSongByIdWithRadio(song)
                 }
             }
 

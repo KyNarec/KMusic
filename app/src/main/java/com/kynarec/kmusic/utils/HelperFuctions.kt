@@ -54,7 +54,7 @@ fun createMediaItemFromSong(song: Song, context: Context): MediaItem {
     val py = Python.getInstance()
     val module = py.getModule("backend")
     val uri = module.callAttr("playSongByIdWithBestBitrate", song.id) // Your Python call
-    Log.i("Main Activity", "ExoPlayer URI: $uri")
+//    Log.i("Main Activity", "ExoPlayer URI: $uri")
 
     uri?.toString()?.let { playbackUriString ->
         if (playbackUriString.isNotBlank()) {
