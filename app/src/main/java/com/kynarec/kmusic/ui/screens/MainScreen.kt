@@ -1,5 +1,6 @@
 package com.kynarec.kmusic.ui.screens
 
+import android.app.Application
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.ui.Navigation
 import com.kynarec.kmusic.ui.SearchResultScreen
 import com.kynarec.kmusic.ui.SearchScreen
@@ -32,12 +34,17 @@ import com.kynarec.kmusic.ui.components.MyNavigationRailComponent
 import com.kynarec.kmusic.ui.components.PlayerControlBar
 import com.kynarec.kmusic.ui.components.TopBarComponent
 import com.kynarec.kmusic.ui.theme.KMusicTheme
+import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
 
 @Composable
 fun MainScreen() {
     val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModel.Factory(LocalContext.current))
-    val showControlBar by playerViewModel.showControlBar.collectAsState()
+    //val showControlBar by playerViewModel.showControlBar.collectAsState()
+
+    val application = LocalContext.current.applicationContext as Application
+    val musicViewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((application as MyApp).database.songDao(),LocalContext.current))
+    val showControlBar = musicViewModel.uiState.collectAsState().value.showControlBar
 
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -99,7 +106,7 @@ fun MainScreen() {
             ) {
                 PlayerControlBar(
                     onBarClick = { showPlayerScreen = true },
-                    viewModel = playerViewModel,
+                    viewModel = musicViewModel,
                 )
             }
 
@@ -117,7 +124,7 @@ fun MainScreen() {
             ) {
                 PlayerScreen(
                     onClose = { showPlayerScreen = false },
-                    playerViewModel
+                    musicViewModel
                 )
             }
         }

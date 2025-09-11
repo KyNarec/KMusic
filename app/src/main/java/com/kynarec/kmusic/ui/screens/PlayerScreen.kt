@@ -1,5 +1,7 @@
 package com.kynarec.kmusic.ui.screens
 
+import android.app.Application
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -46,8 +48,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.R
+import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
+import com.kynarec.kmusic.utils.parseMillisToDuration
 import ir.mahozad.multiplatform.wavyslider.WaveDirection
 import ir.mahozad.multiplatform.wavyslider.material.WavySlider
 
@@ -60,10 +65,11 @@ import ir.mahozad.multiplatform.wavyslider.material.WavySlider
 @Composable
 fun PlayerScreen(
     onClose: () -> Unit,
-    viewModel: PlayerViewModel = viewModel(factory = PlayerViewModel.Factory(LocalContext.current))
+    viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as MyApp).database.songDao(),LocalContext.current))
 ) {
-    val playerViewModel = viewModel
-    val uiState by playerViewModel.uiState.collectAsState()
+    //val playerViewModel = viewModel
+    //val uiState by playerViewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
     // Handle system back button press
     BackHandler {
@@ -117,7 +123,7 @@ fun PlayerScreen(
 
         // Album art
         AsyncImage(
-            model = uiState.albumArtUri,
+            model = uiState.currentSong?.thumbnail,
             contentDescription = "Album art",
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -133,7 +139,7 @@ fun PlayerScreen(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.background)
         ) {
             Text(
-                text = uiState.title,
+                text = uiState.currentSong?.title ?: "NA",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
@@ -149,7 +155,7 @@ fun PlayerScreen(
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.background)
         ) {
             Text(
-                text = uiState.artist,
+                text = uiState.currentSong?.artist ?: "NA",
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 1,
@@ -182,10 +188,12 @@ fun PlayerScreen(
             thumbColor = Color(0xFFD4B67C)
             )
 
+            Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentDuration: ${uiState.currentDuration}")
+
             WavySlider(
-                value = if (uiState.totalDuration > 0) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,
+                value = if (uiState.totalDuration > 0 || uiState.totalDuration < 0) uiState.currentPosition.toFloat() / uiState.currentDuration.toFloat() else 0f,
                 onValueChange = { newValue ->
-                    playerViewModel.seekTo((newValue * uiState.totalDuration).toLong())
+                    viewModel.seekTo((newValue * uiState.currentDuration).toLong())
                 },
                 modifier = Modifier.fillMaxWidth(),
                 waveHeight = if (uiState.isPlaying) 4.dp else 0.dp,
@@ -244,7 +252,8 @@ fun PlayerScreen(
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
                 Text(
-                    text = "${uiState.totalDuration / 1000 / 60}:${(uiState.totalDuration / 1000 % 60).toString().padStart(2, '0')}",
+//                    text = "${uiState.currentDuration / 1000 / 60}:${(uiState.totalDuration / 1000 % 60).toString().padStart(2, '0')}",
+                    text = parseMillisToDuration(uiState.currentDuration),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
@@ -261,7 +270,7 @@ fun PlayerScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = { playerViewModel.skipToPrevious() },
+                onClick = { viewModel.skipToPrevious() },
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(
@@ -272,7 +281,7 @@ fun PlayerScreen(
             }
             IconButton(
                 onClick = {
-                    if (uiState.isPlaying) viewModel.pause() else viewModel.play()
+                    if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
                 },
                 modifier = Modifier.size(48.dp)
             ) {
@@ -283,7 +292,7 @@ fun PlayerScreen(
                 )
             }
             IconButton(
-                onClick = { playerViewModel.skipToNext() },
+                onClick = { viewModel.skipToNext() },
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(

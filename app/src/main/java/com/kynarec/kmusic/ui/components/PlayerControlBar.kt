@@ -1,5 +1,6 @@
 package com.kynarec.kmusic.ui.components
 
+import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -37,14 +38,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.transform.RoundedCornersTransformation
+import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.R
+import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
 import com.kynarec.kmusic.utils.THUMBNAIL_ROUNDNESS
 
 @Composable
 fun PlayerControlBar(
     onBarClick: () -> Unit,
-    viewModel: PlayerViewModel = viewModel(factory = PlayerViewModel.Factory(LocalContext.current))
+    viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as MyApp).database.songDao(),LocalContext.current))
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val customBackgroundColor = Color(0xFF2B3233)
@@ -68,7 +71,7 @@ fun PlayerControlBar(
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(uiState.albumArtUri)
+                    .data(uiState.currentSong?.thumbnail)
                     .crossfade(true)
                     .transformations(RoundedCornersTransformation(THUMBNAIL_ROUNDNESS.toFloat()))
                     .build(),
@@ -87,14 +90,14 @@ fun PlayerControlBar(
                 .padding(horizontal = 16.dp),
         ) {
             Text(
-                text = uiState.title,
+                text = uiState.currentSong?.title ?: "NA",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = uiState.artist,
+                text = uiState.currentSong?.artist ?: "NA",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 maxLines = 1,
@@ -112,7 +115,7 @@ fun PlayerControlBar(
                 )
             }
             IconButton(onClick = {
-                if (uiState.isPlaying) viewModel.pause() else viewModel.play()
+                if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
             }) {
                 Icon(
                     imageVector = if (uiState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,

@@ -62,16 +62,39 @@ class PlayerServiceModern : MediaLibraryService() {
     private var accumulatedPlayTime = 0L
     private var playbackStartTime = 0L
 
-    private val playbackStateListener = object : Player.Listener {
+    private val playerListener = object : Player.Listener {
+        // Called when the player transitions to a new song or the playlist ends
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            super.onMediaItemTransition(mediaItem, reason)
+            // Save playback time for the previous song before transitioning
+            saveCurrentPlaybackTime()
+            // Reset trackers for the new song
+            accumulatedPlayTime = 0L
+            playbackStartTime = System.currentTimeMillis()
+            // Update the current song ID
+            currentSongId = mediaItem?.mediaId
+            Log.i("PlayerService", "Transitioned to new media item: ${mediaItem?.mediaId}")
+        }
+
+        // Called when play/pause state changes
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
             if (isPlaying) {
+                // Started playing
                 playbackStartTime = System.currentTimeMillis()
                 startPeriodicUpdates()
             } else {
+                // Paused or stopped
                 saveCurrentPlaybackTime()
                 stopPeriodicUpdates()
             }
+        }
+
+        // Called when the player encounters an error
+        override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+            super.onPlayerError(error)
+            Log.e("PlayerService", "Player Error: ", error)
+            // Here you could stop the service, show a toast, or try to recover.
         }
     }
 
@@ -141,7 +164,7 @@ class PlayerServiceModern : MediaLibraryService() {
             .setLoadControl(loadController)
             .build()
 
-        player?.addListener(playbackStateListener)
+        player?.addListener(playerListener)
 
         mediaLibrarySession = MediaLibrarySession.Builder(
             this,
@@ -164,7 +187,7 @@ class PlayerServiceModern : MediaLibraryService() {
             release()
             mediaLibrarySession = null
         }
-        player?.removeListener(playbackStateListener)
+        player?.removeListener(playerListener)
         player = null
         super.onDestroy()
     }
