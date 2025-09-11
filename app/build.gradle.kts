@@ -56,7 +56,9 @@ android {
 chaquopy {
     defaultConfig {
         pip {
-            install("innertube==2.1.19")  // Use == for exact version
+//            install("innertube==2.1.19")  // Use == for exact version
+//            install("requests")
+            install("-r", "../requirements.txt")
         }
         version = "3.10"
     }

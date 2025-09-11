@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -153,10 +154,11 @@ fun PlayerScreen(
             AsyncImage(
                 model = uiState.currentSong?.thumbnail,
                 contentDescription = "Album art",
-                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(300.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(16.dp)),
+                contentScale = ContentScale.Crop,
 
             )
         }
@@ -219,12 +221,12 @@ fun PlayerScreen(
                 thumbColor = Color(0xFFD4B67C)
             )
 
-            Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentDuration: ${uiState.currentDuration}, currentPosition: ${uiState.currentPosition}")
+            Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentPosition: ${uiState.currentPosition}")
 
             WavySlider(
                 value = if (uiState.totalDuration != 0L) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,
                 onValueChange = { newValue ->
-                    viewModel.seekTo((newValue * uiState.currentDuration).toLong())
+                    viewModel.seekTo((newValue * uiState.totalDuration).toLong())
                 },
                 modifier = Modifier.fillMaxWidth(),
                 waveHeight = if (uiState.isPlaying) 4.dp else 0.dp,
@@ -286,7 +288,7 @@ fun PlayerScreen(
                 )
                 Text(
 //                    text = "${uiState.currentDuration / 1000 / 60}:${(uiState.totalDuration / 1000 % 60).toString().padStart(2, '0')}",
-                    text = parseMillisToDuration(uiState.currentDuration),
+                    text = parseMillisToDuration(uiState.totalDuration),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )

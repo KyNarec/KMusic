@@ -10,3 +10,4 @@ anyio~=4.9.0
 httpx~=0.23.3
 mediate~=0.1.8
 innertube~=2.1.19
+requests~=2.32.5

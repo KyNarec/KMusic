@@ -36,7 +36,6 @@ data class MusicUiState(
     val currentPosition: Long = 0,
     val totalDuration: Long = 0,
     val showControlBar: Boolean = false,
-    val currentDuration: Long = 0
 )
 
 // The new, combined ViewModel
@@ -69,7 +68,6 @@ class MusicViewModel
             _uiState.value = _uiState.value.copy(
                 currentSong = currentSong,
                 totalDuration = if (newTotalDuration > 0) newTotalDuration else 0L,
-                currentDuration = newCurrentDuration
             )
         }
 

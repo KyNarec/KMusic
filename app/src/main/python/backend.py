@@ -2,6 +2,7 @@ import re
 from innertube import InnerTube
 from pprint import pprint
 from time import perf_counter
+import requests
 
 PARAMS_TYPE_VIDEO = "EgIQAQ%3D%3D"
 PARAMS_TYPE_CHANNEL = "EgIQAg%3D%3D"
@@ -56,7 +57,7 @@ def searchSongs(query):
             except IndexError:
                 video_duration = "Unknown Duration"
 
-            video_thumbnail = f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
+            video_thumbnail = get_youtube_thumbnail(video_id)
 
             results.append({
                 "id": video_id,
@@ -109,7 +110,7 @@ def getRadio(video_id):
         video_id = i.get('playlistPanelVideoRenderer').get('videoId')
         video_title = i.get('playlistPanelVideoRenderer').get('title').get('runs')[0].get('text')
         video_artist = i.get('playlistPanelVideoRenderer').get('longBylineText').get('runs')[0].get('text')
-        video_thumbnail = f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
+        video_thumbnail = get_youtube_thumbnail(video_id)
         #video_duration = i.get('playlistPanelVideoRenderer').get('lengthText').get('runs')[0].get('text')
         
         try:
@@ -357,7 +358,7 @@ def playSongByIdWithBestBitrate(video_id):
     hBitrate = 0
     currentHighestBitrateUrl = ""
     n_data = data.get("streamingData").get("adaptiveFormats")
-    #pprint(n_data)
+    pprint(n_data)
     for i in n_data:
         if (
             i.get("audioQuality") == "AUDIO_QUALITY_HIGH"
@@ -391,3 +392,30 @@ def tester(video_id):
 
 #playSongByIdWithBestBitrate("A__cH65WRvE")
 # tester("A__cH65WRvE")
+
+def get_youtube_thumbnail(video_id):
+    """
+    Checks for all standard YouTube thumbnail resolutions and returns the highest available one.
+    """
+    resolutions = ['maxresdefault', 'sddefault', 'hqdefault', 'mqdefault', 'default']
+    base_url = f"https://img.youtube.com/vi/{video_id}/"
+    
+    for res in resolutions:
+        url = f"{base_url}{res}.jpg"
+        try:
+            # Using requests.head() is efficient as it only downloads the headers, not the image content
+            response = requests.head(url)
+            if response.status_code == 200:
+                print(f"Found thumbnail with resolution: {res}")
+                return url
+        except requests.exceptions.RequestException as e:
+            print(f"An error occurred while checking {url}: {e}")
+            continue
+            
+    print("No standard thumbnail found for this video.")
+    return None
+# Example usage with a video ID
+#video_id = "s6GIT4RhFv0"
+#thumbnail_url = get_youtube_thumbnail(video_id)
+#if thumbnail_url:
+#    print(f"Using thumbnail URL: {thumbnail_url}")
