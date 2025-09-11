@@ -10,15 +10,18 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.SliderDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
@@ -31,30 +34,47 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.addOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
+import com.kynarec.kmusic.utils.THUMBNAIL_ROUNDNESS
 import com.kynarec.kmusic.utils.parseMillisToDuration
 import ir.mahozad.multiplatform.wavyslider.WaveDirection
 import ir.mahozad.multiplatform.wavyslider.material.WavySlider
+import kotlin.io.path.Path
 
 /**
  * The full-screen music player composable.
@@ -86,7 +106,7 @@ fun PlayerScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(Color(0xFF2B3233))
             .draggable(
                 state = draggableState,
                 orientation = Orientation.Vertical,
@@ -122,21 +142,32 @@ fun PlayerScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Album art
-        AsyncImage(
-            model = uiState.currentSong?.thumbnail,
-            contentDescription = "Album art",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(300.dp)
-                .clip(MaterialTheme.shapes.medium)
-        )
+        Box(
+            modifier = Modifier.size(300.dp)
+                .multiLayersShadow(
+                    elevation = 10.dp,
+                    transparencyMultiplier = 0.2f,
+                    layers = 10,
+                    shape = RoundedCornerShape(16.dp))
+        ) {
+            AsyncImage(
+                model = uiState.currentSong?.thumbnail,
+                contentDescription = "Album art",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(300.dp)
+                    .clip(RoundedCornerShape(16.dp))
+
+            )
+        }
+
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Song title
         Button(
             onClick = { /* TODO: Navigate to song details */ },
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.background)
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0f, 0f, 0f, 0f))
         ) {
             Text(
                 text = uiState.currentSong?.title ?: "NA",
@@ -152,7 +183,7 @@ fun PlayerScreen(
         // Song artist
         Button(
             onClick = { /* TODO: Navigate to artist details */ },
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.background)
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0f, 0f, 0f, 0f))
         ) {
             Text(
                 text = uiState.currentSong?.artist ?: "NA",
@@ -180,12 +211,12 @@ fun PlayerScreen(
 //                modifier = Modifier.fillMaxWidth()
 //            )
 
-            val customSliderColors  = SliderDefaults.colors(
-            activeTrackColor = Color(0xFFD4B67C),
-            inactiveTrackColor = Color(0xFF8E8A81),
-            activeTickColor = Color.Transparent,
-            inactiveTickColor = Color.Transparent,
-            thumbColor = Color(0xFFD4B67C)
+            val customSliderColors = SliderDefaults.colors(
+                activeTrackColor = Color(0xFFD4B67C),
+                inactiveTrackColor = Color(0xFF8E8A81),
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent,
+                thumbColor = Color(0xFFD4B67C)
             )
 
 //            Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentDuration: ${uiState.currentDuration}")
@@ -247,7 +278,9 @@ fun PlayerScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "${uiState.currentPosition / 1000 / 60}:${(uiState.currentPosition / 1000 % 60).toString().padStart(2, '0')}",
+                    text = "${uiState.currentPosition / 1000 / 60}:${
+                        (uiState.currentPosition / 1000 % 60).toString().padStart(2, '0')
+                    }",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
@@ -302,5 +335,66 @@ fun PlayerScreen(
                 )
             }
         }
+    }
+}
+
+/**
+ * Code from https://medium.com/@yuriyskul/different-approaches-to-create-android-style-shadows-with-transparent-containers-in-jetpack-compose-e299a215557e
+ */
+fun Modifier.multiLayersShadow(
+    elevation: Dp,
+    transparencyMultiplier: Float = 0.1f,
+    color: Color = Color.Black,
+    layers: Int = 20,
+    shape: Shape = RoundedCornerShape(8.dp)
+): Modifier = this.drawWithCache {
+
+    // Set the shadow size based on the elevation
+    val shadowSize =
+        elevation.toPx() * 1.2f  // tweak the multiplier for proper shadow size
+    val layerSize = shadowSize / layers
+
+    // Create the outline based on the shape and size
+    val outline = shape.createOutline(size, layoutDirection, this)
+    val path = Path().apply { addOutline(outline) }
+
+    onDrawWithContent {
+        // Draw each shadow layer with decreasing opacity and expanding size
+        repeat(layers) { layer ->
+            val layerAlpha = 1f - (1 / layers.toFloat()) * layer
+            val reducedLayerAlpha = layerAlpha * transparencyMultiplier
+
+            // Adjust the scale factor based on the layer
+            val scaleFactorX = 1f + (layer * layerSize) / size.width
+            val scaleFactorY = 1f + (layer * layerSize) / size.height
+
+            drawIntoCanvas { canvas ->
+                // Save the current state of the canvas
+                canvas.save()
+
+                // Move the canvas to the center
+                val centerX = size.width / 2
+                val centerY = size.height / 2
+                canvas.translate(centerX, centerY)
+
+                // Apply scale transformation, scaling differently in X and Y directions
+                canvas.scale(scaleFactorX, scaleFactorY)
+
+                // Translate back to the original position
+                canvas.translate(-centerX, -centerY)
+
+                // Draw the outline using the path and apply transparency for the shadow effect
+                drawPath(
+                    path = path,
+                    color = color.copy(alpha = reducedLayerAlpha),
+                    style = Stroke(width = layerSize)  // Set stroke width for each layer
+                )
+
+                // Restore the canvas to its original state
+                canvas.restore()
+            }
+        }
+
+        drawContent()
     }
 }

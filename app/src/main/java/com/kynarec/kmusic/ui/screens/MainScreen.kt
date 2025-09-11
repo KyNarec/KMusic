@@ -102,7 +102,7 @@ fun MainScreen() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .padding(32.dp)
+                    .padding(bottom = 24.dp, start = 12.dp, end = 12.dp)
             ) {
                 PlayerControlBar(
                     onBarClick = { showPlayerScreen = true },
