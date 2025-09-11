@@ -44,7 +44,7 @@ data class MusicUiState(
 class MusicViewModel
     (
     private val songDao: SongDao,
-    val context: Context
+    private val context: Context
 ) : ViewModel() {
     private val tag = "MusicViewModel"
 
@@ -103,24 +103,29 @@ class MusicViewModel
         viewModelScope.launch(Dispatchers.Main) {
             while (true) {
                 val currentPosition = mediaController?.currentPosition ?: 0L
-                if (_uiState.value.currentPosition != currentPosition) {
-                    _uiState.value = _uiState.value.copy(currentPosition = currentPosition)
-                }
+                val totalDuration = mediaController?.duration ?: 0L // Fetch total duration
+//                if (_uiState.value.currentPosition != currentPosition) {
+//                    _uiState.value = _uiState.value.copy(currentPosition = currentPosition, totalDuration = totalDuration)
+//                }
+                _uiState.value = _uiState.value.copy(currentPosition = currentPosition, totalDuration = totalDuration)
+
                 delay(100) // Update position 10 times a second
             }
         }
     }
 
-    // This is the key function that connects the song list to the player
-    fun playSong(tappedSong: Song) {
+    /**
+     * Plays a specific song.
+     * @param song The song to play.
+     */    fun playSong(song: Song) {
         Log.i(tag, "playSong called")
         val controller = mediaController ?: return
         val songList = _uiState.value.songsList
 
         // Find the index of the tapped song
-        val startIndex = songList.indexOf(tappedSong)
+        val startIndex = songList.indexOf(song)
 
-        val mediaItem = createMediaItemFromSong(tappedSong, context)
+        val mediaItem = createMediaItemFromSong(song, context)
         controller.setMediaItem(mediaItem)
         controller.prepare()
         controller.play()
@@ -167,22 +172,38 @@ class MusicViewModel
         }
     }
 
+    /**
+     * Pauses playback.
+     */
     fun pause() {
         mediaController?.pause()
     }
 
+    /**
+     * Resumes playback.
+     */
     fun resume() {
         mediaController?.play()
     }
 
+    /**
+     * Seeks to a specific position in the current song.
+     * @param position The position to seek to in milliseconds.
+     */
     fun seekTo(position: Long) {
         mediaController?.seekTo(position)
     }
 
+    /**
+     * Skips to the next song in the queue.
+     */
     fun skipToNext() {
         mediaController?.seekToNextMediaItem()
     }
 
+    /**
+     * Skips to the previous song in the queue.
+     */
     fun skipToPrevious() {
         mediaController?.seekToPreviousMediaItem()
     }
@@ -193,7 +214,9 @@ class MusicViewModel
         MediaController.releaseFuture(mediaControllerFuture)
     }
 
-    // A Factory is needed to pass arguments (songDao, context) to the ViewModel
+    /**
+     * Factory for creating the ViewModel with dependencies.
+     */
     class Factory(
         private val songDao: SongDao,
         private val context: Context

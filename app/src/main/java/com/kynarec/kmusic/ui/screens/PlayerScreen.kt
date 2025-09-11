@@ -219,10 +219,10 @@ fun PlayerScreen(
                 thumbColor = Color(0xFFD4B67C)
             )
 
-//            Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentDuration: ${uiState.currentDuration}")
+            Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentDuration: ${uiState.currentDuration}, currentPosition: ${uiState.currentPosition}")
 
             WavySlider(
-                value = if (uiState.totalDuration > 0 || uiState.totalDuration < 0) uiState.currentPosition.toFloat() / uiState.currentDuration.toFloat() else 0f,
+                value = if (uiState.totalDuration != 0L) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,
                 onValueChange = { newValue ->
                     viewModel.seekTo((newValue * uiState.currentDuration).toLong())
                 },
