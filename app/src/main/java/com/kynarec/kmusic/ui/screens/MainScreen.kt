@@ -53,10 +53,14 @@ fun MainScreen() {
     // New state to control PlayerScreen visibility
     var showPlayerScreen by remember { mutableStateOf(false) }
 
-    val shouldHideNavElements = remember(currentRoute) {
-        currentRoute?.startsWith(SearchScreen::class.qualifiedName!!) == true ||
-                currentRoute?.startsWith(SearchResultScreen::class.qualifiedName!!) == true
+    val isSearchScreen = remember(currentRoute) {
+        currentRoute?.startsWith(SearchScreen::class.qualifiedName!!) == true
     }
+    val isSearchResultScreen = remember(currentRoute) {
+        currentRoute?.startsWith(SearchResultScreen::class.qualifiedName!!) == true
+    }
+
+    val shouldHideNavElements = isSearchScreen || isSearchResultScreen
 
     KMusicTheme {
         // The top-level Box for layering
@@ -95,7 +99,7 @@ fun MainScreen() {
 
             // This is the PlayerControlBar, now correctly positioned to float
             AnimatedVisibility(
-                visible = showControlBar && !shouldHideNavElements && !showPlayerScreen,
+                visible = showControlBar && !isSearchScreen && !showPlayerScreen,
                 enter = slideInVertically(initialOffsetY = { it }),
                 exit = slideOutVertically(targetOffsetY = { it }),
                 // Modifiers to float the bar in the bottom-center of the screen
