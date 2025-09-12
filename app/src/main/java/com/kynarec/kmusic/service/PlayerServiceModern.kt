@@ -1,14 +1,12 @@
 package com.kynarec.kmusic.service
 
 import android.app.PendingIntent
-import android.content.ComponentName
 import android.content.Intent
 import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
-import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
@@ -23,9 +21,7 @@ import androidx.media3.exoplayer.upstream.DefaultAllocator
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
-import androidx.media3.session.SessionCommands
 import androidx.media3.session.SessionError
-import androidx.media3.session.legacy.MediaBrowserCompat
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -34,8 +30,8 @@ import com.google.common.util.concurrent.SettableFuture
 import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.data.db.dao.SongDao
-import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.utils.createMediaItemFromSong
+import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -123,9 +119,33 @@ class PlayerServiceModern : MediaLibraryService() {
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>
         ): ListenableFuture<MutableList<MediaItem>> {
-            currentSongId = mediaItems.firstOrNull()?.mediaId
-            val updatedMediaItems = mediaItems.map { it.buildUpon().setMimeType("audio/mpeg").build() }.toMutableList()
-            return super.onAddMediaItems(mediaSession, controller, updatedMediaItems)
+            Log.d(tag, "onAddMediaItems called with ${mediaItems.size} items")
+            val future = SettableFuture.create<MutableList<MediaItem>>()
+            if (mediaItems.isEmpty() || mediaItems.firstOrNull()?.mediaId == null) {
+                future.set(mutableListOf())
+                return future
+            }
+
+            val mediaId = mediaItems.first().mediaId
+            Log.i(tag, "Attempting to retrieve full song data for mediaId: $mediaId")
+
+            serviceScope.launch(Dispatchers.IO) {
+                try {
+                    val song = songDao.getSongById(mediaId)
+                    if (song != null) {
+                        Log.i(tag, "Found song in database: ${song.title}")
+                        val fullMediaItem = createMediaItemFromSong(song, applicationContext)
+                        future.set(mutableListOf(fullMediaItem))
+                    } else {
+                        Log.e(tag, "Song not found for mediaId: $mediaId")
+                        future.set(mutableListOf())
+                    }
+                } catch (e: Exception) {
+                    Log.e(tag, "Error retrieving song from database.", e)
+                    future.setException(e)
+                }
+            }
+            return future
         }
 
 
@@ -166,7 +186,7 @@ class PlayerServiceModern : MediaLibraryService() {
                         Log.i(tag, "Found ${allSongs.size} songs in the database.")
 
                         val mediaItems = allSongs.map {
-                            createMediaItemFromSong(it, applicationContext)
+                            createPartialMediaItemFromSong(it, applicationContext)
                         }
                         Log.i(tag, "Created ${mediaItems.size} MediaItems.")
 
@@ -181,65 +201,37 @@ class PlayerServiceModern : MediaLibraryService() {
             return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_BAD_VALUE))
         }
 
-//        override fun onGetItem(
-//            session: MediaLibrarySession,
-//            browser: MediaSession.ControllerInfo,
-//            mediaId: String,
-//            params: LibraryParams?
-//        ): ListenableFuture<LibraryResult<MediaItem>> {
-//            return Futures.submitAsync({
-////                val song : Song = Song()
-//                serviceScope.launch {
-//                    val song = songDao.getSongById(mediaId)!!
-//                }
-////                val song = withContext(Dispatchers.IO) {
-////                    songDao.getSongById(mediaId)
-////                }
-//                if (song != null) {
-//                    val mediaItem = getSongMediaItems(listOf(song)).first()
-//                    LibraryResult.ofItem(mediaItem, params)
-//                } else {
-//                    LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
-//                }
-//            }, executor)
-//        }
 
         override fun onGetItem(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
             mediaId: String
         ): ListenableFuture<LibraryResult<MediaItem>> {
+            Log.d(tag, "onGetItem called with mediaId: $mediaId")
+            if (mediaId == "all_songs") {
+                Log.e(tag, "Attempted to get a playable item with the ID of a browsable item. Returning an error.")
+                return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_BAD_VALUE))
+            }
             val future = SettableFuture.create<LibraryResult<MediaItem>>()
             serviceScope.launch(Dispatchers.IO) {
                 try {
                     val song = songDao.getSongById(mediaId)
                     if (song != null) {
-                        val mediaItem = createMediaItemFromSong(song, applicationContext)
+                        Log.i(tag, "Found song with mediaId: $mediaId")
+                        val mediaItem = createPartialMediaItemFromSong(song, applicationContext)
                         future.set(LibraryResult.ofItem(mediaItem, null))
                     } else {
+                        Log.e(tag, "Could not find song with mediaId: $mediaId")
                         future.set(LibraryResult.ofError(SessionError.ERROR_BAD_VALUE))
                     }
                 } catch (e: Exception) {
+                    Log.e(tag, "Error getting song from database.", e)
                     future.setException(e)
                 }
             }
             return future
         }
 
-//        override fun onGetItem(
-//            session: MediaLibrarySession,
-//            browser: MediaSession.ControllerInfo,
-//            mediaId: String
-//        ): ListenableFuture<LibraryResult<MediaItem>> {
-//            var mediaItem = MediaItem.EMPTY
-//            serviceScope.launch {
-//                val song = songDao.getSongById(mediaId)!!
-//                mediaItem = createMediaItemFromSong(song, applicationContext)
-//            }
-//            return if (mediaItem == MediaItem.EMPTY) Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_BAD_VALUE))
-//            else Futures.immediateFuture(LibraryResult.ofItem(mediaItem, null))
-////            return super.onGetItem(session, browser, mediaId)
-//        }
     }
 
     // Add this inside your PlayerServiceModern class

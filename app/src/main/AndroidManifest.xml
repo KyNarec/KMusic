@@ -27,8 +27,8 @@
         android:supportsRtl="true"
         android:name=".MyApp"
         android:theme="@style/Theme.KMusic.AppBase"
-        android:enableOnBackInvokedCallback="true"
-        >
+        android:enableOnBackInvokedCallback="true">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

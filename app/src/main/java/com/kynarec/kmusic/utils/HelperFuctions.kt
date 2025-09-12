@@ -66,6 +66,8 @@ fun createMediaItemFromSong(song: Song, context: Context): MediaItem {
                         .setTitle(song.title)
                         .setArtist(song.artist)
                         .setArtworkUri(song.thumbnail.toUri())
+                        .setIsBrowsable(false)
+                        .setIsPlayable(true)
                         .build()
                 )
                 .build()
@@ -85,6 +87,25 @@ fun createMediaItemFromSong(song: Song, context: Context): MediaItem {
     return mediaItem
 }
 
+fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
+    //val croppedUri = runBlocking { getCroppedArtworkUri(context, song.thumbnail.toUri()) }
+
+    val mediaItem = MediaItem.Builder()
+        .setMediaId(song.id) // Important: Set mediaId on ExoPlayer's MediaItem
+        //.setUri(playbackUriString)
+        .setMediaMetadata(
+            MediaMetadata.Builder()
+                .setTitle(song.title)
+                .setArtist(song.artist)
+                .setArtworkUri(song.thumbnail.toUri())
+                .setIsBrowsable(false)
+                .setIsPlayable(true)
+                .build()
+        )
+        .build()
+
+    return mediaItem
+}
 
 @Composable
 fun ConditionalMarqueeText(
