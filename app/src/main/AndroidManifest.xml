@@ -9,6 +9,13 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
+    <uses-feature
+        android:name="android.hardware.type.automotive"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.type.car"
+        android:required="false" />
+
 
     <application
         android:allowBackup="true"
@@ -32,16 +39,28 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <service
             android:name=".service.PlayerServiceModern"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>
+                <!-- This intent filter is essential for media clients like Android Auto -->
                 <action android:name="androidx.media3.session.MediaLibraryService" />
-                <action android:name="androidx.media3.session.MediaSessionService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
+            <!--
+             The following metadata is required to tell Android Auto that your app
+             provides a MediaLibraryService. The value should match the full class name.
+             This is a new requirement for Media3.
+            -->
         </service>
 
+        <meta-data android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc"/>
+
+        <meta-data android:name="com.google.android.gms.car.notification.SmallIcon"
+            android:resource="@drawable/ic_launcher_foreground" />
 
     </application>
 </manifest>
