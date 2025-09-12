@@ -30,6 +30,7 @@ import com.google.common.util.concurrent.SettableFuture
 import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.data.db.dao.SongDao
+import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
 import kotlinx.coroutines.CoroutineScope
@@ -134,7 +135,7 @@ class PlayerServiceModern : MediaLibraryService() {
                     val song = songDao.getSongById(mediaId)
                     if (song != null) {
                         Log.i(tag, "Found song in database: ${song.title}")
-                        val fullMediaItem = createMediaItemFromSong(song, applicationContext)
+                        val fullMediaItem = createMediaItemFromSong(context = applicationContext, song = song)
                         future.set(mutableListOf(fullMediaItem))
                     } else {
                         Log.e(tag, "Song not found for mediaId: $mediaId")
@@ -149,7 +150,7 @@ class PlayerServiceModern : MediaLibraryService() {
         }
 
 
-        // This is where Android Auto requests the root of your media library.
+        // MODIFIED: This is where Android Auto requests the root of your media library.
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
@@ -157,7 +158,7 @@ class PlayerServiceModern : MediaLibraryService() {
         ): ListenableFuture<LibraryResult<MediaItem>> {
             // Android Auto expects a browsable root item. We use a "Songs" category.
             val libraryRoot = MediaItem.Builder()
-                .setMediaId("all_songs")
+                .setMediaId(ROOT_ID)
                 .setMediaMetadata(
                     MediaMetadata.Builder()
                         .setIsPlayable(false)
@@ -169,6 +170,7 @@ class PlayerServiceModern : MediaLibraryService() {
             return Futures.immediateFuture(LibraryResult.ofItem(libraryRoot, params))
         }
 
+        // MODIFIED: This handles the different browsable folders, including the new sort options.
         override fun onGetChildren(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
@@ -178,60 +180,116 @@ class PlayerServiceModern : MediaLibraryService() {
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
             Log.d(tag, "onGetChildren called with parentId: $parentId")
-            if (parentId == "all_songs") {
-                val future = SettableFuture.create<LibraryResult<ImmutableList<MediaItem>>>()
-                serviceScope.launch(Dispatchers.IO) {
-                    try {
-                        val allSongs = songDao.getAllSongs()
-                        Log.i(tag, "Found ${allSongs.size} songs in the database.")
 
-                        val mediaItems = allSongs.map {
-                            createPartialMediaItemFromSong(it, applicationContext)
-                        }
-                        Log.i(tag, "Created ${mediaItems.size} MediaItems.")
+            val future = SettableFuture.create<LibraryResult<ImmutableList<MediaItem>>>()
 
-                        future.set(LibraryResult.ofItemList(mediaItems, params))
-                    } catch (e: Exception) {
-                        Log.e(tag, "Error loading songs from database.", e)
-                        future.setException(e)
-                    }
-                }
-                return future
-            }
-            return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_BAD_VALUE))
-        }
-
-
-        override fun onGetItem(
-            session: MediaLibrarySession,
-            browser: MediaSession.ControllerInfo,
-            mediaId: String
-        ): ListenableFuture<LibraryResult<MediaItem>> {
-            Log.d(tag, "onGetItem called with mediaId: $mediaId")
-            if (mediaId == "all_songs") {
-                Log.e(tag, "Attempted to get a playable item with the ID of a browsable item. Returning an error.")
-                return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_BAD_VALUE))
-            }
-            val future = SettableFuture.create<LibraryResult<MediaItem>>()
             serviceScope.launch(Dispatchers.IO) {
                 try {
-                    val song = songDao.getSongById(mediaId)
-                    if (song != null) {
-                        Log.i(tag, "Found song with mediaId: $mediaId")
-                        val mediaItem = createPartialMediaItemFromSong(song, applicationContext)
-                        future.set(LibraryResult.ofItem(mediaItem, null))
-                    } else {
-                        Log.e(tag, "Could not find song with mediaId: $mediaId")
-                        future.set(LibraryResult.ofError(SessionError.ERROR_BAD_VALUE))
+                    val mediaItems = when (parentId) {
+                        ROOT_ID -> {
+                            listOf(
+                                MediaItem.Builder()
+                                    .setMediaId(ALL_SONGS_ID)
+                                    .setMediaMetadata(MediaMetadata.Builder().setTitle("All Songs").setIsBrowsable(true).setIsPlayable(false).build())
+                                    .build(),
+                                MediaItem.Builder()
+                                    .setMediaId(SORT_OPTIONS_ID)
+                                    .setMediaMetadata(MediaMetadata.Builder().setTitle("Sort").setIsBrowsable(true).setIsPlayable(false).build())
+                                    .build()
+                            )
+                        }
+                        ALL_SONGS_ID -> {
+                            val allSongs = songDao.getAllSongs()
+                            allSongs.map { createPartialMediaItemFromSong(it, applicationContext) }
+                        }
+                        SORT_OPTIONS_ID -> {
+                            listOf(
+                                MediaItem.Builder()
+                                    .setMediaId(SORT_BY_TITLE_ID)
+                                    .setMediaMetadata(MediaMetadata.Builder().setTitle("Title (A-Z)").setIsBrowsable(true).setIsPlayable(false).build())
+                                    .build(),
+                                MediaItem.Builder()
+                                    .setMediaId(SORT_BY_ARTIST_ID)
+                                    .setMediaMetadata(MediaMetadata.Builder().setTitle("Artist (A-Z)").setIsBrowsable(true).setIsPlayable(false).build())
+                                    .build()
+                            )
+                        }
+                        SORT_BY_TITLE_ID -> {
+                            val sortedSongs = songDao.getAllSongs().sortedBy { it.title }
+                            sortedSongs.map { createPartialMediaItemFromSong(it, applicationContext) }
+                        }
+                        SORT_BY_ARTIST_ID -> {
+                            val sortedSongs = songDao.getAllSongs().sortedBy { it.artist }
+                            sortedSongs.map { createPartialMediaItemFromSong(it, applicationContext) }
+                        }
+                        else -> {
+                            Log.w(tag, "Invalid parentId: $parentId")
+                            emptyList<MediaItem>()
+                        }
                     }
+                    future.set(LibraryResult.ofItemList(mediaItems.toMutableList(), params))
                 } catch (e: Exception) {
-                    Log.e(tag, "Error getting song from database.", e)
+                    Log.e(tag, "Error loading songs from database.", e)
                     future.setException(e)
                 }
             }
             return future
         }
 
+
+        // MODIFIED: This must return a FULL MediaItem with the URI.
+        override fun onGetItem(
+            session: MediaLibrarySession,
+            browser: MediaSession.ControllerInfo,
+            mediaId: String
+        ): ListenableFuture<LibraryResult<MediaItem>> {
+            Log.d(tag, "onGetItem called with mediaId: $mediaId")
+
+            val future = SettableFuture.create<LibraryResult<MediaItem>>()
+            serviceScope.launch(Dispatchers.IO) {
+                try {
+                    // Check if the mediaId corresponds to a browsable folder
+                    val browsableItem = when (mediaId) {
+                        ROOT_ID -> {
+                            MediaItem.Builder().setMediaId(ROOT_ID).setMediaMetadata(MediaMetadata.Builder().setTitle("Songs").setIsBrowsable(true).setIsPlayable(false).build()).build()
+                        }
+                        ALL_SONGS_ID -> {
+                            MediaItem.Builder().setMediaId(ALL_SONGS_ID).setMediaMetadata(MediaMetadata.Builder().setTitle("All Songs").setIsBrowsable(true).setIsPlayable(false).build()).build()
+                        }
+                        SORT_OPTIONS_ID -> {
+                            MediaItem.Builder().setMediaId(SORT_OPTIONS_ID).setMediaMetadata(MediaMetadata.Builder().setTitle("Sort").setIsBrowsable(true).setIsPlayable(false).build()).build()
+                        }
+                        SORT_BY_TITLE_ID -> {
+                            MediaItem.Builder().setMediaId(SORT_BY_TITLE_ID).setMediaMetadata(MediaMetadata.Builder().setTitle("Title (A-Z)").setIsBrowsable(true).setIsPlayable(false).build()).build()
+                        }
+                        SORT_BY_ARTIST_ID -> {
+                            MediaItem.Builder().setMediaId(SORT_BY_ARTIST_ID).setMediaMetadata(MediaMetadata.Builder().setTitle("Artist (A-Z)").setIsBrowsable(true).setIsPlayable(false).build()).build()
+                        }
+                        else -> null // This is a song, not a browsable folder
+                    }
+
+                    if (browsableItem != null) {
+                        Log.i(tag, "Returning a browsable item for mediaId: $mediaId")
+                        future.set(LibraryResult.ofItem(browsableItem, null))
+                    } else {
+                        // This is a song, so fetch the full song data
+                        val song = songDao.getSongById(mediaId)
+                        if (song != null) {
+                            Log.i(tag, "Found song with mediaId: $mediaId. Creating full MediaItem.")
+                            val mediaItem = createMediaItemFromSong(song, applicationContext)
+                            future.set(LibraryResult.ofItem(mediaItem, null))
+                        } else {
+                            Log.e(tag, "Could not find song with mediaId: $mediaId")
+                            future.set(LibraryResult.ofError(SessionError.ERROR_BAD_VALUE))
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(tag, "Error in onGetItem: ${e.message}", e)
+                    future.setException(e)
+                }
+            }
+            return future
+        }
     }
 
     // Add this inside your PlayerServiceModern class
@@ -239,6 +297,13 @@ class PlayerServiceModern : MediaLibraryService() {
         private const val CACHE_DIR = "kmusic_cache"
         private const val MAX_CACHE_SIZE_BYTES = 100 * 1024 * 1024L // 100MB
         private var cache: SimpleCache? = null
+
+        // New constants for sorting functionality
+        const val ROOT_ID = "root_id"
+        const val ALL_SONGS_ID = "all_songs"
+        const val SORT_OPTIONS_ID = "sort_options"
+        const val SORT_BY_TITLE_ID = "sort_by_title"
+        const val SORT_BY_ARTIST_ID = "sort_by_artist"
     }
 
     // Function to initialize the cache

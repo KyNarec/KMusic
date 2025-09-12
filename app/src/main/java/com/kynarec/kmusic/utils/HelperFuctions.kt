@@ -191,24 +191,21 @@ fun convertThumbnailUriToSquareByteArray(context: Context, uri: Uri): ByteArray?
     return byteArray
 }
 
+// This function is for creating browsable items. It should not contain the playback URI.
 fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
-    //val croppedUri = runBlocking { getCroppedArtworkUri(context, song.thumbnail.toUri()) }
-
-    val mediaItem = MediaItem.Builder()
-        .setMediaId(song.id) // Important: Set mediaId on ExoPlayer's MediaItem
-        //.setUri(playbackUriString)
+    // This is a browsable item, it only needs the MediaId and Metadata.
+    return MediaItem.Builder()
+        .setMediaId(song.id)
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setTitle(song.title)
                 .setArtist(song.artist)
                 .setArtworkUri(song.thumbnail.toUri())
-                .setIsBrowsable(false)
-                .setIsPlayable(true)
+                .setIsBrowsable(false) // Songs are not folders.
+                .setIsPlayable(true)   // Songs are playable.
                 .build()
         )
         .build()
-
-    return mediaItem
 }
 
 @Composable
