@@ -2,7 +2,6 @@ package com.kynarec.kmusic.ui.screens
 
 import android.app.Application
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
@@ -10,17 +9,21 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -36,11 +39,13 @@ import com.kynarec.kmusic.ui.components.TopBarComponent
 import com.kynarec.kmusic.ui.theme.KMusicTheme
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
     val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModel.Factory(LocalContext.current))
-    //val showControlBar by playerViewModel.showControlBar.collectAsState()
+    val scope = rememberCoroutineScope()
 
     val application = LocalContext.current.applicationContext as Application
     val musicViewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((application as MyApp).database.songDao(),LocalContext.current))
@@ -51,7 +56,9 @@ fun MainScreen() {
     val currentRoute = navBackStackEntry?.destination?.route
 
     // New state to control PlayerScreen visibility
-    var showPlayerScreen by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val showBottomSheet = remember { mutableStateOf(false) }
+
 
     val isSearchScreen = remember(currentRoute) {
         currentRoute?.startsWith(SearchScreen::class.qualifiedName!!) == true
@@ -99,7 +106,7 @@ fun MainScreen() {
 
             // This is the PlayerControlBar, now correctly positioned to float
             AnimatedVisibility(
-                visible = showControlBar && !isSearchScreen && !showPlayerScreen,
+                visible = showControlBar && !isSearchScreen && !showBottomSheet.value,
                 enter = slideInVertically(initialOffsetY = { it }),
                 exit = slideOutVertically(targetOffsetY = { it }),
                 // Modifiers to float the bar in the bottom-center of the screen
@@ -109,27 +116,33 @@ fun MainScreen() {
                     .padding(bottom = 24.dp, start = 12.dp, end = 12.dp)
             ) {
                 PlayerControlBar(
-                    onBarClick = { showPlayerScreen = true },
+                    onBarClick = {
+                        showBottomSheet.value = true
+                                 },
                     viewModel = musicViewModel,
                 )
             }
 
-            // This is the new PlayerScreen overlay
-            AnimatedVisibility(
-                visible = showPlayerScreen,
-                enter = slideInVertically(
-                    initialOffsetY = { fullHeight -> fullHeight },
-                    animationSpec = tween(durationMillis = 400)
-                ),
-                exit = slideOutVertically(
-                    targetOffsetY = { fullHeight -> fullHeight },
-                    animationSpec = tween(durationMillis = 400)
-                )
-            ) {
-                PlayerScreen(
-                    onClose = { showPlayerScreen = false },
-                    musicViewModel
-                )
+            if (showBottomSheet.value) {
+                ModalBottomSheet(
+                    onDismissRequest = {
+                        showBottomSheet.value = false
+                    },
+                    dragHandle = null,
+                    shape = RectangleShape,
+                    sheetState = sheetState
+                ) {
+                    PlayerScreen(
+                        onClose = {
+                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                if (!sheetState.isVisible) {
+                                    showBottomSheet.value = false
+                                }
+                            }
+                        },
+                        viewModel = musicViewModel
+                    )
+                }
             }
         }
     }
