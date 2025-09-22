@@ -62,5 +62,9 @@
         <meta-data android:name="com.google.android.gms.car.notification.SmallIcon"
             android:resource="@drawable/ic_launcher_foreground" />
 
+        <meta-data
+            android:name="media_session_default_notification_icon"
+            android:resource="@drawable/ic_launcher_foreground" />
+
     </application>
 </manifest>
