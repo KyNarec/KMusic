@@ -109,15 +109,15 @@ fun SearchScreen(
                         navController.navigate(SearchResultScreen(searchQuery))
                     }
                 ),
-//                colors = TextFieldDefaults.colors(
-//                    focusedContainerColor = Color.Transparent,
-//                    unfocusedContainerColor = Color.Transparent,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
 //                    focusedTextColor = Color.White,
 //                    unfocusedTextColor = Color.White,
 //                    cursorColor = Color.White,
-//                    focusedIndicatorColor = Color.Transparent,
-//                    unfocusedIndicatorColor = Color.Transparent,
-//                )
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                )
             )
         }
     }
