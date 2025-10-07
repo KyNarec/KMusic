@@ -36,6 +36,7 @@ import com.kynarec.kmusic.ui.SearchScreen
 import com.kynarec.kmusic.ui.components.MyNavigationRailComponent
 import com.kynarec.kmusic.ui.components.PlayerControlBar
 import com.kynarec.kmusic.ui.components.TopBarComponent
+import com.kynarec.kmusic.ui.theme.AppTheme
 import com.kynarec.kmusic.ui.theme.KMusicTheme
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
@@ -69,7 +70,7 @@ fun MainScreen() {
 
     val shouldHideNavElements = isSearchScreen || isSearchResultScreen
 
-    KMusicTheme {
+    AppTheme {
         // The top-level Box for layering
         Box(
             modifier = Modifier.fillMaxSize()

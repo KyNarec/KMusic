@@ -84,16 +84,17 @@ fun PlayerScreen(
     }
 
     // This DraggableState handles the swipe-down-to-dismiss gesture
-    val draggableState = rememberDraggableState(onDelta = { delta ->
-        if (delta > 50) { // A small threshold to prevent accidental dismissal
-            onClose()
-        }
-    })
+//    val draggableState = rememberDraggableState(onDelta = { delta ->
+//        if (delta > 50) { // A small threshold to prevent accidental dismissal
+//            onClose()
+//        }
+//    })
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF2B3233))
+//            .background(Color(0xFF2B3233))
+            .background(MaterialTheme.colorScheme.secondaryContainer)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

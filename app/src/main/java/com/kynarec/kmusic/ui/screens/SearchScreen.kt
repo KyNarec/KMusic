@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
@@ -62,7 +63,8 @@ fun SearchScreen(
                 .padding(top = 40.dp)
                 .fillMaxWidth()
                 .background(
-                    color = Color(0xFF2B3233),
+//                    color = Color(0xFF2B3233),
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     shape = RoundedCornerShape(24.dp)
                 ),
             contentAlignment = Alignment.Center
@@ -78,7 +80,7 @@ fun SearchScreen(
                         text = stringResource(id = R.string.search_hint),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
-                        color = Color.LightGray
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 },
                 trailingIcon = {

@@ -1,16 +1,28 @@
+@file:kotlin.OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package com.kynarec.kmusic.ui.screens
 
 import android.app.Application
 import android.content.ComponentName
 import androidx.annotation.OptIn
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ContainedLoadingIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.LoadingIndicatorDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.Log
@@ -19,6 +31,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.chaquo.python.PyObject
 import com.chaquo.python.Python
+import com.google.android.material.loadingindicator.LoadingIndicator
 import com.google.common.util.concurrent.MoreExecutors
 import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.data.db.entities.Song
@@ -27,8 +40,9 @@ import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-
-@OptIn(UnstableApi::class)
+@OptIn(UnstableApi::class, ExperimentalMaterial3ExpressiveApi::class,
+    ExperimentalMaterial3ExpressiveApi::class
+)
 @Composable
 fun SearchResultScreen(
     query: String,
@@ -57,6 +71,7 @@ fun SearchResultScreen(
     // The coroutine will be launched when the query changes.
     LaunchedEffect(query) {
         isLoading = true
+        Log.i("SearchResultScreen", "isLoading is now true")
         errorMessage = null
         try {
             // Perform all backend calls on the I/O dispatcher
@@ -91,35 +106,54 @@ fun SearchResultScreen(
             errorMessage = "An error occurred: ${e.message}"
         } finally {
             isLoading = false
+            Log.i("SearchResultScreen", "isLoading is now false")
         }
     }
 
-    LazyColumn {
-        items(
-            count = songs.size,
-            key = { index -> songs[index].id } // Add stable key!
-        ) { index ->
-            val song = songs[index]
+    val loadingIndicatorColor: Color = MaterialTheme.colorScheme.primaryContainer
 
-            // Create stable onClick callback
-            val onSongClick = remember(song.id) {
-                {
+    when {
+        isLoading -> {
+            Box(
+                contentAlignment = Alignment.TopCenter,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                //CircularProgressIndicator() // The M3 Loading Indicator
+                ContainedLoadingIndicator(
+//                    color = Color(0xFF2B3233)
+                )
+            }
+        }
+        else -> {
+            LazyColumn {
+                items(
+                    count = songs.size,
+                    key = { index -> songs[index].id } // Add stable key!
+                ) { index ->
+                    val song = songs[index]
+
+                    // Create stable onClick callback
+                    val onSongClick = remember(song.id) {
+                        {
 //                    mediaController?.let { controller ->
 //                        val mediaItem = createMediaItemFromSong(song, context)
 //                        controller.setMediaItem(mediaItem)
 //                        controller.prepare()
 //                        controller.playSong()
 //                    }
-                    Log.d("SongClick", "Song clicked: ${song.title}")
-                    //viewModel.playSong(song)
-                    viewModel.playSongByIdWithRadio(song)
+                            Log.d("SongClick", "Song clicked: ${song.title}")
+                            //viewModel.playSong(song)
+                            viewModel.playSongByIdWithRadio(song)
+                        }
+                    }
+
+                    SongComponent(
+                        song = song,
+                        onClick = onSongClick as () -> Unit
+                    )
                 }
             }
-
-            SongComponent(
-                song = song,
-                onClick = onSongClick as () -> Unit
-            )
         }
     }
+
 }

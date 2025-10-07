@@ -59,7 +59,7 @@ fun PlayerControlBar(
 //            .background(MaterialTheme.colorScheme.surface)
             .clip(RoundedCornerShape(THUMBNAIL_ROUNDNESS.toFloat()))
 
-            .background(customBackgroundColor)
+            .background(MaterialTheme.colorScheme.secondaryContainer)
             .clickable(onClick = onBarClick)
 //            .padding()
             .padding(8.dp, 8.dp),
@@ -93,6 +93,7 @@ fun PlayerControlBar(
             Text(
                 text = uiState.currentSong?.title ?: "NA",
                 style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -104,7 +105,7 @@ fun PlayerControlBar(
             Text(
                 text = uiState.currentSong?.artist ?: "NA",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.basicMarquee(
@@ -120,7 +121,7 @@ fun PlayerControlBar(
                 Icon(
                     imageVector = Icons.Filled.SkipPrevious,
                     contentDescription = "Skip Previous",
-                    tint = MaterialTheme.colorScheme.onBackground
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
             IconButton(onClick = {
@@ -129,14 +130,14 @@ fun PlayerControlBar(
                 Icon(
                     imageVector = if (uiState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                     contentDescription = if (uiState.isPlaying) "Pause" else "Play",
-                    tint = MaterialTheme.colorScheme.onBackground
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
             IconButton(onClick = { viewModel.skipToNext() }) {
                 Icon(
                     imageVector = Icons.Filled.SkipNext,
                     contentDescription = "Skip Forward",
-                    tint = MaterialTheme.colorScheme.onBackground
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
         }
