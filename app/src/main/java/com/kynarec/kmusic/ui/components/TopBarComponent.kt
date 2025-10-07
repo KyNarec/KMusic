@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -56,25 +57,35 @@ fun TopBarComponent(
                         onClick = { navController.popBackStack() },
                         modifier = Modifier
                             .align(Alignment.CenterVertically)
-                            .size(60.dp)
+//                            .size(60.dp)
+                            .height(60.dp)
+                            .width(30.dp)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back")
                     }
                 }
-                IconButton(
-                    onClick = { /*TODO*/ },
+
+                Box(
                     modifier = Modifier
-                        .size(60.dp)
+//                        .size(60.dp)
+                        .clickable(onClick = { /*TODO*/ })
+                        .height(60.dp)
+                        .width(40.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                        painter = painterResource(id = R.drawable.ic_launcher_foreground_scaled),
                         contentDescription = "Logo",
+                        // 3. Set the size of the *actual icon* content
+                        modifier = Modifier
+                            .size(40.dp)
+                            .padding(bottom = 6.dp, top = 0.dp),
                         tint = MaterialTheme.colorScheme.onBackground
-
                     )
                 }
+
                 Text(
                     text = stringResource(R.string.app_name),
                     color = MaterialTheme.colorScheme.onBackground,

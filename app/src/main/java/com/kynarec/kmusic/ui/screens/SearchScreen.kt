@@ -79,21 +79,12 @@ fun SearchScreen(
                     Text(
                         text = stringResource(id = R.string.search_hint),
                         modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
+                        textAlign = TextAlign.Start,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 },
                 trailingIcon = {
-//                    if (searchQuery.isNotEmpty()) {
-//                        Text(
-//                            text = "x",
-//                            color = Color.Red,
-//                            modifier = Modifier
-//                                .padding(end = 16.dp)
-//                                .clickable {
-//                                    searchQuery = ""
-//                                }
-//                        )
+                    if (searchQuery.isNotEmpty()) {
                         IconButton(
                             onClick = { searchQuery = "" },
                             modifier = Modifier.padding(end = 16.dp)
@@ -101,10 +92,10 @@ fun SearchScreen(
                             Icon(
                                 imageVector = Icons.Default.Clear,
                                 contentDescription = "Clear",
-                                tint = Color.Red
+                                tint = MaterialTheme.colorScheme.error
                             )
                         }
-//                    }
+                    }
                 },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -118,15 +109,15 @@ fun SearchScreen(
                         navController.navigate(SearchResultScreen(searchQuery))
                     }
                 ),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    cursorColor = Color.White,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                )
+//                colors = TextFieldDefaults.colors(
+//                    focusedContainerColor = Color.Transparent,
+//                    unfocusedContainerColor = Color.Transparent,
+//                    focusedTextColor = Color.White,
+//                    unfocusedTextColor = Color.White,
+//                    cursorColor = Color.White,
+//                    focusedIndicatorColor = Color.Transparent,
+//                    unfocusedIndicatorColor = Color.Transparent,
+//                )
             )
         }
     }
