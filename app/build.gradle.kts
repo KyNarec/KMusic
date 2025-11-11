@@ -121,5 +121,6 @@ dependencies {
     // wavy seekbar
     implementation(libs.wavy.slider)
 
-
+    implementation("com.squareup.okhttp3:okhttp:5.3.0")
+    implementation("org.json:json:20250517")
 }

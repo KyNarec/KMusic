@@ -38,7 +38,10 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import innertube.searchSongs
+import innertube.searchSongsFlow
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 @OptIn(UnstableApi::class, ExperimentalMaterial3ExpressiveApi::class,
     ExperimentalMaterial3ExpressiveApi::class
@@ -72,41 +75,17 @@ fun SearchResultScreen(
     LaunchedEffect(query) {
         isLoading = true
         Log.i("SearchResultScreen", "isLoading is now true")
-        errorMessage = null
-        try {
-            // Perform all backend calls on the I/O dispatcher
-            val result = withContext(Dispatchers.IO) {
-                val py = Python.getInstance()
-                val module = py.getModule("backend")
-                val pyResult = module.callAttr("searchSongs", query)
+        songs = emptyList()
 
-                // Check for errors and handle empty list
-                if (pyResult.asList() == emptyList<PyObject>()) {
-                    return@withContext emptyList<Song>()
-                }
+        searchSongsFlow(query)
+            .flowOn(Dispatchers.IO)
+            .collect { song ->
+                songs = songs + song // progressively add each song
+                isLoading = false
+            }
 
-                // Use map to transform PyObjects to Song objects efficiently
-                pyResult.asList().map { item ->
-                    val d = item.callAttr("get", "duration").toString()
-                    Song(
-                        id = item.callAttr("get", "id").toString(),
-                        title = item.callAttr("get", "title").toString(),
-                        artist = item.callAttr("get", "artist").toString(),
-                        thumbnail = item.callAttr("get", "thumbnail").toString(),
-                        duration = if (Regex("""^(\d{1,2}):(\d{1,2})$""").matches(d)) d else "NA"
-                    )
-                }
-            }
-            if (result.isEmpty()) {
-                errorMessage = "No results found for '$query'."
-            } else {
-                songs = result
-            }
-        } catch (e: Exception) {
-            errorMessage = "An error occurred: ${e.message}"
-        } finally {
-            isLoading = false
-            Log.i("SearchResultScreen", "isLoading is now false")
+        if (songs.isEmpty()) {
+            Log.w("SearchResultScreen", "No results found for '$query'.")
         }
     }
 
