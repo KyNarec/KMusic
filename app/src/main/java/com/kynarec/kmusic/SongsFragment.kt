@@ -17,6 +17,8 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.utils.SongAdapter
 import com.kynarec.kmusic.utils.createMediaItemFromSong
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 
@@ -68,12 +70,15 @@ class SongsFragment : Fragment() {
                         val mediaController = controllerFuture.get()
 
                         // Create a MediaItem from your Song data class
-                        val mediaItem = createMediaItemFromSong(song, context)
+                        CoroutineScope(Dispatchers.IO).launch {
+                            val mediaItem = createMediaItemFromSong(song, context)
+                            mediaController.setMediaItem(mediaItem)
+                            mediaController.prepare()
+                            mediaController.play()
+
+                        }
 
                         // Use the MediaController to set the media item and start playback.
-                        mediaController.setMediaItem(mediaItem)
-                        mediaController.prepare()
-                        mediaController.play()
 
                         // Optional: You could now navigate to the PlayerFragment
 //                        (activity as? MainActivity)?.navigatePlayer()

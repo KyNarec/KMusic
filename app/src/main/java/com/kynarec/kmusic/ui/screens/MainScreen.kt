@@ -45,11 +45,17 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
-    val playerViewModel: PlayerViewModel = viewModel(factory = PlayerViewModel.Factory(LocalContext.current))
+    val playerViewModel: PlayerViewModel =
+        viewModel(factory = PlayerViewModel.Factory(LocalContext.current))
     val scope = rememberCoroutineScope()
 
     val application = LocalContext.current.applicationContext as Application
-    val musicViewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((application as MyApp).database.songDao(),LocalContext.current))
+    val musicViewModel: MusicViewModel = viewModel(
+        factory = MusicViewModel.Factory(
+            (application as MyApp).database.songDao(),
+            LocalContext.current
+        )
+    )
     val showControlBar = musicViewModel.uiState.collectAsState().value.showControlBar
 
     val navController = rememberNavController()
@@ -72,79 +78,87 @@ fun MainScreen() {
 
     AppTheme {
         // The top-level Box for layering
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
+//        Box(
+//            modifier = Modifier.fillMaxSize()
+//        ) {
+//            Surface(
+//                modifier = Modifier.fillMaxSize(),
+//                color = MaterialTheme.colorScheme.background
+//            ) {
+        // Main UI Scaffold, including the NavHost
+        Scaffold(
+            topBar = {
+                Box(modifier = Modifier.padding(top = 8.dp)) {
+                    TopBarComponent(shouldHideNavElements, navController)
+                }
+            },
+        ) { contentPadding ->
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(contentPadding)
             ) {
-                // Main UI Scaffold, including the NavHost
-                Scaffold(
-                    topBar = {
-                        Box(modifier = Modifier.padding(top = 8.dp)) {
-                            TopBarComponent(shouldHideNavElements, navController)
-                        }
-                    },
-                ) { contentPadding ->
-                    Row(
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+//                            .padding(contentPadding)
+                ) {
+                    if (!shouldHideNavElements) {
+                        MyNavigationRailComponent(navController)
+                    }
+                    Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(contentPadding)
                     ) {
-                        if (!shouldHideNavElements) {
-                            MyNavigationRailComponent(navController)
-                        }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                        ) {
-                            Navigation(navController)
-                        }
+                        Navigation(navController)
                     }
                 }
-            }
+//                }
+//            }
 
-            // This is the PlayerControlBar, now correctly positioned to float
-            AnimatedVisibility(
-                visible = showControlBar && !isSearchScreen && !showBottomSheet.value,
-                enter = slideInVertically(initialOffsetY = { it }),
-                exit = slideOutVertically(targetOffsetY = { it }),
-                // Modifiers to float the bar in the bottom-center of the screen
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 24.dp, start = 12.dp, end = 12.dp)
-            ) {
-                PlayerControlBar(
-                    onBarClick = {
-                        showBottomSheet.value = true
-                                 },
-                    viewModel = musicViewModel,
-                )
-            }
-
-            if (showBottomSheet.value) {
-                ModalBottomSheet(
-                    onDismissRequest = {
-                        showBottomSheet.value = false
-                    },
-                    dragHandle = null,
-                    shape = RectangleShape,
-                    sheetState = sheetState
+                // This is the PlayerControlBar, now correctly positioned to float
+                AnimatedVisibility(
+                    visible = showControlBar && !isSearchScreen && !showBottomSheet.value,
+                    enter = slideInVertically(initialOffsetY = { it }),
+                    exit = slideOutVertically(targetOffsetY = { it }),
+                    // Modifiers to float the bar in the bottom-center of the screen
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 8.dp, start = 12.dp, end = 12.dp)
                 ) {
-                    PlayerScreen(
-                        onClose = {
-                            scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                if (!sheetState.isVisible) {
-                                    showBottomSheet.value = false
-                                }
-                            }
+                    PlayerControlBar(
+                        onBarClick = {
+                            showBottomSheet.value = true
                         },
-                        viewModel = musicViewModel
+                        viewModel = musicViewModel,
                     )
+                }
+
+                if (showBottomSheet.value) {
+                    ModalBottomSheet(
+                        onDismissRequest = {
+                            showBottomSheet.value = false
+                        },
+                        dragHandle = null,
+                        shape = RectangleShape,
+                        sheetState = sheetState
+                    ) {
+                        PlayerScreen(
+                            onClose = {
+                                scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                    if (!sheetState.isVisible) {
+                                        showBottomSheet.value = false
+                                    }
+                                }
+                            },
+                            viewModel = musicViewModel
+                        )
+                    }
                 }
             }
         }
     }
 }
+

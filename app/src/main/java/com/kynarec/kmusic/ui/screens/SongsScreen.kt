@@ -8,6 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -19,6 +20,10 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.utils.createMediaItemFromSong
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -29,6 +34,9 @@ fun SongsScreen(
     val context = LocalContext.current
 
     var mediaController by remember { mutableStateOf<MediaController?>(null) }
+
+    val scope = rememberCoroutineScope()
+
 
     LaunchedEffect(Unit) {
         val sessionToken = SessionToken(context, ComponentName(context, PlayerServiceModern::class.java))
@@ -47,11 +55,16 @@ fun SongsScreen(
             // Create stable onClick callback
             val onSongClick = remember(song.id) {
                 {
-                    mediaController?.let { controller ->
-                        val mediaItem = createMediaItemFromSong(song, context)
-                        controller.setMediaItem(mediaItem)
-                        controller.prepare()
-                        controller.play()
+                    scope.launch {
+                        val mediaItem = withContext(Dispatchers.IO) {
+                            createMediaItemFromSong(song, context)
+                        }
+
+                        mediaController?.let { controller ->
+                            controller.setMediaItem(mediaItem)
+                            controller.prepare()
+                            controller.play()
+                        }
                     }
                 }
             }

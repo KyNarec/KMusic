@@ -26,7 +26,15 @@ import androidx.media3.common.util.Log
 import com.chaquo.python.Python
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.parseDurationToMillis
+import com.kynarec.kmusic.utils.parseMillisToDuration
+import innertube.getRadioFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withContext
+import okhttp3.Dispatcher
+import kotlin.collections.emptyList
+import kotlin.coroutines.CoroutineContext
 
 // A single state class for the entire music screen
 data class MusicUiState(
@@ -84,10 +92,14 @@ class MusicViewModel
         val sessionToken = SessionToken(context, ComponentName(context, PlayerServiceModern::class.java))
         mediaControllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
         mediaControllerFuture.addListener({
-            mediaController?.addListener(playerListener)
-            // Start the coroutine that updates the playback position
-            updatePosition()
+            // This runs on a background executor, so it's safe to call get()
+            val controller = mediaControllerFuture.get()
+            controller.addListener(playerListener)
+
+            // Start updating playback position on the main thread
+            viewModelScope.launch { updatePosition() }
         }, Executors.newSingleThreadExecutor())
+
     }
 
     private fun loadSongs() {
@@ -107,7 +119,7 @@ class MusicViewModel
 //                }
                 _uiState.value = _uiState.value.copy(currentPosition = currentPosition, totalDuration = totalDuration)
 
-                delay(100) // Update position 10 times a second
+                delay(50) // Update position 10 times a second
             }
         }
     }
@@ -115,60 +127,53 @@ class MusicViewModel
     /**
      * Plays a specific song.
      * @param song The song to play.
-     */    fun playSong(song: Song) {
+     */
+    fun playSong(song: Song) {
         Log.i(tag, "playSong called")
         val controller = mediaController ?: return
         val songList = _uiState.value.songsList
 
         // Find the index of the tapped song
         val startIndex = songList.indexOf(song)
-
-        val mediaItem = createMediaItemFromSong(song, context)
-        controller.setMediaItem(mediaItem)
-        controller.prepare()
-        controller.play()
+        viewModelScope.launch {
+            val mediaItem = createMediaItemFromSong(song, context)
+            controller.setMediaItem(mediaItem)
+            controller.prepare()
+            controller.play()
+        }
     }
 
     fun playSongByIdWithRadio(song: Song) {
         Log.i(tag, "playSongByIdWithRadio called with songId: ${song.id}")
+
+        // Play the selected song immediately
         playSong(song)
+
         viewModelScope.launch {
-            val radioSongs = withContext(Dispatchers.IO) {
-                try {
-                    val py = Python.getInstance()
-                    val module = py.getModule("backend")
-                    val pyResult = module.callAttr("getRadio", song.id)
-                    pyResult.asList().map { item ->
-                        val d = item.callAttr("get", "duration").toString()
-                        val s = Song(
-                            id = item.callAttr("get", "id").toString(),
-                            title = item.callAttr("get", "title").toString(),
-                            artist = item.callAttr("get", "artist").toString(),
-                            thumbnail = item.callAttr("get", "thumbnail").toString(),
-                            duration = if (Regex("""^(\d{1,2}):(\d{1,2})$""").matches(d)) d else "NA"
-                        )
-                        if (s.id != song.id) {
+            try {
+                getRadioFlow(song.id)
+                    .flowOn(Dispatchers.IO) // network + parsing off main
+                    .collect { radioSong ->
+                        if (radioSong.id != song.id) {
+                            val mediaItem = createMediaItemFromSong(radioSong, context)
 
-                            val mediaItem = createMediaItemFromSong(s, context)
-
+                            // Update UI immediately for each song
                             withContext(Dispatchers.Main) {
                                 _uiState.value = _uiState.value.copy(
-                                    songsList = _uiState.value.songsList + s
+                                    songsList = _uiState.value.songsList + radioSong
                                 )
-
                                 mediaController?.addMediaItem(mediaItem)
                             }
-
-                            s
-                        } else null
-
+                        }
                     }
-                } catch (e: Exception) {
-                    emptyList()
-                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e(tag, "Failed to load radio songs for ${song.id}")
             }
         }
+
     }
+
 
     /**
      * Pauses playback.

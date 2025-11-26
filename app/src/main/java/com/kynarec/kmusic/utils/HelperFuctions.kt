@@ -9,6 +9,7 @@ import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,10 +23,12 @@ import androidx.media3.common.MediaMetadata
 import com.chaquo.python.Python
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
+import innertube.playSongByIdWithBestBitrate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.net.HttpURLConnection
@@ -40,12 +43,14 @@ fun parseDurationToMillis(durationStr: String): Long {
             val seconds = parts[1].toLongOrNull() ?: 0L
             (minutes * 60 + seconds) * 1000
         }
+
         3 -> { // For "HH:mm:ss" format
             val hours = parts[0].toLongOrNull() ?: 0L
             val minutes = parts[1].toLongOrNull() ?: 0L
             val seconds = parts[2].toLongOrNull() ?: 0L
             (hours * 3600 + minutes * 60 + seconds) * 1000
         }
+
         else -> 0L
     }
 }
@@ -56,52 +61,35 @@ fun parseMillisToDuration(timeMs: Long): String {
     return "$minutes:$seconds"
 }
 
-fun createMediaItemFromSong(song: Song, context: Context): MediaItem {
-    var mediaItem = MediaItem.Builder().build()
-    val py = Python.getInstance()
-    val module = py.getModule("backend")
-    val uri = module.callAttr("playSongByIdWithBestBitrate", song.id) // Your Python call
-//    Log.i("Main Activity", "ExoPlayer URI: $uri")
+suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = withContext(Dispatchers.IO) {
+    val uri = playSongByIdWithBestBitrate(song.id) ?: return@withContext MediaItem.Builder().build()
 
-    uri?.toString()?.let { playbackUriString ->
-        if (playbackUriString.isNotBlank()) {
-            val mediaMetadataBuilder = MediaMetadata.Builder()
-                .setTitle(song.title)
-                .setArtist(song.artist)
-                .setIsBrowsable(false)
-                .setIsPlayable(true)
+    val mediaMetadataBuilder = MediaMetadata.Builder()
+        .setTitle(song.title)
+        .setArtist(song.artist)
+        .setIsBrowsable(false)
+        .setIsPlayable(true)
 
-            // Attempt to convert the thumbnail URI to a byte array
-            val artworkByteArray = convertThumbnailUriToSquareByteArray(context, song.thumbnail.toUri())
-
-            if (artworkByteArray != null) {
-                mediaMetadataBuilder.setArtworkData(artworkByteArray, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
-            } else {
-                // Fallback to the original URI if the conversion fails
-                mediaMetadataBuilder.setArtworkUri(song.thumbnail.toUri())
-                Log.w("Artwork Conversion", "Failed to convert artwork to byte array. Falling back to URI.")
-            }
-
-            mediaItem = MediaItem.Builder()
-                .setMediaId(song.id)
-                .setUri(playbackUriString)
-                .setMediaMetadata(mediaMetadataBuilder.build())
-                .build()
-        } else {
-            Log.w("Main Activity", "Python backend returned empty or null URI for song ID: $song.id")
-        }
-        val songDao = KmusicDatabase.getDatabase(context).songDao()
-        val serviceScope = CoroutineScope(Dispatchers.Main + Job())
-        serviceScope.launch {
-//            songDao.deleteSong(song)
-            if (songDao.getSongById(song.id) == null) {
-                songDao.insertSong(song)
-                Log.i("Main Activity", "Song with ID ${song.id} inserted into database.")
-            }
-        }
+    val artworkByteArray = convertThumbnailUriToSquareByteArray(context, song.thumbnail.toUri())
+    if (artworkByteArray != null) {
+        mediaMetadataBuilder.setArtworkData(artworkByteArray, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+    } else {
+        mediaMetadataBuilder.setArtworkUri(song.thumbnail.toUri())
     }
-    return mediaItem
+
+    // Database insertion should also be offloaded
+    val songDao = KmusicDatabase.getDatabase(context).songDao()
+    if (songDao.getSongById(song.id) == null) {
+        songDao.insertSong(song)
+    }
+
+    MediaItem.Builder()
+        .setMediaId(song.id)
+        .setUri(uri)
+        .setMediaMetadata(mediaMetadataBuilder.build())
+        .build()
 }
+
 
 fun convertThumbnailUriToSquareByteArray(context: Context, uri: Uri): ByteArray? {
     val TAG = "ArtworkByteArrayConverter"
