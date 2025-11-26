@@ -1,9 +1,17 @@
+<!-- res/values/themes.xml -->
 <resources>
-    <!-- Base application theme. -->
-    <style name="Base.Theme.KMusic" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
-    </style>
+    <style name="Theme.KMusic.AppBase" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!--
+            This theme is primarily a placeholder for the Android system.
+            Your KMusicTheme in Compose will define the actual look and feel.
+            You might set window-level attributes here if needed for edge-to-edge,
+            but often this can also be handled in your Activity's onCreate.
+        -->
 
-    <style name="Theme.KMusic" parent="Base.Theme.KMusic" />
+        <!-- For example, to support edge-to-edge drawing for your Compose content -->
+<!--        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item> &lt;!&ndash; Or false for dark status bar icons &ndash;&gt;-->
+<!--        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item> &lt;!&ndash; Or false for dark navigation bar icons &ndash;&gt;-->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
 </resources>

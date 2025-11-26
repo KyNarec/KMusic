@@ -1,14 +1,10 @@
 package com.kynarec.kmusic.data.db.dao
 
 import androidx.room.Dao
-import androidx.room.Embedded
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Transaction
 import com.kynarec.kmusic.data.db.entities.PersistedQueueItem
-import com.kynarec.kmusic.data.db.entities.Song
-import kotlinx.coroutines.flow.Flow // Or List if not reactive
 
 @Dao
 interface PersistedQueueDao {

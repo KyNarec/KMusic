@@ -1,9 +1,7 @@
 package com.kynarec.kmusic.data.db.entities
 
-import android.os.Build
 import android.os.Parcel
 import android.os.Parcelable
-import androidx.annotation.RequiresApi
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 

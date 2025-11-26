@@ -1,9 +1,9 @@
 package com.kynarec.kmusic.data.db.entities
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 import androidx.room.ForeignKey
 import androidx.room.Index
+import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "persisted_playback_queue",

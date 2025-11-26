@@ -27,4 +27,14 @@ interface SongDao {
 
     @Delete
     suspend fun deleteSong(song: Song)
+
+    /**
+     * Deletes a song from the database by its unique ID.
+     * This uses a custom SQL query with the @Query annotation, as
+     * the @Delete annotation requires an entire entity object.
+     *
+     * @param id The unique ID of the song to delete.
+     */
+    @Query("DELETE FROM Song WHERE id = :id")
+    suspend fun deleteSongById(id: String)
 }

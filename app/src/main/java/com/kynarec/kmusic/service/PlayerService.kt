@@ -1,4 +1,4 @@
-//package com.kynarec.kmusic.service
+package com.kynarec.kmusic.service
 //
 //import android.app.NotificationChannel
 //import android.app.NotificationManager
@@ -49,7 +49,8 @@
 //import kotlinx.coroutines.launch
 //import kotlinx.coroutines.withContext
 //
-//
+@Deprecated("Use PlayerServiceModern")
+class PlayerService()
 //class PlayerService() : MediaLibraryService() {
 //    private val TAG = "Player Service"
 //    private lateinit var player: ExoPlayer

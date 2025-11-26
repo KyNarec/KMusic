@@ -1,10 +1,13 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    // python support
-    id("com.chaquo.python")
+    alias(libs.plugins.compose.compiler)
     kotlin("kapt")
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.2.10"
+
 }
+
+val appVersion = "0.1.0"
 
 android {
     namespace = "com.kynarec.kmusic"
@@ -15,7 +18,7 @@ android {
         minSdk = 31
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0"
+        versionName = appVersion
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -43,28 +46,22 @@ android {
         jvmTarget = "11"
     }
     buildFeatures{
+        compose = true
         dataBinding {
             enable = true
         }
     }
-}
-
-chaquopy {
-    defaultConfig {
-        pip {
-            install("innertube==2.1.19")  // Use == for exact version
+    applicationVariants.all {
+        outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            output.outputFileName = "KMusic_v${appVersion}.apk"
         }
-        version = "3.10"
     }
 }
 
 dependencies {
-
-//    implementation(project(":innertube"))
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
 
@@ -75,6 +72,7 @@ dependencies {
 
     implementation(libs.androidx.room.common.jvm)
     implementation(libs.androidx.room.runtime.android)
+    implementation(libs.androidx.ui)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -82,6 +80,11 @@ dependencies {
 
     implementation(libs.androidx.databinding.runtime)
     implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.okhttp)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.client.encoding)
+    implementation(libs.ktor.client.serialization)
+    implementation(libs.ktor.serialization.json)
     implementation(libs.androidx.recyclerview)
     implementation (libs.androidx.cardview)
 
@@ -95,7 +98,26 @@ dependencies {
     implementation(libs.innertube)
 
     implementation( libs.androidx.room.runtime)
+    debugImplementation(libs.androidx.compose.ui.tooling)
     kapt (libs.androidx.room.compiler)
 
     implementation( libs.toasty)
+
+    implementation(libs.androidx.navigation.compose)
+//    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.material)
+    implementation(libs.coil.compose)
+    // Add the Kotlinx Serialization library dependency here
+    implementation(libs.kotlinx.serialization.json)
+
+    // wavy seekbar
+    implementation(libs.wavy.slider)
+
+    implementation("com.squareup.okhttp3:okhttp:5.3.0")
+    implementation("org.json:json:20250517")
 }
