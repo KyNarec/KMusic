@@ -18,8 +18,6 @@ import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import com.chaquo.python.Python
-import com.chaquo.python.android.AndroidPlatform
 import com.google.common.util.concurrent.MoreExecutors
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.ui.screens.MainScreen
@@ -94,12 +92,6 @@ class MainActivity : AppCompatActivity() {
 
         //hidePlayerControlBar(true)
 
-
-        if (! Python.isStarted()) {
-            Python.start(AndroidPlatform(this));
-        }
-        val py = Python.getInstance()
-        val module = py.getModule("backend")
 
 
 //        this.setPlayerIsPlaying(false)

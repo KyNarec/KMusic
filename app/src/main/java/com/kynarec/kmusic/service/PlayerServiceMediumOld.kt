@@ -14,7 +14,6 @@ import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaNotification
 import androidx.media3.session.MediaSession
-import com.chaquo.python.Python
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.kynarec.kmusic.MainActivity
@@ -108,9 +107,7 @@ class PlayerServiceMediumOld : MediaLibraryService() {
             // You need to add the playable URI here since it gets stripped out during IPC
             val updatedMediaItems = mediaItems.map { mediaItem ->
                 // Use your Python backend to get the playable URI
-                val py = Python.getInstance()
-                val module = py.getModule("backend")
-                val uri = module.callAttr("playSongByIdWithBestBitrate", mediaItem.mediaId)
+                val uri = ""
 
                 mediaItem.buildUpon()
                     .setUri(uri.toString())

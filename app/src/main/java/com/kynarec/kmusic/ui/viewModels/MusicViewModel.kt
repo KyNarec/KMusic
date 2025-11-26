@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 import androidx.media3.common.util.Log
-import com.chaquo.python.Python
 import com.google.common.util.concurrent.MoreExecutors
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.parseDurationToMillis

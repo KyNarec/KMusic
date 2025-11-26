@@ -2,12 +2,12 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
-    // python support
-    id("com.chaquo.python")
     kotlin("kapt")
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.10"
 
 }
+
+val appVersion = "0.1.0"
 
 android {
     namespace = "com.kynarec.kmusic"
@@ -18,7 +18,7 @@ android {
         minSdk = 31
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0"
+        versionName = appVersion
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -51,23 +51,15 @@ android {
             enable = true
         }
     }
-}
-
-chaquopy {
-    defaultConfig {
-        pip {
-//            install("innertube==2.1.19")  // Use == for exact version
-//            install("requests")
-            install("-r", "../requirements.txt")
+    applicationVariants.all {
+        outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            output.outputFileName = "KMusic_v${appVersion}.apk"
         }
-        version = "3.10"
     }
 }
 
 dependencies {
-
-//    implementation(project(":innertube"))
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity)

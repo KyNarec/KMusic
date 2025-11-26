@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
-import com.chaquo.python.Python
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import innertube.playSongByIdWithBestBitrate
