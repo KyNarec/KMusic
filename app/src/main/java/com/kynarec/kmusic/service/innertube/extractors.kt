@@ -93,6 +93,11 @@ data class NavigationEndpoint(
 
 @Serializable
 data class BrowseEndpoint(
+    val browseEndpointContextSupportedConfigs: BrowseEndpointContextSupportedConfigs? = null
+)
+
+@Serializable
+data class BrowseEndpointContextSupportedConfigs(
     val browseEndpointContextMusicConfig: BrowseEndpointContextMusicConfig? = null
 )
 
@@ -100,6 +105,7 @@ data class BrowseEndpoint(
 data class BrowseEndpointContextMusicConfig(
     val pageType: String? = null
 )
+
 
 @Serializable
 data class WatchEndpoint(
@@ -156,19 +162,25 @@ fun searchSongsFlow(query: String): Flow<Song> = flow {
             // Artists
             val flex1 = renderer.flexColumns?.getOrNull(1)?.musicResponsiveListItemFlexColumnRenderer
             val artistRuns = flex1?.text?.runs.orEmpty()
+
             val artists = artistRuns
-                .filter {
-                    it.navigationEndpoint?.browseEndpoint?.browseEndpointContextMusicConfig?.pageType == "MUSIC_PAGE_TYPE_ARTIST"
+                .filter { run ->
+                    run.navigationEndpoint?.browseEndpoint
+                        ?.browseEndpointContextSupportedConfigs
+                        ?.browseEndpointContextMusicConfig
+                        ?.pageType == "MUSIC_PAGE_TYPE_ARTIST"
                 }
                 .mapNotNull { it.text }
                 .ifEmpty { listOf("Unknown Artist") }
 
+
             // Duration (last run of flex1)
             val duration = artistRuns.lastOrNull()?.text ?: "Unknown Duration"
 
-            // Thumbnail
-            val thumbnail = renderer.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.firstOrNull()?.url
-                ?: innerTubeClient.getYoutubeThumbnail(videoId)
+//            // Thumbnail
+//            val thumbnail = renderer.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.firstOrNull()?.url
+//                ?: innerTubeClient.getYoutubeThumbnail(videoId)
+            val thumbnail = innerTubeClient.getYoutubeThumbnail(videoId)
 
             val song = Song(
                 id = videoId,

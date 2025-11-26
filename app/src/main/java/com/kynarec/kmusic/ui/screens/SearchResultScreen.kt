@@ -56,19 +56,6 @@ fun SearchResultScreen(
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-
-    // Create MediaController once
-    var mediaController by remember { mutableStateOf<MediaController?>(null) }
-
-    LaunchedEffect(Unit) {
-        val sessionToken =
-            SessionToken(context, ComponentName(context, PlayerServiceModern::class.java))
-        val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
-        controllerFuture.addListener({
-            mediaController = controllerFuture.get()
-        }, MoreExecutors.directExecutor())
-    }
-
     // Use LaunchedEffect to perform the side effect (data fetching)
     // The coroutine will be launched when the query changes.
     LaunchedEffect(query) {
@@ -121,6 +108,9 @@ fun SearchResultScreen(
 //                    }
                             Log.d("SongClick", "Song clicked: ${song.title}")
                             //viewModel.playSong(song)
+                            Log.i("PlayerControlBar", "Song clicked: ${song.title}")
+                            Log.i("PlayerControlBar", "Song thumbnail: ${song.thumbnail}")
+
                             viewModel.playSongByIdWithRadio(song)
                         }
                     }

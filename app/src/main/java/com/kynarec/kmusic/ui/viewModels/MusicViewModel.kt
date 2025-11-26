@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 import androidx.media3.common.util.Log
 import com.chaquo.python.Python
+import com.google.common.util.concurrent.MoreExecutors
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.parseDurationToMillis
 import com.kynarec.kmusic.utils.parseMillisToDuration
@@ -31,7 +32,9 @@ import innertube.getRadioFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
+import okhttp3.CacheControl
 import okhttp3.Dispatcher
 import kotlin.collections.emptyList
 import kotlin.coroutines.CoroutineContext
@@ -39,7 +42,7 @@ import kotlin.coroutines.CoroutineContext
 // A single state class for the entire music screen
 data class MusicUiState(
     val songsList: List<Song> = emptyList(),
-    val currentSong: Song? = null,
+    var currentSong: Song? = null,
     val isPlaying: Boolean = false,
     val currentPosition: Long = 0,
     val totalDuration: Long = 0,
@@ -130,16 +133,26 @@ class MusicViewModel
      */
     fun playSong(song: Song) {
         Log.i(tag, "playSong called")
+
         val controller = mediaController ?: return
         val songList = _uiState.value.songsList
 
         // Find the index of the tapped song
         val startIndex = songList.indexOf(song)
+        _uiState.update { it.copy(currentSong = song) }
+
+        if (!songList.contains(song)) {
+            _uiState.update { it.copy(songsList = songList + song) }
+        }
+
         viewModelScope.launch {
-            val mediaItem = createMediaItemFromSong(song, context)
+            val mediaItem = withContext(Dispatchers.IO) {
+                createMediaItemFromSong(song, context)
+            }
             controller.setMediaItem(mediaItem)
             controller.prepare()
             controller.play()
+
         }
     }
 

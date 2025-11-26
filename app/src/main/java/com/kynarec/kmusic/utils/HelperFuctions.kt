@@ -73,7 +73,10 @@ suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = w
     val artworkByteArray = convertThumbnailUriToSquareByteArray(context, song.thumbnail.toUri())
     if (artworkByteArray != null) {
         mediaMetadataBuilder.setArtworkData(artworkByteArray, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+        Log.i("PlayerControlBar", "artworkByteArray is not null")
+
     } else {
+        Log.i("PlayerControlBar", "artworkByteArray is null")
         mediaMetadataBuilder.setArtworkUri(song.thumbnail.toUri())
     }
 

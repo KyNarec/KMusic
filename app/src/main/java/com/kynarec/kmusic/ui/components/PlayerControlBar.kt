@@ -1,6 +1,7 @@
 package com.kynarec.kmusic.ui.components
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
@@ -51,7 +52,6 @@ fun PlayerControlBar(
     viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as MyApp).database.songDao(),LocalContext.current))
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val customBackgroundColor = Color(0xFF2B3233)
     Row(
         modifier = Modifier
             .fillMaxWidth()

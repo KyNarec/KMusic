@@ -1,5 +1,6 @@
 package com.kynarec.kmusic.ui.screens
 
+import android.app.Application
 import android.content.ComponentName
 import androidx.annotation.OptIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,13 +13,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
+import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.ui.components.SongComponent
+import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +33,8 @@ import kotlinx.coroutines.withContext
 @Composable
 fun SongsScreen(
     songs: List<Song>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as MyApp).database.songDao(),LocalContext.current))
 ) {
     val context = LocalContext.current
 
@@ -55,17 +60,7 @@ fun SongsScreen(
             // Create stable onClick callback
             val onSongClick = remember(song.id) {
                 {
-                    scope.launch {
-                        val mediaItem = withContext(Dispatchers.IO) {
-                            createMediaItemFromSong(song, context)
-                        }
-
-                        mediaController?.let { controller ->
-                            controller.setMediaItem(mediaItem)
-                            controller.prepare()
-                            controller.play()
-                        }
-                    }
+                    viewModel.playSong(song)
                 }
             }
 

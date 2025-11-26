@@ -2,6 +2,8 @@ package com.kynarec.kmusic.ui.screens
 
 import android.app.Application
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
@@ -13,9 +15,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kynarec.kmusic.MyApp
+import com.kynarec.kmusic.PlayerControlBar
 import com.kynarec.kmusic.ui.Navigation
 import com.kynarec.kmusic.ui.SearchResultScreen
 import com.kynarec.kmusic.ui.SearchScreen
@@ -66,7 +69,6 @@ fun MainScreen() {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val showBottomSheet = remember { mutableStateOf(false) }
 
-
     val isSearchScreen = remember(currentRoute) {
         currentRoute?.startsWith(SearchScreen::class.qualifiedName!!) == true
     }
@@ -75,6 +77,12 @@ fun MainScreen() {
     }
 
     val shouldHideNavElements = isSearchScreen || isSearchResultScreen
+
+    LaunchedEffect(sheetState.isVisible) {
+        if (!sheetState.isVisible) {
+            showBottomSheet.value = false
+        }
+    }
 
     AppTheme {
         // The top-level Box for layering
@@ -97,12 +105,12 @@ fun MainScreen() {
                 Modifier
                     .fillMaxSize()
                     .padding(contentPadding)
+                    .padding(top = 8.dp)
             ) {
 
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-//                            .padding(contentPadding)
                 ) {
                     if (!shouldHideNavElements) {
                         MyNavigationRailComponent(navController)
@@ -114,26 +122,32 @@ fun MainScreen() {
                         Navigation(navController)
                     }
                 }
-//                }
-//            }
 
-                // This is the PlayerControlBar, now correctly positioned to float
-                AnimatedVisibility(
-                    visible = showControlBar && !isSearchScreen && !showBottomSheet.value,
-                    enter = slideInVertically(initialOffsetY = { it }),
-                    exit = slideOutVertically(targetOffsetY = { it }),
-                    // Modifiers to float the bar in the bottom-center of the screen
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 8.dp, start = 12.dp, end = 12.dp)
-                ) {
-                    PlayerControlBar(
-                        onBarClick = {
-                            showBottomSheet.value = true
-                        },
-                        viewModel = musicViewModel,
-                    )
+
+
+                // This is the PlayerControlBar
+                if (showControlBar && !isSearchScreen) {
+
+                        AnimatedVisibility(
+                            true,
+                            enter = slideInVertically(
+                                initialOffsetY = { it },
+                                animationSpec = spring(stiffness = Spring.StiffnessLow)
+                            ),
+                            exit = slideOutVertically(targetOffsetY = { it / 2 }),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 8.dp, start = 12.dp, end = 12.dp)
+                        ) {
+                            PlayerControlBar(
+                                onBarClick = {
+                                    showBottomSheet.value = true
+                                },
+                                viewModel = musicViewModel,
+                            )
+                        }
+
                 }
 
                 if (showBottomSheet.value) {
