@@ -11,12 +11,12 @@ val appVersion = "0.1.0"
 
 android {
     namespace = "com.kynarec.kmusic"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.kynarec.kmusic"
         minSdk = 31
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = appVersion
 
