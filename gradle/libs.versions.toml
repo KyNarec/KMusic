@@ -33,8 +33,8 @@ roomCommonJvm = "2.7.1"
 roomRuntimeAndroid = "2.7.1"
 toasty = "1.5.2"
 material3 = "1.5.0-alpha04"
-ui = "1.9.0"
-uiTooling = "1.9.0"
+ui = "1.9.5"
+uiTooling = "1.9.5"
 wavySlider = "2.1.0"
 
 [libraries]
