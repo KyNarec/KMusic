@@ -33,8 +33,6 @@ import com.kynarec.kmusic.ui.screens.SearchResultScreen
 import com.kynarec.kmusic.ui.screens.SearchScreen
 import com.kynarec.kmusic.ui.screens.SongsScreen
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import com.kynarec.kmusic.ui.viewModels.SongViewModel
-import com.kynarec.kmusic.ui.viewModels.SongViewModelFactory
 import com.kynarec.kmusic.utils.rememberPreference
 import com.kynarec.kmusic.utils.transitionEffectKey
 import kotlinx.serialization.Serializable

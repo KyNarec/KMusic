@@ -2,20 +2,15 @@ package com.kynarec.kmusic.ui.screens
 
 import android.app.Application
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,8 +20,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +32,7 @@ fun QueueScreen(
 //    hazeState: HazeState
 ) {
 
-    val scope = rememberCoroutineScope()
+    rememberCoroutineScope()
 
     val uiState by viewModel.uiState.collectAsState()
 

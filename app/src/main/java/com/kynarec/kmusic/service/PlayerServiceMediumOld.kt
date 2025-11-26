@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.R
 
+@Deprecated("Use PlayerServiceModern")
 class PlayerServiceMediumOld : MediaLibraryService() {
     private lateinit var mediaLibrarySession: MediaLibrarySession
     private lateinit var player: ExoPlayer
@@ -84,7 +85,7 @@ class PlayerServiceMediumOld : MediaLibraryService() {
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
             parentId: String,
-            params: MediaLibraryService.LibraryParams?
+            params: LibraryParams?
         ): ListenableFuture<LibraryResult<Void>> {
             return Futures.immediateFuture(LibraryResult.ofVoid())
         }

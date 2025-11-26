@@ -2,16 +2,13 @@ package com.kynarec.kmusic.utils
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.core.content.edit
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SnapshotMutationPolicy
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-
-
+import androidx.core.content.edit
 
 
 fun Context.getPlayerIsPlaying(): Boolean {
@@ -21,7 +18,7 @@ fun Context.getPlayerIsPlaying(): Boolean {
 
 fun Context.setPlayerIsPlaying(value: Boolean) {
     getSharedPreferences("preferences", Context.MODE_PRIVATE)
-        .edit() {
+        .edit {
             putBoolean(PLAYER_IS_PLAYING, value)
         }
 }
@@ -33,7 +30,7 @@ fun Context.getJustStartedUp(): Boolean {
 
 fun Context.setJustStartedUp(value: Boolean) {
     getSharedPreferences("preferences", Context.MODE_PRIVATE)
-        .edit() {
+        .edit {
             putBoolean(JUST_STARTED_UP, value)
         }
 }
@@ -45,7 +42,7 @@ fun Context.getPlayerOpen(): Boolean {
 
 fun Context.setPlayerOpen(value: Boolean) {
     getSharedPreferences("preferences", Context.MODE_PRIVATE)
-        .edit() {
+        .edit {
             putBoolean(PLAYER_IS_OPEN, value)
         }
 }

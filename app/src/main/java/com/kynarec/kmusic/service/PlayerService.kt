@@ -49,7 +49,8 @@ package com.kynarec.kmusic.service
 //import kotlinx.coroutines.launch
 //import kotlinx.coroutines.withContext
 //
-//
+@Deprecated("Use PlayerServiceModern")
+class PlayerService()
 //class PlayerService() : MediaLibraryService() {
 //    private val TAG = "Player Service"
 //    private lateinit var player: ExoPlayer

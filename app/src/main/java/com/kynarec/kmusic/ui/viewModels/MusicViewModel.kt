@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -15,28 +16,19 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerServiceModern
+import com.kynarec.kmusic.utils.createMediaItemFromSong
+import com.kynarec.kmusic.utils.parseDurationToMillis
+import innertube.getRadioFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import java.util.concurrent.Executors
-import androidx.media3.common.util.Log
-import com.google.common.util.concurrent.MoreExecutors
-import com.kynarec.kmusic.utils.createMediaItemFromSong
-import com.kynarec.kmusic.utils.parseDurationToMillis
-import com.kynarec.kmusic.utils.parseMillisToDuration
-import innertube.getRadioFlow
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.CacheControl
-import okhttp3.Dispatcher
-import kotlin.collections.emptyList
-import kotlin.coroutines.CoroutineContext
+import java.util.concurrent.Executors
 
 // A single state class for the entire music screen
 data class MusicUiState(
@@ -137,7 +129,7 @@ class MusicViewModel
         val songList = _uiState.value.songsList
 
         // Find the index of the tapped song
-        val startIndex = songList.indexOf(song)
+        songList.indexOf(song)
         _uiState.update { it.copy(currentSong = song) }
 
         if (!songList.contains(song)) {

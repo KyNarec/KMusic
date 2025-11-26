@@ -51,7 +51,7 @@ fun TopBarComponent(
                 })
 //                .fillMaxWidth()
         ){
-            Row() {
+            Row {
                 if (isSearchScreen) {
                     IconButton(
                         onClick = { navController.popBackStack() },

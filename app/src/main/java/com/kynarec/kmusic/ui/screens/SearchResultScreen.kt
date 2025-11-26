@@ -3,16 +3,12 @@
 package com.kynarec.kmusic.ui.screens
 
 import android.app.Application
-import android.content.ComponentName
 import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.LoadingIndicator
-import androidx.compose.material3.LoadingIndicatorDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,24 +18,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
-import com.google.android.material.loadingindicator.LoadingIndicator
-import com.google.common.util.concurrent.MoreExecutors
 import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.data.db.entities.Song
-import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import innertube.searchSongsFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.withContext
+
 @OptIn(UnstableApi::class, ExperimentalMaterial3ExpressiveApi::class,
     ExperimentalMaterial3ExpressiveApi::class
 )
@@ -49,10 +39,9 @@ fun SearchResultScreen(
     viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as MyApp).database.songDao(),LocalContext.current)),
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
+    LocalContext.current
     var songs by remember { mutableStateOf(emptyList<Song>()) }
     var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     // Use LaunchedEffect to perform the side effect (data fetching)
     // The coroutine will be launched when the query changes.
@@ -73,7 +62,7 @@ fun SearchResultScreen(
         }
     }
 
-    val loadingIndicatorColor: Color = MaterialTheme.colorScheme.primaryContainer
+    MaterialTheme.colorScheme.primaryContainer
 
     when {
         isLoading -> {

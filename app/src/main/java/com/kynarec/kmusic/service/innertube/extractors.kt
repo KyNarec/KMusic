@@ -3,10 +3,10 @@ package innertube
 import com.kynarec.kmusic.data.db.entities.Song
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import org.json.JSONArray
-import org.json.JSONObject
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.json.JSONArray
+import org.json.JSONObject
 
 @Serializable
 data class SearchResponse(

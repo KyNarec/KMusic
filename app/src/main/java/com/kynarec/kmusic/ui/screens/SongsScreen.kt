@@ -23,11 +23,6 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import com.kynarec.kmusic.utils.createMediaItemFromSong
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -40,7 +35,7 @@ fun SongsScreen(
 
     var mediaController by remember { mutableStateOf<MediaController?>(null) }
 
-    val scope = rememberCoroutineScope()
+    rememberCoroutineScope()
 
 
     LaunchedEffect(Unit) {

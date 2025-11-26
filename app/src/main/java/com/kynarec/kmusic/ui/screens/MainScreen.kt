@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -32,7 +31,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kynarec.kmusic.MyApp
-import com.kynarec.kmusic.PlayerControlBar
 import com.kynarec.kmusic.ui.Navigation
 import com.kynarec.kmusic.ui.SearchResultScreen
 import com.kynarec.kmusic.ui.SearchScreen
@@ -40,16 +38,12 @@ import com.kynarec.kmusic.ui.components.MyNavigationRailComponent
 import com.kynarec.kmusic.ui.components.PlayerControlBar
 import com.kynarec.kmusic.ui.components.TopBarComponent
 import com.kynarec.kmusic.ui.theme.AppTheme
-import com.kynarec.kmusic.ui.theme.KMusicTheme
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
-    val playerViewModel: PlayerViewModel =
-        viewModel(factory = PlayerViewModel.Factory(LocalContext.current))
     val scope = rememberCoroutineScope()
 
     val application = LocalContext.current.applicationContext as Application

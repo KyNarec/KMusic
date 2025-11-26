@@ -30,7 +30,6 @@ import com.google.common.util.concurrent.SettableFuture
 import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.MyApp
 import com.kynarec.kmusic.data.db.dao.SongDao
-import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
 import kotlinx.coroutines.CoroutineScope
@@ -432,7 +431,7 @@ class PlayerServiceModern : MediaLibraryService() {
         serviceScope.launch(Dispatchers.IO) {
             try {
                 // Get playback info on the main thread
-                val (isPlaying, currentPosition) = withContext(Dispatchers.Main) {
+                val (isPlaying, _) = withContext(Dispatchers.Main) {
                     Pair(player?.isPlaying, player?.currentPosition)
                 }
 

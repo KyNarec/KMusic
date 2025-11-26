@@ -1,26 +1,24 @@
 package innertube
 
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.head
 import io.ktor.client.request.header
+import io.ktor.client.request.headers
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.client.request.get
-import io.ktor.client.request.head
-import io.ktor.client.request.headers
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -234,7 +232,7 @@ class InnerTube(
         params: String,
         continuation: String?
     ): String {
-        val client = client
+        client
 
         val url = "https://music.youtube.com/youtubei/v1/search?prettyPrint=false"
 
@@ -273,7 +271,7 @@ class InnerTube(
         val mediaType = "application/json".toMediaType()
         val requestBody = jsonBody.toRequestBody(mediaType)
 
-        val request = Request.Builder()
+        Request.Builder()
             .url(url)
             .post(requestBody)
             .addHeader("X-Goog-FieldMask", "contents.tabbedSearchResultsRenderer.tabs.tabRenderer.content.sectionListRenderer.contents.musicShelfRenderer(continuations,contents.musicResponsiveListItemRenderer(flexColumns,fixedColumns,thumbnail,navigationEndpoint,badges))")
@@ -331,7 +329,7 @@ class InnerTube(
             )
         )
 
-        val json = Json { ignoreUnknownKeys = true }
+        Json { ignoreUnknownKeys = true }
 
         try {
             val response = client.post(url) {
