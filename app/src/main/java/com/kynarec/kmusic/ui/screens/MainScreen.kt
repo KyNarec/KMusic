@@ -90,7 +90,7 @@ fun MainScreen() {
         // Main UI Scaffold, including the NavHost
         Scaffold(
             topBar = {
-                Box(modifier = Modifier.padding(top = 8.dp)) {
+                Box(modifier = Modifier.padding(top = 16.dp)) {
                     TopBarComponent(shouldHideNavElements, navController)
                 }
             },
@@ -99,7 +99,6 @@ fun MainScreen() {
                 Modifier
                     .fillMaxSize()
                     .padding(contentPadding)
-                    .padding(top = 8.dp)
             ) {
 
                 Row(

@@ -1,15 +1,23 @@
 package com.kynarec.kmusic.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -21,12 +29,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -35,9 +45,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.R
+import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.data.db.entities.SearchQuery
+import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.SearchResultScreen
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
-//@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SearchScreen(
     navController: NavHostController
@@ -46,79 +61,142 @@ fun SearchScreen(
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var searchQueries by remember { mutableStateOf(emptyList<SearchQuery>()) }
 
-    LaunchedEffect(Unit) {
+    val searchQueryDao = KmusicDatabase.getDatabase(context).searchQueryDao()
+
+    LaunchedEffect(Unit, searchQueryDao) {
+        searchQueryDao.observeRecentQueries(10).collect {
+            searchQueries = it
+        }
         focusRequester.requestFocus()
         keyboardController?.show()
     }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        contentAlignment = Alignment.TopCenter
-    ) {
+    Column(
+        Modifier.fillMaxSize(),
+    )
+    {
         Box(
             modifier = Modifier
-                .padding(top = 40.dp)
                 .fillMaxWidth()
-                .background(
-//                    color = Color(0xFF2B3233),
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = RoundedCornerShape(24.dp)
-                ),
-            contentAlignment = Alignment.Center
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.TopCenter
         ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
+            Box(
                 modifier = Modifier
+                    .padding(top = 40.dp)
                     .fillMaxWidth()
-                    .focusRequester(focusRequester),
-                placeholder = {
-                    Text(
-                        text = stringResource(id = R.string.search_hint),
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Start,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(
-                            onClick = { searchQuery = "" },
-                            modifier = Modifier.padding(end = 16.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = "Clear",
-                                tint = MaterialTheme.colorScheme.error
-                            )
+                    .background(
+//                    color = Color(0xFF2B3233),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(24.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester),
+                    placeholder = {
+                        Text(
+                            text = stringResource(id = R.string.search_hint),
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Start,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(
+                                onClick = { searchQuery = "" },
+                                modifier = Modifier.padding(end = 16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = "Clear",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
-                    }
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Search
-                ),
-                keyboardActions = KeyboardActions(
-                    onSearch = {
-                        println("Search query: $searchQuery")
-                        keyboardController?.hide()
-                        focusManager.clearFocus()
-                        navController.navigate(SearchResultScreen(searchQuery))
-                    }
-                ),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Search
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onSearch = {
+                            println("Search query: $searchQuery")
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                            scope.launch {
+                                searchQueryDao.deleteQuery(searchQuery.trim())
+                                searchQueryDao.insertQuery(SearchQuery(query = searchQuery.trim()))
+                            }
+                            navController.navigate(SearchResultScreen(searchQuery.trim()))
+                        }
+                    ),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
 //                    focusedTextColor = Color.White,
 //                    unfocusedTextColor = Color.White,
 //                    cursorColor = Color.White,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    )
                 )
-            )
+            }
+        }
+        Spacer(Modifier.height(24.dp))
+        Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 8.dp)) {
+            Text("Search History", style = MaterialTheme.typography.titleLarge)
+        }
+        LazyColumn(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .fillMaxWidth(),
+//            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            items(count = searchQueries.size) { index ->
+                Row(Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .clickable {
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                        scope.launch {
+                            searchQueryDao.deleteQuery(searchQuery)
+                            searchQueryDao.insertQuery(SearchQuery(query = searchQuery))
+                        }
+                        navController.navigate(SearchResultScreen(searchQueries[index].query))
+                    },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Text(searchQueries[index].query)
+
+
+                    Spacer(Modifier.weight(1f))
+                    IconButton(onClick = {
+                        scope.launch {
+                            searchQueryDao.deleteQuery(searchQueries[index].query)
+                        }
+                    }) {
+                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
+                    }
+                    IconButton(onClick = {
+                        scope.launch {
+                            searchQuery = searchQueries[index].query
+                        }
+                    }) {
+                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
+                    }
+                }
+            }
         }
     }
 }
