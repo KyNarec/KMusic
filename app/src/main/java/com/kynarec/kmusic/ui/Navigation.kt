@@ -16,6 +16,8 @@ import androidx.compose.animation.shrinkOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,7 +25,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.kynarec.kmusic.MyApp
+import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.ui.screens.AlbumsScreen
 import com.kynarec.kmusic.ui.screens.ArtistsScreen
@@ -31,100 +33,154 @@ import com.kynarec.kmusic.ui.screens.HomeScreen
 import com.kynarec.kmusic.ui.screens.PlaylistScreen
 import com.kynarec.kmusic.ui.screens.SearchResultScreen
 import com.kynarec.kmusic.ui.screens.SearchScreen
+import com.kynarec.kmusic.ui.screens.SettingsScreen
 import com.kynarec.kmusic.ui.screens.SongsScreen
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import com.kynarec.kmusic.utils.rememberPreference
-import com.kynarec.kmusic.utils.transitionEffectKey
+import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import kotlinx.serialization.Serializable
 
 @Composable
 fun Navigation(
-    navController: NavHostController
+    navController: NavHostController,
 ) {
     // Get the Application context using LocalContext.
     // This is safe to use in a Composable because it's tied to the Composable's scope.
     val application = LocalContext.current.applicationContext as Application
 
     // Use a custom ViewModel factory to inject the database DAO.
-    val viewModel: MusicViewModel = viewModel(
+    val musicViewModel: MusicViewModel = viewModel(
         factory = MusicViewModel.Factory(
-            (application as MyApp).database.songDao(),
+            (application as KMusic).database.songDao(),
             LocalContext.current
         )
     )
 
-    val transitionEffect by rememberPreference(transitionEffectKey, TransitionEffect.Fade)
+    val settingsViewModel: SettingsViewModel = viewModel(
+        factory = SettingsViewModel.Factory(
+            (application as KMusic).ksafe,
+            LocalContext.current
+        )
+    )
+
+    val transitionEffect by settingsViewModel.transitionEffectFlow.collectAsState()
 
     NavHost(
-        navController = navController,
-        startDestination = HomeScreen,
-        enterTransition = {
-            when (transitionEffect) {
-                TransitionEffect.None -> EnterTransition.None
-                TransitionEffect.Expand -> expandIn(animationSpec = tween(350, easing = LinearOutSlowInEasing), expandFrom = Alignment.TopStart)
-                TransitionEffect.Fade -> fadeIn(animationSpec = tween(350))
-                TransitionEffect.Scale -> scaleIn(animationSpec = tween(350))
-                TransitionEffect.SlideVertical -> slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Up)
-                TransitionEffect.SlideHorizontal -> slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left)
-            }
-        },
-        exitTransition = {
-            when (transitionEffect) {
-                TransitionEffect.None -> ExitTransition.None
-                TransitionEffect.Expand -> shrinkOut(animationSpec = tween(350, easing = FastOutSlowInEasing),shrinkTowards = Alignment.TopStart)
-                TransitionEffect.Fade -> fadeOut(animationSpec = tween(350))
-                TransitionEffect.Scale -> scaleOut(animationSpec = tween(350))
-                TransitionEffect.SlideVertical -> slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Down)
-                TransitionEffect.SlideHorizontal -> slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right)
-            }
-        },
-        popEnterTransition = {
-            when (transitionEffect) {
-                TransitionEffect.None -> EnterTransition.None
-                TransitionEffect.Expand -> expandIn(animationSpec = tween(350, easing = LinearOutSlowInEasing), expandFrom = Alignment.TopStart)
-                TransitionEffect.Fade -> fadeIn(animationSpec = tween(350))
-                TransitionEffect.Scale -> scaleIn(animationSpec = tween(350))
-                TransitionEffect.SlideVertical -> slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Up)
-                TransitionEffect.SlideHorizontal -> slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left)
-            }
-        },
-        popExitTransition = {
-            when (transitionEffect) {
-                TransitionEffect.None -> ExitTransition.None
-                TransitionEffect.Expand -> shrinkOut(animationSpec = tween(350, easing = FastOutSlowInEasing),shrinkTowards = Alignment.TopStart)
-                TransitionEffect.Fade -> fadeOut(animationSpec = tween(350))
-                TransitionEffect.Scale -> scaleOut(animationSpec = tween(350))
-                TransitionEffect.SlideVertical -> slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Down)
-                TransitionEffect.SlideHorizontal -> slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right)
-            }
-        }
-    ) {
-        composable<HomeScreen> {
-            HomeScreen()
-        }
+            navController = navController,
+            startDestination = HomeScreen,
+            enterTransition = {
+                when (transitionEffect) {
+                    TransitionEffect.None -> EnterTransition.None
+                    TransitionEffect.Expand -> expandIn(
+                        animationSpec = tween(
+                            350,
+                            easing = LinearOutSlowInEasing
+                        ), expandFrom = Alignment.TopStart
+                    )
 
-        composable<SongsScreen> {
+                    TransitionEffect.Fade -> fadeIn(animationSpec = tween(350))
+                    TransitionEffect.Scale -> scaleIn(animationSpec = tween(350))
+                    TransitionEffect.SlideVertical -> slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Up
+                    )
+
+                    TransitionEffect.SlideHorizontal -> slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Left
+                    )
+                }
+            },
+            exitTransition = {
+                when (transitionEffect) {
+                    TransitionEffect.None -> ExitTransition.None
+                    TransitionEffect.Expand -> shrinkOut(
+                        animationSpec = tween(
+                            350,
+                            easing = FastOutSlowInEasing
+                        ), shrinkTowards = Alignment.TopStart
+                    )
+
+                    TransitionEffect.Fade -> fadeOut(animationSpec = tween(350))
+                    TransitionEffect.Scale -> scaleOut(animationSpec = tween(350))
+                    TransitionEffect.SlideVertical -> slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Down
+                    )
+
+                    TransitionEffect.SlideHorizontal -> slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Right
+                    )
+                }
+            },
+            popEnterTransition = {
+                when (transitionEffect) {
+                    TransitionEffect.None -> EnterTransition.None
+                    TransitionEffect.Expand -> expandIn(
+                        animationSpec = tween(
+                            350,
+                            easing = LinearOutSlowInEasing
+                        ), expandFrom = Alignment.TopStart
+                    )
+
+                    TransitionEffect.Fade -> fadeIn(animationSpec = tween(350))
+                    TransitionEffect.Scale -> scaleIn(animationSpec = tween(350))
+                    TransitionEffect.SlideVertical -> slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Up
+                    )
+
+                    TransitionEffect.SlideHorizontal -> slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Left
+                    )
+                }
+            },
+            popExitTransition = {
+                when (transitionEffect) {
+                    TransitionEffect.None -> ExitTransition.None
+                    TransitionEffect.Expand -> shrinkOut(
+                        animationSpec = tween(
+                            350,
+                            easing = FastOutSlowInEasing
+                        ), shrinkTowards = Alignment.TopStart
+                    )
+
+                    TransitionEffect.Fade -> fadeOut(animationSpec = tween(350))
+                    TransitionEffect.Scale -> scaleOut(animationSpec = tween(350))
+                    TransitionEffect.SlideVertical -> slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Down
+                    )
+
+                    TransitionEffect.SlideHorizontal -> slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Right
+                    )
+                }
+            }
+        ) {
+            composable<HomeScreen> {
+                HomeScreen()
+            }
+
+            composable<SongsScreen> {
 //            val songs = viewModel.songsList.collectAsState()
-            val songs = viewModel.uiState.collectAsState().value.songsList
-            SongsScreen(songs = songs)
+                val songs = musicViewModel.uiState.collectAsState().value.songsList
+                SongsScreen(songs = songs)
+            }
+            composable<ArtistsScreen> {
+                ArtistsScreen()
+            }
+            composable<PlaylistScreen> {
+                PlaylistScreen()
+            }
+            composable<AlbumsScreen> {
+                AlbumsScreen()
+            }
+            composable<SearchScreen> {
+                SearchScreen(navController)
+            }
+            composable<SearchResultScreen> {
+                val args = it.toRoute<SearchResultScreen>()
+                SearchResultScreen(args.query, musicViewModel)
+            }
+            composable<SettingsScreen> {
+                SettingsScreen(prefs = settingsViewModel)
+            }
         }
-        composable<ArtistsScreen> {
-            ArtistsScreen()
-        }
-        composable<PlaylistScreen> {
-            PlaylistScreen()
-        }
-        composable<AlbumsScreen> {
-            AlbumsScreen()
-        }
-        composable<SearchScreen> {
-            SearchScreen(navController)
-        }
-        composable<SearchResultScreen> {
-            val args = it.toRoute<SearchResultScreen>()
-            SearchResultScreen(args.query, viewModel)
-        }
-    }
 }
 
 @Serializable
@@ -155,3 +211,6 @@ object SearchScreen
 data class SearchResultScreen(
     val query: String
 )
+
+@Serializable
+object SettingsScreen

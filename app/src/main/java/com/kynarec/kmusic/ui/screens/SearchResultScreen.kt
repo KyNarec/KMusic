@@ -22,7 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
-import com.kynarec.kmusic.MyApp
+import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
@@ -36,7 +36,7 @@ import kotlinx.coroutines.flow.flowOn
 @Composable
 fun SearchResultScreen(
     query: String,
-    viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as MyApp).database.songDao(),LocalContext.current)),
+    viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as KMusic).database.songDao(),LocalContext.current)),
     modifier: Modifier = Modifier
 ) {
     LocalContext.current

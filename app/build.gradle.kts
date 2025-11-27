@@ -120,4 +120,7 @@ dependencies {
 
     implementation("com.squareup.okhttp3:okhttp:5.3.0")
     implementation("org.json:json:20250517")
+
+    implementation("eu.anifantakis:ksafe:1.1.1")
+    implementation("eu.anifantakis:ksafe-compose:1.1.1")
 }

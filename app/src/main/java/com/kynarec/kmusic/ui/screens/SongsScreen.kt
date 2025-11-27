@@ -18,7 +18,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
-import com.kynarec.kmusic.MyApp
+import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.ui.components.SongComponent
@@ -29,7 +29,7 @@ import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 fun SongsScreen(
     songs: List<Song>,
     modifier: Modifier = Modifier,
-    viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as MyApp).database.songDao(),LocalContext.current))
+    viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as KMusic).database.songDao(),LocalContext.current))
 ) {
     val context = LocalContext.current
 

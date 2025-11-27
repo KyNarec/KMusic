@@ -9,6 +9,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
+import com.kynarec.kmusic.utils.Constants.JUST_STARTED_UP
+import com.kynarec.kmusic.utils.Constants.PLAYER_IS_OPEN
+import com.kynarec.kmusic.utils.Constants.PLAYER_IS_PLAYING
 
 
 fun Context.getPlayerIsPlaying(): Boolean {

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -30,6 +32,8 @@ import androidx.navigation.NavHostController
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.ui.HomeScreen
 import com.kynarec.kmusic.ui.SearchScreen
+import com.kynarec.kmusic.ui.SettingsScreen
+import com.kynarec.kmusic.ui.screens.SettingsScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +53,6 @@ fun TopBarComponent(
                 .clickable(true, onClick = {
                     navController.navigate(HomeScreen)
                 })
-//                .fillMaxWidth()
         ){
             Row {
                 if (isSearchScreen) {
@@ -57,19 +60,18 @@ fun TopBarComponent(
                         onClick = { navController.popBackStack() },
                         modifier = Modifier
                             .align(Alignment.CenterVertically)
-//                            .size(60.dp)
-                            .height(60.dp)
-                            .width(30.dp)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back")
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
                 }
 
                 Box(
                     modifier = Modifier
-//                        .size(60.dp)
                         .clickable(onClick = { /*TODO*/ })
                         .height(60.dp)
                         .width(40.dp),
@@ -103,12 +105,24 @@ fun TopBarComponent(
             onClick = { navController.navigate(SearchScreen) },
             modifier = Modifier
                 .align(Alignment.CenterVertically)
-                .size(60.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Search",
-                tint = MaterialTheme.colorScheme.onBackground
+                tint = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+        IconButton(
+            onClick = { navController.navigate(SettingsScreen) },
+            modifier = Modifier
+                .align(Alignment.CenterVertically)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Settings",
+                tint = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.size(32.dp)
             )
         }
         Spacer(modifier = Modifier.width(16.dp))

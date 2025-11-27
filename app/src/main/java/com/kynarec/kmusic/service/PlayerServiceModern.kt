@@ -28,7 +28,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
 import com.kynarec.kmusic.MainActivity
-import com.kynarec.kmusic.MyApp
+import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
@@ -320,7 +320,7 @@ class PlayerServiceModern : MediaLibraryService() {
         super.onCreate()
 
         try {// Ensure the DAO is initialized here.
-            songDao = (application as MyApp).database.songDao()
+            songDao = (application as KMusic).database.songDao()
             Log.i("PlayerService", "songDao has been initialized.")
 
             val cacheDataSourceFactory = CacheDataSource.Factory()
