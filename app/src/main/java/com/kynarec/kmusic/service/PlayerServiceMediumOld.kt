@@ -158,7 +158,7 @@ class PlayerServiceMediumOld : MediaLibraryService() {
     }
 
     companion object {
-        const val NOTIFICATION_ID = com.kynarec.kmusic.utils.NOTIFICATION_ID
+        const val NOTIFICATION_ID = com.kynarec.kmusic.utils.Constants.NOTIFICATION_ID
         const val NOTIFICATION_CHANNEL_ID = "kmusic_playback_channel"
     }
 

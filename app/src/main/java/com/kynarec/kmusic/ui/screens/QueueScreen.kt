@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.kynarec.kmusic.MyApp
+import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 
@@ -26,7 +26,7 @@ import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 fun QueueScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as MyApp).database.songDao(),LocalContext.current)),
+    viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as KMusic).database.songDao(),LocalContext.current)),
     sheetState: SheetState,
     showBottomSheet: MutableState<Boolean>,
 //    hazeState: HazeState

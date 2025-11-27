@@ -1,21 +1,27 @@
 package com.kynarec.kmusic.utils
 
-const val ACTION_RESUME = "ACTION_RESUME"
-const val ACTION_PLAY = "ACTION_PLAY"
-const val ACTION_PAUSE = "ACTION_PAUSE"
-const val ACTION_NEXT = "ACTION_NEXT"
-const val ACTION_PREV = "ACTION_PREV"
-const val ACTION_SEEK = "ACTION_SEEK"
-const val ACTION_STOP_UPDATES = "ACTION_STOP_UPDATES"
-const val ACTION_RESUME_UPDATES = "ACTION_RESUME_UPDATES"
+import com.kynarec.kmusic.enums.TransitionEffect
 
-const val PLAYER_PROGRESS_UPDATE = "PLAYER_PROGRESS_UPDATE"
-const val PLAYBACK_STATE_CHANGED = "PLAYBACK_STATE_CHANGED"
-const val IS_PLAYING = "IS_PLAYING"
-const val NOTIFICATION_ID = 1596
-const val PLAYER_IS_PLAYING = "playerIsPlaying"
-const val JUST_STARTED_UP = "justStartedUp"
-const val PLAYER_IS_OPEN = "playerIsOpen"
-const val THUMBNAIL_ROUNDNESS = 30
-const val MARQUEE_DELAY = 1000L
-const val transitionEffectKey = "transitionEffect"
+object Constants {
+    const val ACTION_RESUME = "ACTION_RESUME"
+    const val ACTION_PLAY = "ACTION_PLAY"
+    const val ACTION_PAUSE = "ACTION_PAUSE"
+    const val ACTION_NEXT = "ACTION_NEXT"
+    const val ACTION_PREV = "ACTION_PREV"
+    const val ACTION_SEEK = "ACTION_SEEK"
+    const val ACTION_STOP_UPDATES = "ACTION_STOP_UPDATES"
+    const val ACTION_RESUME_UPDATES = "ACTION_RESUME_UPDATES"
+
+    const val PLAYER_PROGRESS_UPDATE = "PLAYER_PROGRESS_UPDATE"
+    const val PLAYBACK_STATE_CHANGED = "PLAYBACK_STATE_CHANGED"
+    const val IS_PLAYING = "IS_PLAYING"
+    const val NOTIFICATION_ID = 1596
+    const val PLAYER_IS_PLAYING = "playerIsPlaying"
+    const val JUST_STARTED_UP = "justStartedUp"
+    const val PLAYER_IS_OPEN = "playerIsOpen"
+    const val THUMBNAIL_ROUNDNESS = 30
+    const val MARQUEE_DELAY = 1000L
+    const val TRANSITION_EFFECT_KEY = "transitionEffect"
+    val DEFAULT_TRANSITION_EFFECT = TransitionEffect.Fade
+}
+

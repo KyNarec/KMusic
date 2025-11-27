@@ -30,10 +30,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.kynarec.kmusic.MyApp
+import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.ui.Navigation
 import com.kynarec.kmusic.ui.SearchResultScreen
 import com.kynarec.kmusic.ui.SearchScreen
+import com.kynarec.kmusic.ui.SettingsScreen
 import com.kynarec.kmusic.ui.components.MyNavigationRailComponent
 import com.kynarec.kmusic.ui.components.PlayerControlBar
 import com.kynarec.kmusic.ui.components.TopBarComponent
@@ -49,7 +50,7 @@ fun MainScreen() {
     val application = LocalContext.current.applicationContext as Application
     val musicViewModel: MusicViewModel = viewModel(
         factory = MusicViewModel.Factory(
-            (application as MyApp).database.songDao(),
+            (application as KMusic).database.songDao(),
             LocalContext.current
         )
     )
@@ -69,8 +70,12 @@ fun MainScreen() {
     val isSearchResultScreen = remember(currentRoute) {
         currentRoute?.startsWith(SearchResultScreen::class.qualifiedName!!) == true
     }
+    val isSettingsScreen = remember(currentRoute) {
+        currentRoute?.startsWith(SettingsScreen::class.qualifiedName!!) == true
+    }
 
-    val shouldHideNavElements = isSearchScreen || isSearchResultScreen
+
+    val shouldHideNavElements = isSearchScreen || isSearchResultScreen || isSettingsScreen
 
     LaunchedEffect(sheetState.isVisible) {
         if (!sheetState.isVisible) {
