@@ -1,5 +1,5 @@
 [versions]
-agp = "8.9.1"
+agp = "8.13.1"
 cardview = "1.0.0"
 coilCompose = "2.7.0"
 compiler = "5.0.5"

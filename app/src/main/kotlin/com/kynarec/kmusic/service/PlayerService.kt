@@ -330,7 +330,7 @@ class PlayerService()
 //        }
 //
 ////        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-//        val manager = getSystemService(NotificationManager::class.java)
+//        val manager = getSystemService(NotificationManager::class.kotlin)
 //        manager.createNotificationChannel(channel)
 //    }
 //

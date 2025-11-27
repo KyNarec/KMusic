@@ -23,5 +23,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "KMusic"
 include(":app")
-include(":innertube")
- 

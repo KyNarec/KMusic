@@ -7,8 +7,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.kynarec.kmusic.KMusic
-import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.utils.Constants.DEFAULT_TRANSITION_EFFECT

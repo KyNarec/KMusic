@@ -433,6 +433,8 @@ class InnerTube(
         val clientVersion: String
     )
 
+    private val jsonSetting = Json { prettyPrint = true }
+
     suspend fun betterNext(
         videoId: String,
         playlistId: String?,
@@ -458,7 +460,7 @@ class InnerTube(
         )
 
         val bodyString = json.encodeToString(requestBody)
-        println(json.encodeToString(Json { prettyPrint = true }.encodeToJsonElement(requestBody)))
+        println(json.encodeToString(jsonSetting.encodeToJsonElement(requestBody)))
 
         try {
             val response: HttpResponse = client.post(url) {
