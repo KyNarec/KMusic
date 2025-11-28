@@ -9,7 +9,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.enums.TransitionEffect
+import com.kynarec.kmusic.utils.Constants.DARK_MODE_KEY
+import com.kynarec.kmusic.utils.Constants.DEFAULT_DARK_MODE
+import com.kynarec.kmusic.utils.Constants.DEFAULT_DYNAMIC_COLORS
 import com.kynarec.kmusic.utils.Constants.DEFAULT_TRANSITION_EFFECT
+import com.kynarec.kmusic.utils.Constants.DYNAMIC_COLORS_KEY
 import com.kynarec.kmusic.utils.Constants.TRANSITION_EFFECT_KEY
 import eu.anifantakis.lib.ksafe.KSafe
 import eu.anifantakis.lib.ksafe.invoke
@@ -29,10 +33,12 @@ class SettingsViewModel(
     val transitionEffectFlow: StateFlow<TransitionEffect> = snapshotFlow { transitionEffect }
         .stateIn(viewModelScope, SharingStarted.Eagerly, transitionEffect)
 
-    init {
-        // Observe changes using KSafe's flow
+//    val darkMode by ksafe.mutableStateOf(DEFAULT_DARK_MODE, DARK_MODE_KEY)
+    val darkModeFLow = ksafe.getFlow(DARK_MODE_KEY, DEFAULT_DARK_MODE)
+    val dynamicColorsFlow = ksafe.getFlow(DYNAMIC_COLORS_KEY, DEFAULT_DYNAMIC_COLORS)
 
-    }
+
+
 
     suspend inline fun <reified T : Enum<T>> getEnum(key: String, default: T): T {
         return ksafe.get(key, default)

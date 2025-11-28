@@ -20,6 +20,7 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import com.kynarec.kmusic.service.PlayerServiceModern
+import com.kynarec.kmusic.service.update.PlatformContext
 import com.kynarec.kmusic.ui.screens.MainScreen
 import com.kynarec.kmusic.ui.theme.KMusicTheme
 import com.kynarec.kmusic.utils.setJustStartedUp
@@ -72,7 +73,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestNotificationPermission()
-
+        PlatformContext.initialize(applicationContext)
         setContent {
             KMusicTheme {
                 Surface(

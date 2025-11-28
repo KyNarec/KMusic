@@ -7,7 +7,7 @@ plugins {
 
 }
 
-val appVersion = "0.1.0"
+val appVersion = "0.0.1"
 
 android {
     namespace = "com.kynarec.kmusic"
@@ -130,4 +130,5 @@ dependencies {
 
     implementation("eu.anifantakis:ksafe:1.1.1")
     implementation("eu.anifantakis:ksafe-compose:1.1.1")
+    implementation("com.mikepenz:multiplatform-markdown-renderer-m3:0.38.1")
 }
