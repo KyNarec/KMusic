@@ -106,6 +106,63 @@ class InnerTube(
     internal fun HttpRequestBuilder.mask(value: String = "*") =
         header("X-Goog-FieldMask", value)
 
+    @Serializable
+    data class SearchSuggestion(
+        val input: String,
+        val context: SearchSuggestionContext,
+    )
+
+    @Serializable
+    data class SearchSuggestionContext(
+        val client: SearchSuggestionClient,
+    )
+
+    @Serializable
+    data class SearchSuggestionClient(
+        val clientName: String,
+        val clientVersion: String,
+    )
+
+    suspend fun getYoutubeMusicSearchSuggestion(query: String): String {
+
+        val url = "https://youtubei.googleapis.com/youtubei/v1/music/get_search_suggestions"
+
+        val requestBody = SearchSuggestion(
+            input = query,
+            context = SearchSuggestionContext(
+                client = SearchSuggestionClient(
+                    clientName = clientName.label,
+                    clientVersion = clientName.version
+                )
+            ),
+        )
+        val json = Json { ignoreUnknownKeys = true }
+
+        println(json.encodeToString(SearchSuggestion.serializer(), requestBody))
+
+        try {
+            val response = client.post(url) {
+                contentType(ContentType.Application.Json)
+                setBody(requestBody)
+
+                headers {
+                    append("Accept", "application/json")
+                    append("Accept-Charset", "UTF-8")
+                    append("User-Agent", clientName.userAgent)
+                }
+            }
+
+            if (!response.status.isSuccess()) {
+                throw kotlinx.io.IOException("Unexpected response code: ${response.status}")
+            }
+
+            return response.bodyAsText()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return ""
+        }
+    }
+
     suspend fun getYoutubeThumbnail(
         videoId: String,
     ): String? {

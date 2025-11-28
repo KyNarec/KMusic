@@ -21,7 +21,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
-import innertube.playSongByIdWithBestBitrate
+import com.kynarec.kmusic.service.innertube.playSongByIdWithBestBitrate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
