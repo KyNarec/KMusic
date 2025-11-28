@@ -1,11 +1,13 @@
 package com.kynarec.kmusic.ui.screens
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,6 +33,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kynarec.kmusic.KMusic
+import com.kynarec.kmusic.service.update.PlatformUpdateManager
 import com.kynarec.kmusic.ui.Navigation
 import com.kynarec.kmusic.ui.SearchResultScreen
 import com.kynarec.kmusic.ui.SearchScreen
@@ -40,6 +43,10 @@ import com.kynarec.kmusic.ui.components.PlayerControlBar
 import com.kynarec.kmusic.ui.components.TopBarComponent
 import com.kynarec.kmusic.ui.theme.AppTheme
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
+import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
+import com.kynarec.kmusic.utils.Constants.DEFAULT_DARK_MODE
+import com.kynarec.kmusic.utils.Constants.DEFAULT_DYNAMIC_COLORS
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,10 +54,20 @@ import kotlinx.coroutines.launch
 fun MainScreen() {
     val scope = rememberCoroutineScope()
 
+    val updateManager = remember { PlatformUpdateManager() }
+    val updateViewModel = remember { UpdateViewModel(updateManager) }
+
     val application = LocalContext.current.applicationContext as Application
     val musicViewModel: MusicViewModel = viewModel(
         factory = MusicViewModel.Factory(
             (application as KMusic).database.songDao(),
+            LocalContext.current
+        )
+    )
+    val ksafeInstance = remember { (application as KMusic).ksafe }
+    val settingsViewModel: SettingsViewModel = viewModel(
+        factory = SettingsViewModel.Factory(
+            ksafeInstance, // Use the remembered, stable KSafe instance
             LocalContext.current
         )
     )
@@ -77,13 +94,22 @@ fun MainScreen() {
 
     val shouldHideNavElements = isSearchScreen || isSearchResultScreen || isSettingsScreen
 
+    DEFAULT_DARK_MODE = isSystemInDarkTheme()
+    val darkTheme by settingsViewModel.darkModeFLow.collectAsState(DEFAULT_DARK_MODE)
+
+    val dynamicColors by settingsViewModel.dynamicColorsFlow.collectAsState(DEFAULT_DYNAMIC_COLORS)
+
+
     LaunchedEffect(sheetState.isVisible) {
         if (!sheetState.isVisible) {
             showBottomSheet.value = false
         }
     }
 
-    AppTheme {
+    AppTheme(
+        darkTheme = darkTheme,
+        dynamicColor = dynamicColors
+    ) {
         // The top-level Box for layering
 //        Box(
 //            modifier = Modifier.fillMaxSize()
@@ -117,7 +143,7 @@ fun MainScreen() {
                         modifier = Modifier
                             .fillMaxSize()
                     ) {
-                        Navigation(navController)
+                        Navigation(navController, settingsViewModel = settingsViewModel, updateManager, updateViewModel)
                     }
                 }
 

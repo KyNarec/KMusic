@@ -1,5 +1,6 @@
 package com.kynarec.kmusic.utils
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import com.kynarec.kmusic.enums.TransitionEffect
 
 object Constants {
@@ -23,5 +24,10 @@ object Constants {
     const val MARQUEE_DELAY = 1000L
     const val TRANSITION_EFFECT_KEY = "transitionEffect"
     val DEFAULT_TRANSITION_EFFECT = TransitionEffect.Fade
+    const val DARK_MODE_KEY = "darkMode"
+    // is changed to isSystemInDarkTheme() in mainScreen
+    var DEFAULT_DARK_MODE = false
+    const val DYNAMIC_COLORS_KEY = "dynamicColors"
+    const val DEFAULT_DYNAMIC_COLORS = false
 }
 

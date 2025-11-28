@@ -31,14 +31,14 @@ fun SettingComponentSwitch(
     title: String,
     description: String,
     prefs: SettingsViewModel,
-    switchId: String
+    switchId: String,
+    defaultValue: Boolean
 ) {
     var checked by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        checked = prefs.getBoolean(switchId, true)
-//        checked = secureStorage.getBoolean(switchId)
+        checked = prefs.getBoolean(switchId, defaultValue)
     }
 
     Row(
