@@ -40,7 +40,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -48,16 +50,21 @@ import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.SearchQuery
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.service.innertube.searchSuggestions
 import com.kynarec.kmusic.ui.SearchResultScreen
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import org.schabi.newpipe.extractor.timeago.patterns.it
 
 @Composable
 fun SearchScreen(
     navController: NavHostController
 ) {
-    var searchQuery by remember { mutableStateOf("") }
+    var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -68,11 +75,12 @@ fun SearchScreen(
     val searchQueryDao = KmusicDatabase.getDatabase(context).searchQueryDao()
 
     LaunchedEffect(Unit, searchQueryDao) {
+        focusRequester.requestFocus()
+        keyboardController?.show()
         searchQueryDao.observeRecentQueries(10).collect {
             searchQueries = it
         }
-        focusRequester.requestFocus()
-        keyboardController?.show()
+
     }
     Column(
         Modifier.fillMaxSize(),
@@ -110,9 +118,9 @@ fun SearchScreen(
                         )
                     },
                     trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
+                        if (searchQuery.text.isNotEmpty()) {
                             IconButton(
-                                onClick = { searchQuery = "" },
+                                onClick = { searchQuery = TextFieldValue("") },
                                 modifier = Modifier.padding(end = 16.dp)
                             ) {
                                 Icon(
@@ -133,10 +141,10 @@ fun SearchScreen(
                             keyboardController?.hide()
                             focusManager.clearFocus()
                             scope.launch {
-                                searchQueryDao.deleteQuery(searchQuery.trim())
-                                searchQueryDao.insertQuery(SearchQuery(query = searchQuery.trim()))
+                                searchQueryDao.deleteQuery(searchQuery.text.trim())
+                                searchQueryDao.insertQuery(SearchQuery(query = searchQuery.text.trim()))
                             }
-                            navController.navigate(SearchResultScreen(searchQuery.trim()))
+                            navController.navigate(SearchResultScreen(searchQuery.text.trim()))
                         }
                     ),
                     colors = TextFieldDefaults.colors(
@@ -152,25 +160,86 @@ fun SearchScreen(
             }
         }
         Spacer(Modifier.height(24.dp))
-        Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 8.dp)) {
-            Text("Search History", style = MaterialTheme.typography.titleLarge)
+        if (searchQuery.text.isNotEmpty()){
+            Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 4.dp)) {
+                Text("Search Suggestions", style = MaterialTheme.typography.titleLarge)
+            }
+            var searchSuggestions by remember { mutableStateOf(emptyList<String>()) }
+
+            LaunchedEffect(searchQuery) {
+//                searchSuggestions = emptyList()
+                searchSuggestions = searchSuggestions(searchQuery.text)
+                    .flowOn(Dispatchers.IO)
+                    .toList()
+//                    .collect {
+//                        searchSuggestions = searchSuggestions+ it
+//                    }
+            }
+            LazyColumn(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 0.dp)
+                    .fillMaxWidth(),
+            ) {
+                items(
+                    count = searchSuggestions.size
+                ) { index ->
+                    Row(Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 0.dp)
+                        .clickable {
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
+                            scope.launch {
+                                searchQueryDao.deleteQuery(searchQuery.text)
+                                searchQueryDao.insertQuery(SearchQuery(query = searchQuery.text))
+                            }
+                            navController.navigate(SearchResultScreen(searchSuggestions[index]))
+                        },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(searchSuggestions[index])
+                        Spacer(Modifier.weight(1f))
+                        IconButton(onClick = {
+                            scope.launch {
+                                searchQuery = TextFieldValue(searchSuggestions[index],
+                                    selection = TextRange(searchSuggestions[index].length)
+                                )
+
+                            }
+                        }) {
+                            Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
+                        }
+                    }
+                }
+            }
         }
+
+        if (searchQuery.text.isEmpty()) {
+            Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 0.dp)) {
+                Text("Search History", style = MaterialTheme.typography.titleLarge)
+            }
+        } else {
+            Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 0.dp)) {
+                Text("Search History", style = MaterialTheme.typography.titleLarge)
+            }
+        }
+
         LazyColumn(
             modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 16.dp, vertical = 0.dp)
                 .fillMaxWidth(),
 //            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             items(count = searchQueries.size) { index ->
                 Row(Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 4.dp)
                     .clickable {
                         keyboardController?.hide()
                         focusManager.clearFocus()
                         scope.launch {
-                            searchQueryDao.deleteQuery(searchQuery)
-                            searchQueryDao.insertQuery(SearchQuery(query = searchQuery))
+                            searchQueryDao.deleteQuery(searchQuery.text)
+                            searchQueryDao.insertQuery(SearchQuery(query = searchQuery.text))
                         }
                         navController.navigate(SearchResultScreen(searchQueries[index].query))
                     },
@@ -190,7 +259,9 @@ fun SearchScreen(
                     }
                     IconButton(onClick = {
                         scope.launch {
-                            searchQuery = searchQueries[index].query
+                            searchQuery = TextFieldValue(searchQueries[index].query,
+                                selection = TextRange(searchQueries[index].query.length)
+                            )
                         }
                     }) {
                         Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")

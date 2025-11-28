@@ -1,12 +1,78 @@
-package innertube
+package com.kynarec.kmusic.service.innertube
 
 import com.kynarec.kmusic.data.db.entities.Song
+import innertube.CLIENTNAME
+import innertube.InnerTube
+import innertube.PARAMS
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.json.JSONArray
 import org.json.JSONObject
+
+
+@Serializable
+data class SearchSuggestionsResponse(
+    val contents: List<SuggestionsSection> = emptyList()
+)
+
+@Serializable
+data class SuggestionsSection(
+    val searchSuggestionsSectionRenderer: SearchSuggestionsSectionRenderer? = null
+)
+
+@Serializable
+data class SearchSuggestionsSectionRenderer(
+    val contents: List<SuggestionItem> = emptyList()
+)
+
+@Serializable
+data class SuggestionItem(
+    val searchSuggestionRenderer: SearchSuggestionRenderer? = null
+)
+
+@Serializable
+data class SearchSuggestionRenderer(
+    val suggestion: SuggestionText? = null
+)
+
+@Serializable
+data class SuggestionText(
+    val runs: List<SuggestionRun> = emptyList()
+)
+
+@Serializable
+data class SuggestionRun(
+    val text: String? = null
+)
+
+fun searchSuggestions(input: String): Flow<String> = flow {
+    val json = Json { ignoreUnknownKeys = true }
+    val innerTubeClient = InnerTube(CLIENTNAME.WEB_REMIX)
+
+    try {
+        val raw = innerTubeClient.getYoutubeMusicSearchSuggestion(
+            input
+        )
+
+        val response = json.decodeFromString<SearchSuggestionsResponse>(raw)
+
+        val suggestions = response.contents
+            .asSequence() // Use sequence for efficiency with multiple chained operations
+            .mapNotNull { it.searchSuggestionsSectionRenderer?.contents }
+            .flatten()
+            .mapNotNull { it.searchSuggestionRenderer?.suggestion?.runs }
+            .map { runs -> runs.joinToString("") { it.text ?: "" } } // Join runs without spaces
+
+        suggestions.forEach { suggestion ->
+            emit(suggestion) // Emit each suggestion individually
+        }
+
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
 
 @Serializable
 data class SearchResponse(

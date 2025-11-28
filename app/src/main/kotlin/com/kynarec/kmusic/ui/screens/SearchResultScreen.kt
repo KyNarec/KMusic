@@ -26,7 +26,7 @@ import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import innertube.searchSongsFlow
+import com.kynarec.kmusic.service.innertube.searchSongsFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 
