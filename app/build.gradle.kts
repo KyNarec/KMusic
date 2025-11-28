@@ -7,7 +7,7 @@ plugins {
 
 }
 
-val appVersion = "0.0.1"
+val appVersion = "0.1.1"
 
 android {
     namespace = "com.kynarec.kmusic"
