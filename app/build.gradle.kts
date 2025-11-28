@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     kotlin("kapt")
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.21"
-
+    id("kotlin-parcelize")
 }
 
 val appVersion = "0.1.1"

@@ -170,6 +170,7 @@ fun Navigation(
             ArtistsScreen()
         }
         composable<PlaylistScreen> {
+            val playlists =
             PlaylistScreen()
         }
         composable<AlbumsScreen> {
