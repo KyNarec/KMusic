@@ -29,6 +29,5 @@ data class PlaylistWithSongs(
             entityColumn = "songId"           // Column in the junction table pointing to Song
         )
     )
-    // The list of all Song entities associated with this playlist
     val songs: List<Song>
 ) : Parcelable

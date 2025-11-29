@@ -27,7 +27,7 @@ import com.kynarec.kmusic.R
 import com.kynarec.kmusic.ui.AlbumsScreen
 import com.kynarec.kmusic.ui.ArtistsScreen
 import com.kynarec.kmusic.ui.HomeScreen
-import com.kynarec.kmusic.ui.PlaylistScreen
+import com.kynarec.kmusic.ui.PlaylistsScreen
 import com.kynarec.kmusic.ui.SongsScreen
 
 // Define data for navigation destinations
@@ -47,7 +47,7 @@ fun MyNavigationRailComponent(
         NavigationDestination("Songs", { Icon(Icons.Default.MusicNote, contentDescription = "Songs") }, SongsScreen),
         NavigationDestination("Artists", { Icon(Icons.Default.People, contentDescription = "Artists") }, ArtistsScreen),
         NavigationDestination("Albums", { Icon(painterResource(R.drawable.album), contentDescription = "Albums") }, AlbumsScreen),
-        NavigationDestination("Playlists", { Icon(painterResource(R.drawable.library), contentDescription = "Playlists") }, PlaylistScreen)
+        NavigationDestination("Playlists", { Icon(painterResource(R.drawable.library), contentDescription = "Playlists") }, PlaylistsScreen)
     )
 
     var selectedDestination by rememberSaveable { mutableIntStateOf(0) }

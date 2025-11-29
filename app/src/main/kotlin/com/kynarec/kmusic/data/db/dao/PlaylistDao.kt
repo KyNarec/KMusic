@@ -9,6 +9,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.PlaylistWithSongs
+import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
 import kotlinx.coroutines.flow.Flow
 
@@ -27,7 +28,10 @@ interface PlaylistDao {
     fun getAllPlaylists(): Flow<List<Playlist>>
 
     @Query("SELECT * FROM Playlist WHERE id = :id")
-    suspend fun getPlaylistById(id: String): Playlist?
+    suspend fun getPlaylistById(id: Long): Playlist?
+
+    @Query("SELECT * FROM Playlist WHERE id = :id")
+    fun getPlaylistByIdFlow(id: Long): Flow<Playlist?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSongToPlaylist(crossRef: SongPlaylistMap)
@@ -62,5 +66,13 @@ interface PlaylistDao {
      */
     @Query("SELECT * FROM SongPlaylistMap WHERE playlistId = :playlistId ORDER BY position ASC")
     suspend fun getSongMapByPlaylistId(playlistId: Long): List<SongPlaylistMap>
+
+    @Query("""
+        SELECT Song.* FROM Song
+        INNER JOIN SongPlaylistMap ON Song.id = SongPlaylistMap.songId
+        WHERE SongPlaylistMap.playlistId = :playlistId
+        ORDER BY SongPlaylistMap.position ASC
+    """)
+    fun getSongsForPlaylist(playlistId: Long): Flow<List<Song>>
 
 }
