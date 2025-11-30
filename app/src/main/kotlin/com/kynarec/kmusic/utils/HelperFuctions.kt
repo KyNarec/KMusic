@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -104,6 +105,7 @@ fun ConditionalMarqueeText(
     text: String,
     fontSize: androidx.compose.ui.unit.TextUnit,
     maxLines: Int = 1,
+    color: Color = Color.Unspecified,
     modifier: Modifier = Modifier
 ) {
     // Make state more stable
@@ -114,6 +116,7 @@ fun ConditionalMarqueeText(
         text = text,
         fontSize = fontSize,
         maxLines = maxLines,
+        color = color,
         overflow = TextOverflow.Ellipsis,
         onTextLayout = { textLayoutResult ->
             if (!hasCheckedOverflow) {

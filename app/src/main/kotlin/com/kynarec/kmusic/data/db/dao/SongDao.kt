@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.kynarec.kmusic.data.db.entities.Song
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SongDao {
@@ -16,8 +17,14 @@ interface SongDao {
     @Query("SELECT * FROM Song WHERE id = :id")
     suspend fun getSongById(id: String): Song?
 
+    @Query("SELECT * FROM Song WHERE id = :id")
+    fun getSongFlowById(id: String): Flow<Song?>
+
     @Query("SELECT * FROM Song WHERE totalPlayTimeMs > 0")
     suspend fun getSongsWithPlaytime(): List<Song>
+
+    @Query("SELECT * FROM Song WHERE totalPlayTimeMs > 0")
+    fun getSongsFlowWithPlaytime(): Flow<List<Song>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertSong(song: Song)
@@ -50,6 +57,19 @@ interface SongDao {
                 totalPlayTimeMs = existing.totalPlayTimeMs
             ))
         }
+    }
+
+    suspend fun updateLikedAt(song: Song, likedSong: Song) {
+        updateSong(
+            likedSong.copy(
+                id = song.id,
+                title = song.title,
+                artist = song.artist,
+                duration = song.duration,
+                thumbnail = song.thumbnail,
+                totalPlayTimeMs = song.totalPlayTimeMs
+            )
+        )
     }
 
     /**

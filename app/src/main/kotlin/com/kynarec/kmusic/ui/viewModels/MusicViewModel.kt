@@ -237,8 +237,14 @@ class MusicViewModel
         }
     }
 
-    fun playSongByIdWithRadio(song: Song) {
+    fun playSongByIdWithRadio(song: Song, removeViewModelList: Boolean = true) {
         Log.i(tag, "playSongByIdWithRadio called with songId: ${song.id}")
+
+        if (removeViewModelList) {
+            _uiState.update {
+                it.copy(songsList = emptyList())
+            }
+        }
 
         // Play the selected song immediately
         playSong(song)
@@ -312,6 +318,13 @@ class MusicViewModel
             mediaController?.seekToPreviousMediaItem()
         } else {
             Log.w(tag, "No previous media item to skip to.")
+        }
+    }
+
+    fun toggleFavorite(song: Song) {
+        viewModelScope.launch {
+            val updated = song.toggleLike()
+            songDao.updateSong(updated)
         }
     }
 
