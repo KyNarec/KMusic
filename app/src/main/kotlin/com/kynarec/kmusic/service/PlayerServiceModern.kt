@@ -121,27 +121,31 @@ class PlayerServiceModern : MediaLibraryService() {
         ): ListenableFuture<MutableList<MediaItem>> {
             Log.d(tag, "onAddMediaItems called with ${mediaItems.size} items")
             val future = SettableFuture.create<MutableList<MediaItem>>()
-            if (mediaItems.isEmpty() || mediaItems.firstOrNull()?.mediaId == null) {
+            
+            if (mediaItems.isEmpty()) {
                 future.set(mutableListOf())
                 return future
             }
 
-            val mediaId = mediaItems.first().mediaId
-            Log.i(tag, "Attempting to retrieve full song data for mediaId: $mediaId")
-
             serviceScope.launch(Dispatchers.IO) {
+                val resolvedItems = mutableListOf<MediaItem>()
                 try {
-                    val song = songDao.getSongById(mediaId)
-                    if (song != null) {
-                        Log.i(tag, "Found song in database: ${song.title}")
-                        val fullMediaItem = createMediaItemFromSong(context = applicationContext, song = song)
-                        future.set(mutableListOf(fullMediaItem))
-                    } else {
-                        Log.e(tag, "Song not found for mediaId: $mediaId")
-                        future.set(mutableListOf())
+                    for (item in mediaItems) {
+                        val mediaId = item.mediaId
+                        if (mediaId == MediaItem.DEFAULT_MEDIA_ID) continue
+
+                        val song = songDao.getSongById(mediaId)
+                        if (song != null) {
+                            // Log.i(tag, "Found song in database: ${song.title}")
+                            val fullMediaItem = createMediaItemFromSong(context = applicationContext, song = song)
+                            resolvedItems.add(fullMediaItem)
+                        } else {
+                            Log.e(tag, "Song not found for mediaId: $mediaId")
+                        }
                     }
+                    future.set(resolvedItems)
                 } catch (e: Exception) {
-                    Log.e(tag, "Error retrieving song from database.", e)
+                    Log.e(tag, "Error retrieving songs from database.", e)
                     future.setException(e)
                 }
             }

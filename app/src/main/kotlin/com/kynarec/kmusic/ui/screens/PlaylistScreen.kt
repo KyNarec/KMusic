@@ -56,7 +56,7 @@ fun PlaylistScreen(
                     song = song,
                     onClick = {
                         scope.launch {
-                            viewModel.playSong(song)
+                            viewModel.playPlaylist(songs, song)
                         }
                     }
                 )

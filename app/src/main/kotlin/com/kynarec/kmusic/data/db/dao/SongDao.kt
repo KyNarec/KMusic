@@ -19,7 +19,7 @@ interface SongDao {
     @Query("SELECT * FROM Song WHERE totalPlayTimeMs > 0")
     suspend fun getSongsWithPlaytime(): List<Song>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertSong(song: Song)
 
     @Update
@@ -27,6 +27,30 @@ interface SongDao {
 
     @Delete
     suspend fun deleteSong(song: Song)
+
+    /**
+     * Upserts a song into the database.
+     * - If the song doesn't exist, it inserts it.
+     * - If the song exists, it updates metadata (title, artist, duration, thumbnail)
+     *   while preserving user-specific data (likedAt, totalPlayTimeMs).
+     *
+     * This prevents CASCADE DELETE issues that occur with OnConflictStrategy.REPLACE.
+     *
+     * @param song The song to upsert.
+     */
+    suspend fun upsertSong(song: Song) {
+        val existing = getSongById(song.id)
+        if (existing == null) {
+            // Song doesn't exist, insert it
+            insertSong(song)
+        } else {
+            // Song exists, update metadata but preserve user data
+            updateSong(song.copy(
+                likedAt = existing.likedAt,
+                totalPlayTimeMs = existing.totalPlayTimeMs
+            ))
+        }
+    }
 
     /**
      * Deletes a song from the database by its unique ID.

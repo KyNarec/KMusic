@@ -1,7 +1,9 @@
 package com.kynarec.kmusic.ui.screens
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,7 +24,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -35,16 +40,22 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
+import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.ui.PlaylistScreen
+import com.kynarec.kmusic.ui.components.DismissBackground
+import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.importPlaylistFromCsv
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.dialogs.FileKitMode
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.openFilePicker
+import io.github.vinceglb.filekit.extension
+import io.github.vinceglb.filekit.readString
 import kotlinx.coroutines.launch
 import kotlin.collections.emptyList
 
 @Composable
 fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostController) {
-    val playlistCSV = "PlaylistBrowseId,PlaylistName,MediaId,Title,Artists,Duration,ThumbnailUrl,AlbumId,AlbumTitle,ArtistIds\n" +
-            "VLPLysxZNolVzGNRnPA2CzvEILRF1LKimF8S,Chill,A__cH65WRvE,Californication,Red Hot Chili Peppers,5:29,https://lh3.googleusercontent.com/vEzFuxLILzCtIKEdZWOwSoIfXN3462-JcZ7AYXgV7i9n06NzazzUQOloJ7ghh2Weswt7OcJQH79BI9kePA=w60-h60-l90-rj,MPREb_9zDg9WFf7KR,Californication (Deluxe Version),UCrSorX845CEWXzU4Z7BojjA\n" +
-            "VLPLysxZNolVzGNRnPA2CzvEILRF1LKimF8S,Chill,8901V1M5lDk,Otherside,Red Hot Chili Peppers,4:15,https://lh3.googleusercontent.com/vEzFuxLILzCtIKEdZWOwSoIfXN3462-JcZ7AYXgV7i9n06NzazzUQOloJ7ghh2Weswt7OcJQH79BI9kePA=w60-h60-l90-rj,MPREb_9zDg9WFf7KR,Californication (Deluxe Version),UCrSorX845CEWXzU4Z7BojjA\n"
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val database = remember { KmusicDatabase.getDatabase(context) }
@@ -72,8 +83,14 @@ fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostControl
                 IconButton(
                     onClick = {
                         scope.launch {
+                            val file = FileKit.openFilePicker(mode = FileKitMode.Single)
                             // Call the extracted import function
-                            importPlaylistFromCsv(playlistCSV, context)
+                            if (file?.extension == "csv"){
+                                SmartMessage("Importing...", context = context, durationLong = true)
+                                importPlaylistFromCsv(file.readString(), context)
+                            } else {
+                                SmartMessage("Seems like you didn't select a compatible CSV file", context = context, type = PopupType.Error)
+                            }
                         }
                     }
                 ) {
@@ -105,7 +122,11 @@ fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostControl
                 contentPadding = PaddingValues(top = 8.dp)
             ) {
                 items(playlists) { playlist ->
-                    PlaylistListItem(playlist = playlist, navController)
+                    PlaylistListItem(playlist = playlist, navController, onRemove = {
+                        scope.launch {
+                            database.playlistDao().deletePlaylist(it)
+                        }
+                    })
                 }
             }
         }
@@ -113,41 +134,70 @@ fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostControl
 }
 
 @Composable
-fun PlaylistListItem(playlist: Playlist, navController: NavHostController) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clickable {
-                Log.i("PlaylistListItem", "Playlist clicked: ${playlist.name}")
-                navController.navigate(PlaylistScreen(playlist.id))
-            },
-        elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Placeholder for a playlist icon or thumbnail
-            Icon(
-                imageVector = Icons.Default.AddToPhotos, // Using same icon as placeholder
-                contentDescription = null,
-                modifier = Modifier.size(24.dp).padding(end = 8.dp)
-            )
-            Column {
-                Text(
-                    text = playlist.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                // Optional: Show playlist metadata like song count
-                Text(
-                    text = "ID: ${playlist.id}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
+fun PlaylistListItem(playlist: Playlist, navController: NavHostController, onRemove: (Playlist) -> Unit) {
+    val context = LocalContext.current
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = {
+            when(it) {
+                SwipeToDismissBoxValue.StartToEnd -> {
+                    onRemove(playlist)
+                    SmartMessage(
+                        "Deleted playlist ${playlist.name}",
+                        context = context,
+                        type = PopupType.Success
+                    )
+                }
+                SwipeToDismissBoxValue.EndToStart -> {
+                    onRemove(playlist)
+                }
+                SwipeToDismissBoxValue.Settled -> return@rememberSwipeToDismissBoxState false
             }
-        }
-    }
+            return@rememberSwipeToDismissBoxState true
+        },
+        // positional threshold of 25%
+        positionalThreshold = { it * .25f }
+    )
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = { DismissBackground(dismissState)},
+        content = {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .clickable {
+                        navController.navigate(PlaylistScreen(playlist.id))
+                    },
+                elevation = CardDefaults.cardElevation(2.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Placeholder for a playlist icon or thumbnail
+                    Icon(
+                        imageVector = Icons.Default.AddToPhotos, // Using same icon as placeholder
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .padding(end = 8.dp)
+                    )
+                    Column {
+                        Text(
+                            text = playlist.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        // Optional: Show playlist metadata like song count
+                        Text(
+                            text = "ID: ${playlist.id}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+            }
+        })
+
 }

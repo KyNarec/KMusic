@@ -25,6 +25,8 @@ import com.kynarec.kmusic.ui.screens.MainScreen
 import com.kynarec.kmusic.ui.theme.KMusicTheme
 import com.kynarec.kmusic.utils.setJustStartedUp
 import com.kynarec.kmusic.utils.setPlayerOpen
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.dialogs.init
 
 
 class MainActivity : AppCompatActivity() {
@@ -74,6 +76,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         requestNotificationPermission()
         PlatformContext.initialize(applicationContext)
+        FileKit.init(this)
         setContent {
             KMusicTheme {
                 Surface(

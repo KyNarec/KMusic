@@ -131,4 +131,6 @@ dependencies {
     implementation("eu.anifantakis:ksafe:1.1.1")
     implementation("eu.anifantakis:ksafe-compose:1.1.1")
     implementation("com.mikepenz:multiplatform-markdown-renderer-m3:0.38.1")
+
+    implementation("io.github.vinceglb:filekit-dialogs:0.12.0")
 }

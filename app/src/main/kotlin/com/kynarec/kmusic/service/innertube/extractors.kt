@@ -205,7 +205,7 @@ fun searchSongsFlow(query: String): Flow<Song> = flow {
     try {
         val raw = innerTubeClient.search(
             query,
-            params = PARAMS.SONG.label,
+            params = InnerTube.SearchFilter.Song.value,
             continuation = null
         )
 
@@ -529,7 +529,7 @@ fun getRadioFlow(
         val raw = innerTubeClient.betterNext(
             videoId = videoId,
             playlistId = "RDAMVM$videoId",
-            params = null,
+            params = PARAMS.SONG.label,
             continuation = null
         )
 
