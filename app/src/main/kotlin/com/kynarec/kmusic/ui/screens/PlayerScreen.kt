@@ -211,7 +211,7 @@ fun PlayerScreen(
                 thumbColor = Color(0xFFD4B67C)
             )
 
-            Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentPosition: ${uiState.currentPosition}")
+           // Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentPosition: ${uiState.currentPosition}")
 
             WavySlider(
                 value = if (uiState.totalDuration != 0L) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,

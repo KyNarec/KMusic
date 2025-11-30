@@ -19,9 +19,14 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.room.withTransaction
 import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
 import com.kynarec.kmusic.service.innertube.playSongByIdWithBestBitrate
+import innertube.CLIENTNAME
+import innertube.InnerTube
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
@@ -64,117 +69,17 @@ suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = w
         .setArtist(song.artist)
         .setIsBrowsable(false)
         .setIsPlayable(true)
-
-    val artworkByteArray = convertThumbnailUriToSquareByteArray(context, song.thumbnail.toUri())
-    if (artworkByteArray != null) {
-        mediaMetadataBuilder.setArtworkData(artworkByteArray, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
-        Log.i("PlayerControlBar", "artworkByteArray is not null")
-
-    } else {
-        Log.i("PlayerControlBar", "artworkByteArray is null")
-        mediaMetadataBuilder.setArtworkUri(song.thumbnail.toUri())
-    }
+        .setArtworkUri(song.thumbnail.toUri())
 
     // Database insertion should also be offloaded
     val songDao = KmusicDatabase.getDatabase(context).songDao()
-    if (songDao.getSongById(song.id) == null) {
-        songDao.insertSong(song)
-    }
+    songDao.upsertSong(song)
 
     MediaItem.Builder()
         .setMediaId(song.id)
         .setUri(uri)
         .setMediaMetadata(mediaMetadataBuilder.build())
         .build()
-}
-
-
-fun convertThumbnailUriToSquareByteArray(context: Context, uri: Uri): ByteArray? {
-    val TAG = "ArtworkByteArrayConverter"
-    Log.i(TAG, "Starting conversion for URI: $uri")
-
-    val inputStream: InputStream? = try {
-        // Check if the URI is a web URL
-        if (uri.scheme == "http" || uri.scheme == "https") {
-            Log.d(TAG, "URI is a web URL. Opening network connection.")
-            val url = URL(uri.toString())
-            val connection = url.openConnection() as HttpURLConnection
-            connection.doInput = true
-            connection.connect()
-            connection.inputStream
-        } else {
-            // Assume it's a content URI, file URI, etc.
-            Log.d(TAG, "URI is a local content URI. Using ContentResolver.")
-            context.contentResolver.openInputStream(uri)
-        }
-    } catch (e: Exception) {
-        //Log.e(TAG, "Error opening InputStream for URI: $uri", e)
-        Log.e(TAG, "Error opening InputStream for URI: $uri")
-        return null
-    }
-
-    val originalBitmap: Bitmap? = try {
-        BitmapFactory.decodeStream(inputStream).also {
-            Log.d(TAG, "Bitmap decoded successfully.")
-        }
-    } catch (e: Exception) {
-        Log.e(TAG, "Error decoding Bitmap from InputStream.", e)
-        return null
-    } finally {
-        try {
-            inputStream?.close()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error closing InputStream.", e)
-        }
-    }
-
-    originalBitmap ?: run {
-        Log.w(TAG, "Original bitmap was null after decoding.")
-        return null
-    }
-
-    // 2. Create a new square bitmap
-    val size = minOf(originalBitmap.width, originalBitmap.height)
-    val xOffset = (originalBitmap.width - size) / 2
-    val yOffset = (originalBitmap.height - size) / 2
-
-    val squareBitmap: Bitmap = try {
-        Bitmap.createBitmap(originalBitmap, xOffset, yOffset, size, size).also {
-            Log.d(TAG, "Square bitmap (1:1 ratio) created. Size: ${it.width}x${it.height}")
-        }
-    } catch (e: Exception) {
-        Log.e(TAG, "Error creating square bitmap.", e)
-        originalBitmap.recycle()
-        return null
-    }
-
-    // 3. Compress the square bitmap to a ByteArray
-    val outputStream = ByteArrayOutputStream()
-    val byteArray: ByteArray? = try {
-        squareBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-        Log.d(TAG, "Bitmap compressed to ByteArray.")
-        outputStream.toByteArray()
-    } catch (e: Exception) {
-        Log.e(TAG, "Error compressing bitmap to ByteArray.", e)
-        null
-    } finally {
-        // Clean up resources
-        originalBitmap.recycle()
-        squareBitmap.recycle()
-        try {
-            outputStream.close()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error closing ByteArrayOutputStream.", e)
-        }
-    }
-
-    if (byteArray != null) {
-        Log.i(TAG, "Conversion complete. Resulting byte array size: ${byteArray.size} bytes.")
-    } else {
-        Log.e(TAG, "Conversion failed, returning null.")
-    }
-
-    return byteArray
 }
 
 // This function is for creating browsable items. It should not contain the playback URI.
@@ -230,4 +135,88 @@ fun ConditionalMarqueeText(
             }
         )
     )
+}
+
+
+/**
+ * Parses a single CSV line into a list of strings.
+ * This is a simple parser that assumes comma separation and no internal commas/quotes.
+ */
+fun parseCsvLine(line: String): List<String>? {
+    return try {
+        line.split(",").map { it.trim() }
+    } catch (e: Exception) {
+        Log.e("DataImportService", "Error parsing CSV line: $line", e)
+        null
+    }
+}
+
+suspend fun importPlaylistFromCsv(csvContent: String, context: Context) {
+    val database = KmusicDatabase.getDatabase(context)
+    val songDao = database.songDao()
+    val playlistDao = database.playlistDao()
+
+    // Split the CSV content into lines, skipping the header line.
+    val lines = csvContent.lines().drop(1).filter { it.isNotBlank() }
+
+    if (lines.isEmpty()) {
+        Log.w("DataImportService", "CSV content is empty or only contains a header.")
+        return
+    }
+
+    // Parse the first song to extract the common Playlist data (Name, BrowseId)
+    val firstSongData = parseCsvLine(lines.first())
+    if (firstSongData == null) {
+        Log.e("DataImportService", "Failed to parse the first CSV line.")
+        return
+    }
+
+    val playlistName = firstSongData.getOrNull(1) ?: return
+    val playlistBrowseId = firstSongData.getOrNull(0)
+
+    // 🏆 Room Transaction: Ensure all insertions (Playlist, Songs, Maps) succeed or fail together.
+    database.withTransaction {
+        Log.i("DataImportService", "Starting import transaction for playlist: $playlistName")
+
+        // 1. Create and Insert the Playlist
+        val newPlaylist = Playlist(
+            name = playlistName,
+            browseId = playlistBrowseId
+            // id will be generated by the database
+        )
+        val newPlaylistId = playlistDao.insertPlaylist(newPlaylist)
+        Log.d("DataImportService", "Inserted new playlist with ID: $newPlaylistId")
+
+        // 2. Iterate through all songs, insert them, and create the map entries
+        lines.forEachIndexed { index, line ->
+            val data = parseCsvLine(line)
+            if (data != null && data.size >= 7) {
+                val songEntity = Song(
+                    id = data[2],                       // MediaId
+                    title = data[3],                    // Title
+                    artist = data[4],                   // Artists
+                    duration = data[5],                 // Duration
+//                    thumbnail = data[6]                 // ThumbnailUrl
+                    thumbnail = InnerTube(CLIENTNAME.WEB_REMIX).getYoutubeThumbnail(data[2])?: ""
+                    // likedAt and totalPlayTimeMs use defaults (null/0L)
+                )
+
+                // Insert/Replace the Song entity using upsert to preserve user data
+                songDao.upsertSong(songEntity)
+
+                // Create the mapping entity (position starts at 0 or 1, using 0-based index)
+                val mapEntry = SongPlaylistMap(
+                    songId = songEntity.id,
+                    playlistId = newPlaylistId,
+                    position = index // position 0, 1, 2, ...
+                )
+
+                // Insert the mapping entity
+                playlistDao.insertSongToPlaylist(mapEntry)
+            } else {
+                Log.w("DataImportService", "Skipping malformed CSV line: $line")
+            }
+        }
+        Log.i("DataImportService", "Import transaction completed successfully.")
+    }
 }

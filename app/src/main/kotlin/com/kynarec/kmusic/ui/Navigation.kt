@@ -1,7 +1,6 @@
 package com.kynarec.kmusic.ui
 
 import android.app.Application
-import android.util.Log
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -26,19 +25,18 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.kynarec.kmusic.KMusic
+import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.enums.TransitionEffect
-import com.kynarec.kmusic.service.update.PlatformUpdateManager
 import com.kynarec.kmusic.service.update.UpdateManager
 import com.kynarec.kmusic.ui.screens.AlbumsScreen
 import com.kynarec.kmusic.ui.screens.ArtistsScreen
 import com.kynarec.kmusic.ui.screens.HomeScreen
-import com.kynarec.kmusic.ui.screens.MainScreen
 import com.kynarec.kmusic.ui.screens.PlaylistScreen
+import com.kynarec.kmusic.ui.screens.PlaylistsScreen
 import com.kynarec.kmusic.ui.screens.SearchResultScreen
 import com.kynarec.kmusic.ui.screens.SearchScreen
 import com.kynarec.kmusic.ui.screens.SettingsScreen
 import com.kynarec.kmusic.ui.screens.SongsScreen
-import com.kynarec.kmusic.ui.screens.UpdateDialog
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
@@ -169,8 +167,13 @@ fun Navigation(
         composable<ArtistsScreen> {
             ArtistsScreen()
         }
+        composable<PlaylistsScreen> {
+            val playlists =
+            PlaylistsScreen(navController = navController)
+        }
         composable<PlaylistScreen> {
-            PlaylistScreen()
+            val args = it.toRoute<PlaylistScreen>()
+            PlaylistScreen(playlistId = args.playlistId, viewModel = musicViewModel)
         }
         composable<AlbumsScreen> {
             AlbumsScreen()
@@ -208,7 +211,12 @@ object ArtistsScreen
 object AlbumsScreen
 
 @Serializable
-object PlaylistScreen
+object PlaylistsScreen
+
+@Serializable
+data class PlaylistScreen(
+    val playlistId: Long
+)
 
 @Serializable
 object SearchScreen

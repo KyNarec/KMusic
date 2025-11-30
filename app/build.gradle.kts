@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     kotlin("kapt")
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.21"
-
+    id("kotlin-parcelize")
 }
 
 val appVersion = "0.1.1"
@@ -131,4 +131,6 @@ dependencies {
     implementation("eu.anifantakis:ksafe:1.1.1")
     implementation("eu.anifantakis:ksafe-compose:1.1.1")
     implementation("com.mikepenz:multiplatform-markdown-renderer-m3:0.38.1")
+
+    implementation("io.github.vinceglb:filekit-dialogs:0.12.0")
 }

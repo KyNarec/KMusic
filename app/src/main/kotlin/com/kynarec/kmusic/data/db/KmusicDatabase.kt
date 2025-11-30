@@ -7,21 +7,27 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.kynarec.kmusic.data.db.dao.PersistedQueueDao
+import com.kynarec.kmusic.data.db.dao.PlaylistDao
 import com.kynarec.kmusic.data.db.dao.SearchQueryDao
 import com.kynarec.kmusic.data.db.entities.SearchQuery
 import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.data.db.entities.PersistedQueueItem
+import com.kynarec.kmusic.data.db.entities.Playlist
+import com.kynarec.kmusic.data.db.entities.PlaylistWithSongs
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
 
 @Database(
-    entities = [Song::class, PersistedQueueItem::class, SearchQuery::class],  // add others as needed
-    version = 3
+    entities = [Song::class, PersistedQueueItem::class, SearchQuery::class, Playlist::class, SongPlaylistMap::class],  // add others as needed
+    version = 4
 )
 abstract class KmusicDatabase : RoomDatabase() {
     abstract fun songDao(): SongDao
-//    abstract fun queuedMediaItemDao(): QueuedMediaItemDao
+    //    abstract fun queuedMediaItemDao(): QueuedMediaItemDao
     abstract fun persistedQueueDao(): PersistedQueueDao
     abstract fun searchQueryDao(): SearchQueryDao
+    abstract fun playlistDao(): PlaylistDao
+
 
 
     companion object {

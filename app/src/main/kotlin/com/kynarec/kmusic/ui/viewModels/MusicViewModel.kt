@@ -58,7 +58,7 @@ class MusicViewModel
 
     private val playerListener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
-            _uiState.value = _uiState.value.copy(isPlaying = isPlaying)
+            _uiState.update { it.copy(isPlaying = isPlaying) }
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -67,14 +67,16 @@ class MusicViewModel
             val newTotalDuration = mediaController?.duration ?: 0L
             val newCurrentDuration = parseDurationToMillis(currentSong?.duration ?: "0")
 
-            _uiState.value = _uiState.value.copy(
-                currentSong = currentSong,
-                totalDuration = if (newTotalDuration > 0) newTotalDuration else 0L,
-            )
+            _uiState.update {
+                it.copy(
+                    currentSong = currentSong,
+                    totalDuration = if (newTotalDuration > 0) newTotalDuration else 0L,
+                )
+            }
         }
 
         override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
-            _uiState.value = _uiState.value.copy(showControlBar = !timeline.isEmpty)
+            _uiState.update { it.copy(showControlBar = !timeline.isEmpty) }
         }
     }
 
@@ -99,7 +101,7 @@ class MusicViewModel
     private fun loadSongs() {
         viewModelScope.launch {
             val songs = songDao.getSongsWithPlaytime() // Assuming this fetches your songs
-            _uiState.value = _uiState.value.copy(songsList = songs)
+            _uiState.update { it.copy(songsList = songs) }
         }
     }
 
@@ -108,12 +110,16 @@ class MusicViewModel
             while (true) {
                 val currentPosition = mediaController?.currentPosition ?: 0L
                 val totalDuration = mediaController?.duration ?: 0L // Fetch total duration
-//                if (_uiState.value.currentPosition != currentPosition) {
-//                    _uiState.value = _uiState.value.copy(currentPosition = currentPosition, totalDuration = totalDuration)
-//                }
-                _uiState.value = _uiState.value.copy(currentPosition = currentPosition, totalDuration = totalDuration)
+                
+                _uiState.update { 
+                    if (it.currentPosition != currentPosition || it.totalDuration != totalDuration) {
+                        it.copy(currentPosition = currentPosition, totalDuration = totalDuration)
+                    } else {
+                        it
+                    }
+                }
 
-                delay(50) // Update position 10 times a second
+                delay(200) // Update position 5 times a second (sufficient for UI)
             }
         }
     }
@@ -147,6 +153,90 @@ class MusicViewModel
         }
     }
 
+
+    /**
+     * Plays a playlist starting from a specific song.
+     * @param songs The list of songs in the playlist.
+     * @param startSong The song to start playing from.
+     */
+    fun playPlaylist(songs: List<Song>, startSong: Song) {
+        Log.i(tag, "playPlaylist called with ${songs.size} songs, starting at ${startSong.title}")
+
+        val controller = mediaController ?: return
+
+        // 1. Update UI State immediately
+        _uiState.update {
+            it.copy(
+                songsList = songs,
+                currentSong = startSong
+            )
+        }
+
+        // 2. Prepare MediaItems and update Player asynchronously
+        viewModelScope.launch {
+            val startIndex = songs.indexOfFirst { it.id == startSong.id }.takeIf { it != -1 } ?: 0
+            
+            // Define the window of songs to load immediately (e.g., 5 before and 5 after)
+            val windowSize = 1
+            val windowStart = (startIndex - windowSize).coerceAtLeast(0)
+            val windowEnd = (startIndex + windowSize).coerceAtMost(songs.size - 1)
+            
+            val initialSongs = songs.subList(windowStart, windowEnd + 1)
+            val startSongIndexInWindow = startIndex - windowStart
+
+            // Convert initial window to full MediaItems (heavy operation, but for few items)
+            val initialMediaItems = withContext(Dispatchers.IO) {
+                initialSongs.map { createMediaItemFromSong(it, context) }
+            }
+
+            // Update the player with the initial window
+            controller.setMediaItems(initialMediaItems, startSongIndexInWindow, 0L)
+            controller.prepare()
+            controller.play()
+            
+            // 3. Load the rest of the songs in the background
+            // Load "After" songs first (priority for playback continuity)
+            if (windowEnd < songs.size - 1) {
+                val afterSongs = songs.subList(windowEnd + 1, songs.size)
+                loadChunks(afterSongs, append = true)
+            }
+            
+            // Load "Before" songs (reverse order to maintain index 0 insertion)
+            if (windowStart > 0) {
+                val beforeSongs = songs.subList(0, windowStart)
+                // We chunk the before list, but we need to add them in a way that preserves order.
+                // If we add at index 0, we should add the LAST chunk first.
+                // Example: [1, 2, 3, 4, 5]. Window starts at 6.
+                // Chunk size 2. Chunks: [1, 2], [3, 4], [5].
+                // Add [5] at 0 -> [5, 6...]
+                // Add [3, 4] at 0 -> [3, 4, 5, 6...]
+                // Add [1, 2] at 0 -> [1, 2, 3, 4, 5, 6...]
+                loadChunks(beforeSongs, append = false)
+            }
+        }
+    }
+
+    private suspend fun loadChunks(songs: List<Song>, append: Boolean) {
+        val chunkSize = 20
+        val chunks = songs.chunked(chunkSize)
+        
+        val chunksToProcess = if (append) chunks else chunks.asReversed()
+        
+        withContext(Dispatchers.IO) {
+            chunksToProcess.forEach { chunk ->
+                val mediaItems = chunk.map { com.kynarec.kmusic.utils.createPartialMediaItemFromSong(it, context) }
+                
+                withContext(Dispatchers.Main) {
+                    if (append) {
+                        mediaController?.addMediaItems(mediaItems)
+                    } else {
+                        mediaController?.addMediaItems(0, mediaItems)
+                    }
+                }
+            }
+        }
+    }
+
     fun playSongByIdWithRadio(song: Song) {
         Log.i(tag, "playSongByIdWithRadio called with songId: ${song.id}")
 
@@ -163,9 +253,9 @@ class MusicViewModel
 
                             // Update UI immediately for each song
                             withContext(Dispatchers.Main) {
-                                _uiState.value = _uiState.value.copy(
-                                    songsList = _uiState.value.songsList + radioSong
-                                )
+                                _uiState.update {
+                                    it.copy(songsList = it.songsList + radioSong)
+                                }
                                 mediaController?.addMediaItem(mediaItem)
                             }
                         }
@@ -205,14 +295,24 @@ class MusicViewModel
      * Skips to the next song in the queue.
      */
     fun skipToNext() {
-        mediaController?.seekToNextMediaItem()
+        Log.i(tag, "skipToNext called. Has next: ${mediaController?.hasNextMediaItem()}")
+        if (mediaController?.hasNextMediaItem() == true) {
+            mediaController?.seekToNextMediaItem()
+        } else {
+            Log.w(tag, "No next media item to skip to.")
+        }
     }
 
     /**
      * Skips to the previous song in the queue.
      */
     fun skipToPrevious() {
-        mediaController?.seekToPreviousMediaItem()
+        Log.i(tag, "skipToPrevious called. Has previous: ${mediaController?.hasPreviousMediaItem()}")
+        if (mediaController?.hasPreviousMediaItem() == true) {
+            mediaController?.seekToPreviousMediaItem()
+        } else {
+            Log.w(tag, "No previous media item to skip to.")
+        }
     }
 
     override fun onCleared() {
