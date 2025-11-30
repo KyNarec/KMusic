@@ -27,6 +27,7 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.service.innertube.searchSongsFlow
+import com.kynarec.kmusic.ui.components.SongBottomSheet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 
@@ -42,6 +43,9 @@ fun SearchResultScreen(
     LocalContext.current
     var songs by remember { mutableStateOf(emptyList<Song>()) }
     var isLoading by remember { mutableStateOf(true) }
+
+    val showBottomSheet = remember { mutableStateOf(false) }
+    var longClickSong by remember { mutableStateOf<Song?>(null) }
 
     // Use LaunchedEffect to perform the side effect (data fetching)
     // The coroutine will be launched when the query changes.
@@ -104,11 +108,24 @@ fun SearchResultScreen(
 
                     SongComponent(
                         song = song,
-                        onClick = onSongClick as () -> Unit
+                        onClick = onSongClick as () -> Unit,
+                        onLongClick = {
+                            longClickSong = song
+                            showBottomSheet.value = true
+                        }
                     )
                 }
             }
+            if (showBottomSheet.value && longClickSong != null) {
+                Log.i("SongsScreen", "Showing bottom sheet")
+                Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
+                SongBottomSheet(
+                    songId = longClickSong!!.id,
+                    onDismiss = { showBottomSheet.value = false },
+                    onToggleFavorite = { viewModel.toggleFavorite(longClickSong!!)},
+                    viewModel = viewModel
+                )
+            }
         }
     }
-
 }

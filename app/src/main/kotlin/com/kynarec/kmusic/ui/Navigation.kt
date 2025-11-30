@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkOut
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,6 +43,7 @@ import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
 import kotlinx.serialization.Serializable
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Navigation(
     navController: NavHostController,
@@ -54,7 +56,8 @@ fun Navigation(
     val application = LocalContext.current.applicationContext as Application
 
     // Use a custom ViewModel factory to inject the database DAO.
-    val songDao = remember { (application as KMusic).database.songDao() }
+    val database = remember { (application as KMusic).database }
+    val songDao = remember { database.songDao() }
     // Use a custom ViewModel factory to inject the stable DAO instance.
     val musicViewModel: MusicViewModel = viewModel(
         factory = MusicViewModel.Factory(
@@ -161,8 +164,8 @@ fun Navigation(
 
         composable<SongsScreen> {
 //            val songs = viewModel.songsList.collectAsState()
-            val songs = musicViewModel.uiState.collectAsState().value.songsList
-            SongsScreen(songs = songs)
+//            val songs = musicViewModel.uiState.collectAsState().value.songsList
+            SongsScreen(viewModel = musicViewModel, database = database)
         }
         composable<ArtistsScreen> {
             ArtistsScreen()

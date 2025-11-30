@@ -3,6 +3,7 @@ package com.kynarec.kmusic.ui.components
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,7 +34,8 @@ import com.kynarec.kmusic.utils.ConditionalMarqueeText
 @Composable
 fun SongComponent(
     song: Song,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () ->  Unit = {}
 ) {
     // The main Row acts as the container, mimicking the XML's fixed height and clickable behavior.
     val title = song.title
@@ -44,7 +46,10 @@ fun SongComponent(
         modifier = Modifier
             .fillMaxWidth()
             .height(80.dp)
-            .clickable(onClick = onClick)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
             .background(Color.Transparent) // Equivalent to ?attr/selectableItemBackground
             .padding(vertical = 8.dp), // Add padding to make space for the content
         verticalAlignment = Alignment.CenterVertically
