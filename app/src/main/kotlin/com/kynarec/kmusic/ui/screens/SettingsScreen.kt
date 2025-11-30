@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.enums.TransitionEffect
@@ -37,6 +38,7 @@ import com.kynarec.kmusic.utils.Constants.DEFAULT_DARK_MODE
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DYNAMIC_COLORS
 import com.kynarec.kmusic.utils.Constants.DYNAMIC_COLORS_KEY
 import com.kynarec.kmusic.utils.Constants.TRANSITION_EFFECT_KEY
+import com.kynarec.kmusic.utils.SmartMessage
 import kotlinx.coroutines.launch
 
 
@@ -51,6 +53,7 @@ fun SettingsScreen(
     // var transitionEffect by rememberPreference(transitionEffectKey, TransitionEffect.Fade)
 
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     if (updateViewModel.showDialog && updateViewModel.updateInfo != null) {
         Log.i("UpdateChecker", "Now showing update dialog")
@@ -107,6 +110,7 @@ fun SettingsScreen(
                                 scope.launch{
                                     updateViewModel.checkForUpdates()
                                 }
+                                SmartMessage("Checking for Updates...", context = context)
                             }
                             .padding(16.dp)
                     ) {

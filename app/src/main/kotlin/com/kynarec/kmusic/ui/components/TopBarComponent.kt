@@ -83,7 +83,8 @@ fun TopBarComponent(
                         // 3. Set the size of the *actual icon* content
                         modifier = Modifier
                             .size(40.dp)
-                            .padding(bottom = 6.dp, top = 0.dp),
+                            .padding(bottom = 6.dp, top = 0.dp)
+                            .clickable(enabled = false, onClick = { }),
                         tint = MaterialTheme.colorScheme.onBackground
                     )
                 }

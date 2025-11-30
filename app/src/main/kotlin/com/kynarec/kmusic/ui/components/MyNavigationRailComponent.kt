@@ -87,6 +87,5 @@ fun MyNavigationRailComponent(
             }
         }
     }
-
 }
 
