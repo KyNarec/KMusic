@@ -39,6 +39,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,6 +63,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.R
+import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.parseMillisToDuration
 import ir.mahozad.multiplatform.wavyslider.WaveDirection
@@ -344,7 +346,6 @@ fun PlayerScreen(
                 onClose = { showBottomSheet.value = false },
                 sheetState = sheetState,
                 showBottomSheet = showBottomSheet,
-//                hazeState = hazeState
             )
         }
     }

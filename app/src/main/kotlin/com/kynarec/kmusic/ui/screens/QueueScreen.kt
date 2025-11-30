@@ -11,15 +11,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.util.Log
+import androidx.media3.common.util.UnstableApi
 import com.kynarec.kmusic.KMusic
+import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.ui.components.SongBottomSheet
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +41,9 @@ fun QueueScreen(
 ) {
 
     rememberCoroutineScope()
+
+    val showInfoSheet = remember { mutableStateOf(false) }
+    var longClickSong by remember { mutableStateOf<Song?>(null) }
 
     val uiState by viewModel.uiState.collectAsState()
 
@@ -57,9 +68,23 @@ fun QueueScreen(
                 items(songList.size) { index ->
                     SongComponent(
                         songList[index],
-                        onClick = { viewModel.playSong(songList[index]) }
+                        onClick = { viewModel.playSong(songList[index]) },
+                        onLongClick = {
+                            longClickSong = songList[index]
+                            showInfoSheet.value = true
+                        }
                     )
                 }
             }
+        if (showInfoSheet.value && longClickSong != null) {
+//            Log.i("SongsScreen", "Showing bottom sheet")
+//            Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
+            SongBottomSheet(
+                songId = longClickSong!!.id,
+                onDismiss = { showInfoSheet.value = false },
+                onToggleFavorite = { viewModel.toggleFavorite(longClickSong!!) },
+                viewModel = viewModel
+            )
+        }
     }
 }
