@@ -3,6 +3,7 @@ package com.kynarec.kmusic.ui.viewModels
 import android.content.ComponentName
 import android.content.Context
 import androidx.annotation.OptIn
+import androidx.compose.runtime.currentRecomposeScope
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -82,10 +83,11 @@ class MusicViewModel
 
     init {
         // 1. Load the songs from the database
-        loadSongs()
+//        loadSongs()
 
         // 2. Initialize the connection to the MediaService
-        val sessionToken = SessionToken(context, ComponentName(context, PlayerServiceModern::class.java))
+        val sessionToken =
+            SessionToken(context, ComponentName(context, PlayerServiceModern::class.java))
         mediaControllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
         mediaControllerFuture.addListener({
             // This runs on a background executor, so it's safe to call get()
@@ -110,8 +112,8 @@ class MusicViewModel
             while (true) {
                 val currentPosition = mediaController?.currentPosition ?: 0L
                 val totalDuration = mediaController?.duration ?: 0L // Fetch total duration
-                
-                _uiState.update { 
+
+                _uiState.update {
                     if (it.currentPosition != currentPosition || it.totalDuration != totalDuration) {
                         it.copy(currentPosition = currentPosition, totalDuration = totalDuration)
                     } else {
@@ -175,12 +177,12 @@ class MusicViewModel
         // 2. Prepare MediaItems and update Player asynchronously
         viewModelScope.launch {
             val startIndex = songs.indexOfFirst { it.id == startSong.id }.takeIf { it != -1 } ?: 0
-            
+
             // Define the window of songs to load immediately (e.g., 5 before and 5 after)
             val windowSize = 1
             val windowStart = (startIndex - windowSize).coerceAtLeast(0)
             val windowEnd = (startIndex + windowSize).coerceAtMost(songs.size - 1)
-            
+
             val initialSongs = songs.subList(windowStart, windowEnd + 1)
             val startSongIndexInWindow = startIndex - windowStart
 
@@ -193,14 +195,14 @@ class MusicViewModel
             controller.setMediaItems(initialMediaItems, startSongIndexInWindow, 0L)
             controller.prepare()
             controller.play()
-            
+
             // 3. Load the rest of the songs in the background
             // Load "After" songs first (priority for playback continuity)
             if (windowEnd < songs.size - 1) {
                 val afterSongs = songs.subList(windowEnd + 1, songs.size)
                 loadChunks(afterSongs, append = true)
             }
-            
+
             // Load "Before" songs (reverse order to maintain index 0 insertion)
             if (windowStart > 0) {
                 val beforeSongs = songs.subList(0, windowStart)
@@ -219,13 +221,18 @@ class MusicViewModel
     private suspend fun loadChunks(songs: List<Song>, append: Boolean) {
         val chunkSize = 20
         val chunks = songs.chunked(chunkSize)
-        
+
         val chunksToProcess = if (append) chunks else chunks.asReversed()
-        
+
         withContext(Dispatchers.IO) {
             chunksToProcess.forEach { chunk ->
-                val mediaItems = chunk.map { com.kynarec.kmusic.utils.createPartialMediaItemFromSong(it, context) }
-                
+                val mediaItems = chunk.map {
+                    com.kynarec.kmusic.utils.createPartialMediaItemFromSong(
+                        it,
+                        context
+                    )
+                }
+
                 withContext(Dispatchers.Main) {
                     if (append) {
                         mediaController?.addMediaItems(mediaItems)
@@ -271,7 +278,58 @@ class MusicViewModel
                 Log.e(tag, "Failed to load radio songs for ${song.id}")
             }
         }
+    }
 
+    fun playNext(song: Song) {
+        Log.i(tag, "playNext called with song ${song.title}")
+        viewModelScope.launch {
+            try {
+                val mediaItem = createMediaItemFromSong(song, context)
+                val currentMediaIndex = mediaController?.currentMediaItemIndex ?: 0
+                val nextIndex = currentMediaIndex + 1
+                Log.i(
+                    "MusicViewModel",
+                    "Current index: $currentMediaIndex, Insertion index: $nextIndex"
+                )
+
+                mediaController?.addMediaItem(nextIndex, mediaItem)
+                _uiState.update { currentState ->
+                    // Create a mutable copy of the current list
+                    val updatedList = currentState.songsList.toMutableList()
+
+                    // Insert the new song at the determined index
+                    if (nextIndex <= updatedList.size) {
+                        updatedList.add(nextIndex, song)
+                    } else {
+                        // Handle case where index is out of bounds (should append)
+                        updatedList.add(song)
+                    }
+
+                    // Return the updated state
+                    currentState.copy(songsList = updatedList)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e(tag, "Failed to play next song ${song.title}")
+            }
+        }
+    }
+
+    fun enqueueSong(song: Song) {
+        Log.i(tag, "enqueue called with song ${song.title}")
+        viewModelScope.launch {
+            try {
+                val mediaItem = createMediaItemFromSong(song, context)
+                mediaController?.addMediaItem(mediaItem)
+
+                _uiState.update { currentState ->
+                    currentState.copy(songsList = currentState.songsList + song)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e(tag, "Failed to play next song ${song.title}")
+            }
+        }
     }
 
 
@@ -313,7 +371,10 @@ class MusicViewModel
      * Skips to the previous song in the queue.
      */
     fun skipToPrevious() {
-        Log.i(tag, "skipToPrevious called. Has previous: ${mediaController?.hasPreviousMediaItem()}")
+        Log.i(
+            tag,
+            "skipToPrevious called. Has previous: ${mediaController?.hasPreviousMediaItem()}"
+        )
         if (mediaController?.hasPreviousMediaItem() == true) {
             mediaController?.seekToPreviousMediaItem()
         } else {

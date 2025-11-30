@@ -1,6 +1,7 @@
 package com.kynarec.kmusic.utils
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -29,6 +30,10 @@ import com.kynarec.kmusic.service.innertube.playSongByIdWithBestBitrate
 import innertube.CLIENTNAME
 import innertube.InnerTube
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -154,7 +159,7 @@ fun parseCsvLine(line: String): List<String>? {
     }
 }
 
-suspend fun importPlaylistFromCsv(csvContent: String, context: Context) {
+fun importPlaylistFromCsv(csvContent: String, context: Context): Flow<Int> = channelFlow {
     val database = KmusicDatabase.getDatabase(context)
     val songDao = database.songDao()
     val playlistDao = database.playlistDao()
@@ -164,17 +169,17 @@ suspend fun importPlaylistFromCsv(csvContent: String, context: Context) {
 
     if (lines.isEmpty()) {
         Log.w("DataImportService", "CSV content is empty or only contains a header.")
-        return
+        return@channelFlow
     }
 
     // Parse the first song to extract the common Playlist data (Name, BrowseId)
     val firstSongData = parseCsvLine(lines.first())
     if (firstSongData == null) {
         Log.e("DataImportService", "Failed to parse the first CSV line.")
-        return
+        return@channelFlow
     }
 
-    val playlistName = firstSongData.getOrNull(1) ?: return
+    val playlistName = firstSongData.getOrNull(1) ?: return@channelFlow
     val playlistBrowseId = firstSongData.getOrNull(0)
 
     // 🏆 Room Transaction: Ensure all insertions (Playlist, Songs, Maps) succeed or fail together.
@@ -216,10 +221,33 @@ suspend fun importPlaylistFromCsv(csvContent: String, context: Context) {
 
                 // Insert the mapping entity
                 playlistDao.insertSongToPlaylist(mapEntry)
+                send(index)
             } else {
                 Log.w("DataImportService", "Skipping malformed CSV line: $line")
             }
         }
         Log.i("DataImportService", "Import transaction completed successfully.")
     }
+}
+
+/**
+ * Creates and launches the Android Share Sheet to share a URL.
+ * @param context The application context.
+ * @param url The URL string to be shared.
+ * @param title The title text for the Share Sheet prompt.
+ */
+fun shareUrl(context: Context, url: String, title: String = "Share Song Link") {
+    // 1. Create a simple SEND Intent
+    val sendIntent: Intent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(Intent.EXTRA_TEXT, url) // The content (the URL)
+        type = "text/plain" // Mime type for plain text
+    }
+
+    // 2. Create the Chooser Intent
+    // This forces Android to show the list of apps instead of picking one automatically
+    val shareIntent = Intent.createChooser(sendIntent, title)
+
+    // 3. Launch the activity
+    context.startActivity(shareIntent)
 }

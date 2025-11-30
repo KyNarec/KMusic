@@ -33,6 +33,8 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -53,6 +55,7 @@ import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.readString
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.collections.emptyList
 
@@ -68,6 +71,10 @@ fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostControl
     }.collectAsState(initial = emptyList())
 
     val isLoading = playlists.isEmpty()
+
+    val totalLines = remember { mutableIntStateOf(0) }
+    val currentLine = remember { mutableIntStateOf(0) }
+    val isImportingPlaylist = remember { mutableStateOf(false) }
 
 
     Scaffold(
@@ -88,11 +95,38 @@ fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostControl
                         scope.launch {
                             val file = FileKit.openFilePicker(mode = FileKitMode.Single)
                             // Call the extracted import function
-                            if (file?.extension == "csv"){
+                            if (file?.extension == "csv") {
                                 SmartMessage("Importing...", context = context, durationLong = true)
-                                importPlaylistFromCsv(file.readString(), context)
+                                val csvContent = file.readString()
+                                totalLines.intValue = csvContent.lines().drop(1).filter { it.isNotBlank() }.size
+                                currentLine.intValue = 0
+                                isImportingPlaylist.value = true
+                                try {
+                                    // 3. Start the import and collect progress
+                                    importPlaylistFromCsv(csvContent, context) // Use stored content
+                                        .collect { currentIndex ->
+                                            currentLine.intValue =
+                                                currentIndex + 1 // Increment to show songs processed (1-based)
+                                            Log.d("Import", "Progress: ${currentIndex + 1} / ${totalLines.intValue}")
+                                        }
+                                } catch (e: Exception) {
+                                    Log.e("Import", "Import failed", e)
+                                    SmartMessage(
+                                        "Import failed: ${e.message}",
+                                        context = context,
+                                        type = PopupType.Error
+                                    )
+                                } finally {
+                                    // 4. Hide indicator regardless of success or failure
+                                    Log.i("Import", "setting isImportinPlaylist to false")
+                                    isImportingPlaylist.value = false
+                                }
                             } else {
-                                SmartMessage("Seems like you didn't select a compatible CSV file", context = context, type = PopupType.Error)
+                                SmartMessage(
+                                    "Seems like you didn't select a compatible CSV file",
+                                    context = context,
+                                    type = PopupType.Error
+                                )
                             }
                         }
                     }
@@ -107,7 +141,7 @@ fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostControl
         },
         modifier = modifier.fillMaxSize()
     ) { paddingValues ->
-        if (isLoading) {
+        if (!isImportingPlaylist.value && isLoading) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -122,14 +156,32 @@ fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostControl
                     .fillMaxSize()
                     .padding(paddingValues)
                     .padding(horizontal = 8.dp),
-                contentPadding = PaddingValues(top = 8.dp)
+                contentPadding = PaddingValues(top = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                items(playlists) { playlist ->
+                items(playlists, key = { it.id }) { playlist ->
                     PlaylistListItem(playlist = playlist, navController, onRemove = {
                         scope.launch {
                             database.playlistDao().deletePlaylist(it)
                         }
                     })
+                }
+                if (isImportingPlaylist.value && totalLines.intValue > 0) {
+                    item {
+                        // https://proandroiddev.com/cheatsheet-for-centering-items-in-jetpack-compose-1e3534415237
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CircularWavyProgressIndicator(
+                                // Use .intValue for both the numerator and denominator
+                                progress = { currentLine.intValue.toFloat() / totalLines.intValue.toFloat() },
+                                modifier = Modifier
+                                    .padding(vertical = 16.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -137,11 +189,15 @@ fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostControl
 }
 
 @Composable
-fun PlaylistListItem(playlist: Playlist, navController: NavHostController, onRemove: (Playlist) -> Unit) {
+fun PlaylistListItem(
+    playlist: Playlist,
+    navController: NavHostController,
+    onRemove: (Playlist) -> Unit
+) {
     val context = LocalContext.current
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = {
-            when(it) {
+            when (it) {
                 SwipeToDismissBoxValue.StartToEnd -> {
                     onRemove(playlist)
                     SmartMessage(
@@ -150,9 +206,11 @@ fun PlaylistListItem(playlist: Playlist, navController: NavHostController, onRem
                         type = PopupType.Success
                     )
                 }
+
                 SwipeToDismissBoxValue.EndToStart -> {
                     onRemove(playlist)
                 }
+
                 SwipeToDismissBoxValue.Settled -> return@rememberSwipeToDismissBoxState false
             }
             return@rememberSwipeToDismissBoxState true
@@ -162,7 +220,7 @@ fun PlaylistListItem(playlist: Playlist, navController: NavHostController, onRem
     )
     SwipeToDismissBox(
         state = dismissState,
-        backgroundContent = { DismissBackground(dismissState)},
+        backgroundContent = { DismissBackground(dismissState) },
         content = {
             Card(
                 modifier = Modifier
