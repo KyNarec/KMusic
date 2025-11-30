@@ -82,7 +82,6 @@ fun QueueScreen(
             SongBottomSheet(
                 songId = longClickSong!!.id,
                 onDismiss = { showInfoSheet.value = false },
-                onToggleFavorite = { viewModel.toggleFavorite(longClickSong!!) },
                 viewModel = viewModel
             )
         }

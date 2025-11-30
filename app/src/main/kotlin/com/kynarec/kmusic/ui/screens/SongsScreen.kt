@@ -91,7 +91,6 @@ fun SongsScreen(
             SongBottomSheet(
                 songId = longClickSong!!.id,
                 onDismiss = { showBottomSheet.value = false },
-                onToggleFavorite = { viewModel.toggleFavorite(longClickSong!!) },
                 viewModel = viewModel
             )
         }

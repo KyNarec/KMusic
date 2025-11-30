@@ -55,6 +55,7 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
+import com.kynarec.kmusic.utils.shareUrl
 import kotlinx.coroutines.launch
 
 @OptIn(
@@ -65,12 +66,7 @@ fun SongBottomSheet(
     songId: String,
     onDismiss: () -> Unit,
     onInformation: () -> Unit = {},
-    onStartRadio: () -> Unit = {},
-    onPlayNext: () -> Unit = {},
-    onEnqueue: () -> Unit = {},
-    onToggleFavorite: () -> Unit = {},
     onAddToPlaylist: () -> Unit = {},
-    onShare: () -> Unit = {},
     viewModel: MusicViewModel
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -84,7 +80,14 @@ fun SongBottomSheet(
 
     // Until DB loads, show nothing or a loader
     if (song == null) {
-        CircularWavyProgressIndicator()
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp
+        ) {
+            CircularWavyProgressIndicator()
+        }
         return
     }
 
@@ -155,7 +158,9 @@ fun SongBottomSheet(
                         contentDescription = "Share",
                         modifier = Modifier
                             .size(24.dp)
-                            .clickable { onShare() },
+                            .clickable {
+                                shareUrl(context, url = "https://music.youtube.com/watch?v=${song!!.id}")
+                            },
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -177,7 +182,7 @@ fun SongBottomSheet(
                 icon = Icons.Default.Radio,
                 text = "Start radio",
                 onClick = {
-                    onStartRadio()
+                    viewModel.playSongByIdWithRadio(song!!)
                     onDismiss()
                 }
             )
@@ -186,7 +191,7 @@ fun SongBottomSheet(
                 icon = Icons.Default.SkipNext,
                 text = "Play next",
                 onClick = {
-                    onPlayNext()
+                    viewModel.playNext(song!!)
                     onDismiss()
                 }
             )
@@ -195,7 +200,7 @@ fun SongBottomSheet(
                 icon = Icons.Default.Queue,
                 text = "Enqueue",
                 onClick = {
-                    onEnqueue()
+                    viewModel.enqueueSong(song!!)
                     onDismiss()
                 }
             )
@@ -204,8 +209,6 @@ fun SongBottomSheet(
                 icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                 text = if (isLiked) "Remove from favorites" else "Add to favorites",
                 onClick = {
-//                    onToggleFavorite()
-//                    onDismiss()
                     viewModel.toggleFavorite(song!!)
                 }
             )
