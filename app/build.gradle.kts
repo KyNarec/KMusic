@@ -7,7 +7,7 @@ plugins {
     id("kotlin-parcelize")
 }
 
-val appVersion = "0.1.1"
+val appVersion = "0.1.2"
 
 android {
     namespace = "com.kynarec.kmusic"
