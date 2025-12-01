@@ -23,12 +23,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.imageLoader
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
+import io.ktor.client.content.LocalFileContent
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -63,18 +66,9 @@ fun SongComponent(
                 .size(62.dp)
                 .padding(start = 16.dp)
                 .aspectRatio(1f)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(8.dp)),
+            imageLoader = LocalContext.current.imageLoader
 
-            //            model = ImageRequest.Builder(LocalContext.current)
-            //                .data(imageUrl)
-//                .transformations(RoundedCornersTransformation(THUMBNAIL_ROUNDNESS.toFloat()))
-//                .build(),
-//            contentDescription = "Album art",
-//            contentScale = ContentScale.Crop,
-//            modifier = Modifier
-//                .size(62.dp)
-//                .padding(start = 16.dp)
-//                .aspectRatio(1f)
         )
 
         // Spacer to replicate the margin between the image and the text

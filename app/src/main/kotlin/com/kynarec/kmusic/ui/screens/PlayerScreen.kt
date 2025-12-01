@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.imageLoader
 import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.entities.Song
@@ -151,7 +152,7 @@ fun PlayerScreen(
                     .aspectRatio(1f)
                     .clip(RoundedCornerShape(16.dp)),
                 contentScale = ContentScale.Crop,
-
+                imageLoader = LocalContext.current.imageLoader
             )
         }
 

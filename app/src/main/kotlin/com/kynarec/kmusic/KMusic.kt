@@ -1,10 +1,15 @@
 package com.kynarec.kmusic
 
 import android.app.Application
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.disk.DiskCache
+import coil.memory.MemoryCache
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import eu.anifantakis.lib.ksafe.KSafe
+import kotlin.getValue
 
-class KMusic : Application() {
+class KMusic : Application(), ImageLoaderFactory {
     lateinit var database: KmusicDatabase
         private set
 
@@ -12,9 +17,24 @@ class KMusic : Application() {
         private set
 
     companion object {
-        // Singleton instance of the Application
         lateinit var instance: KMusic
             private set
+    }
+
+    override fun newImageLoader(): ImageLoader {
+        return ImageLoader.Builder(this)
+            .memoryCache {
+                MemoryCache.Builder(this)
+                    .maxSizePercent(0.25) // Use 25% of the app's available memory
+                    .build()
+            }
+            .diskCache {
+                DiskCache.Builder()
+                    .directory(cacheDir.resolve("image_cache"))
+                    .build()
+            }
+            .crossfade(true)
+            .build()
     }
 
     override fun onCreate() {
