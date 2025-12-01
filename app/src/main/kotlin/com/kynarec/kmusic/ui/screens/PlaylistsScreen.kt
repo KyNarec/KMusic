@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
@@ -32,9 +34,11 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -45,9 +49,11 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
+import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.ui.PlaylistScreen
 import com.kynarec.kmusic.ui.components.DismissBackground
+import com.kynarec.kmusic.ui.components.TwoByTwoImageGrid
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.importPlaylistFromCsv
 import io.github.vinceglb.filekit.FileKit
@@ -196,6 +202,23 @@ fun PlaylistListItem(
     onRemove: (Playlist) -> Unit
 ) {
     val context = LocalContext.current
+    val database = remember { KmusicDatabase.getDatabase(context) }
+    val songsThumbnailList = remember { mutableStateListOf<String>() }
+
+    LaunchedEffect(Unit) {
+        database.playlistDao()
+            .getFirstFourSongsForPlaylistFlow(playlist.id)
+            // Use the suspending collect function here
+            .collect { songsList ->
+                // This lambda runs every time the Flow emits a new list
+                songsThumbnailList.clear()
+                songsList.forEach { song ->
+                    songsThumbnailList.add(song.thumbnail)
+                }
+            }
+        // Note: Execution stops at .collect() until the Flow is cancelled (e.g., Composable leaves composition)
+    }
+
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = {
             when (it) {
@@ -238,13 +261,15 @@ fun PlaylistListItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Placeholder for a playlist icon or thumbnail
-                    Icon(
-                        imageVector = Icons.Default.AddToPhotos, // Using same icon as placeholder
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .padding(end = 8.dp)
+                    Box(Modifier
+                        .width(48.dp)
+                        .height(48.dp)
                     )
+                    {
+                        TwoByTwoImageGrid(
+                            songsThumbnailList
+                        )
+                    }
                     Column {
                         Text(
                             text = playlist.name,
