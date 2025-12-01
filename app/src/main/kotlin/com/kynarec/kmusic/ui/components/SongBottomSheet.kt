@@ -55,6 +55,7 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
+import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.shareUrl
 import kotlinx.coroutines.launch
 
@@ -79,19 +80,18 @@ fun SongBottomSheet(
         .collectAsState(initial = null)
 
     // Until DB loads, show nothing or a loader
-    if (song == null) {
-        ModalBottomSheet(
-            onDismissRequest = onDismiss,
-            sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surface,
-            tonalElevation = 8.dp
-        ) {
-            CircularWavyProgressIndicator()
-        }
-        return
-    }
+//    if (song == null) {
+//        ModalBottomSheet(
+//            onDismissRequest = onDismiss,
+//            sheetState = sheetState,
+//            containerColor = MaterialTheme.colorScheme.surface,
+//            tonalElevation = 8.dp
+//        ) {
+//            CircularWavyProgressIndicator()
+//        }
+//        return
+//    }
 
-    val isLiked = song!!.isLiked
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -99,128 +99,145 @@ fun SongBottomSheet(
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 32.dp)
-        ) {
-            // Song Header
+        if (song == null) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Album Art
-                AsyncImage(
-                    model = song!!.thumbnail,
-                    contentDescription = "Album art",
-                    contentScale = ContentScale.Crop,
+                CircularWavyProgressIndicator()
+            }
+            return@ModalBottomSheet
+        } else {
+            val isLiked = song!!.isLiked
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
+            ) {
+                // Song Header
+                Row(
                     modifier = Modifier
-                        .size(64.dp)
-                        .aspectRatio(1f)
-                        .clip(RoundedCornerShape(8.dp))
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Album Art
+                    AsyncImage(
+                        model = song!!.thumbnail,
+                        contentDescription = "Album art",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(64.dp)
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                    )
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    // Song Info
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        ConditionalMarqueeText(
+                            text = song!!.title,
+                            fontSize = 18.sp,
+                            maxLines = 1,
+                            //overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        ConditionalMarqueeText(
+                            text = song!!.artist,
+                            fontSize = 14.sp,
+                            maxLines = 1,
+                            //overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    // Duration and Share
+                    Column(
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Text(
+                            text = song!!.duration,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Share",
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clickable {
+                                    shareUrl(
+                                        context,
+                                        url = "https://music.youtube.com/watch?v=${song!!.id}"
+                                    )
+                                },
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Action Items
+                BottomSheetItem(
+                    icon = Icons.Default.Info,
+                    text = "Information",
+                    onClick = {
+                        onInformation()
+                        onDismiss()
+                    }
                 )
 
-                Spacer(modifier = Modifier.width(16.dp))
+                BottomSheetItem(
+                    icon = Icons.Default.Radio,
+                    text = "Start radio",
+                    onClick = {
+                        viewModel.playSongByIdWithRadio(song!!)
+                        onDismiss()
+                    }
+                )
 
-                // Song Info
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    ConditionalMarqueeText(
-                        text = song!!.title,
-                        fontSize = 18.sp,
-                        maxLines = 1,
-                        //overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    ConditionalMarqueeText(
-                        text = song!!.artist,
-                        fontSize = 14.sp,
-                        maxLines = 1,
-                        //overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                BottomSheetItem(
+                    icon = Icons.Default.SkipNext,
+                    text = "Play next",
+                    onClick = {
+                        viewModel.playNext(song!!)
+                        SmartMessage("Playing ${song!!.title} next", context = context)
+                        onDismiss()
+                    }
+                )
 
-                // Duration and Share
-                Column(
-                    horizontalAlignment = Alignment.End
-                ) {
-                    Text(
-                        text = song!!.duration,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = "Share",
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clickable {
-                                shareUrl(context, url = "https://music.youtube.com/watch?v=${song!!.id}")
-                            },
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                BottomSheetItem(
+                    icon = Icons.Default.Queue,
+                    text = "Enqueue",
+                    onClick = {
+                        viewModel.enqueueSong(song!!)
+                        SmartMessage("Added ${song!!.title} to queue", context = context)
+                        onDismiss()
+                    }
+                )
+
+                BottomSheetItem(
+                    icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    text = if (isLiked) "Remove from favorites" else "Add to favorites",
+                    onClick = {
+                        viewModel.toggleFavorite(song!!)
+                    }
+                )
+
+                BottomSheetItem(
+                    icon = Icons.AutoMirrored.Filled.PlaylistAdd,
+                    text = "Add to playlist",
+                    onClick = {
+                        onAddToPlaylist()
+                        onDismiss()
+                    }
+                )
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Action Items
-            BottomSheetItem(
-                icon = Icons.Default.Info,
-                text = "Information",
-                onClick = {
-                    onInformation()
-                    onDismiss()
-                }
-            )
-
-            BottomSheetItem(
-                icon = Icons.Default.Radio,
-                text = "Start radio",
-                onClick = {
-                    viewModel.playSongByIdWithRadio(song!!)
-                    onDismiss()
-                }
-            )
-
-            BottomSheetItem(
-                icon = Icons.Default.SkipNext,
-                text = "Play next",
-                onClick = {
-                    viewModel.playNext(song!!)
-                    onDismiss()
-                }
-            )
-
-            BottomSheetItem(
-                icon = Icons.Default.Queue,
-                text = "Enqueue",
-                onClick = {
-                    viewModel.enqueueSong(song!!)
-                    onDismiss()
-                }
-            )
-
-            BottomSheetItem(
-                icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                text = if (isLiked) "Remove from favorites" else "Add to favorites",
-                onClick = {
-                    viewModel.toggleFavorite(song!!)
-                }
-            )
-
-            BottomSheetItem(
-                icon = Icons.AutoMirrored.Filled.PlaylistAdd,
-                text = "Add to playlist",
-                onClick = {
-                    onAddToPlaylist()
-                    onDismiss()
-                }
-            )
         }
     }
 }

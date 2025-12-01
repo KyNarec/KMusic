@@ -35,7 +35,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.ImageLoader
 import coil.compose.AsyncImage
+import coil.disk.DiskCache
+import coil.imageLoader
+import coil.memory.MemoryCache
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.transform.RoundedCornersTransformation
 import com.kynarec.kmusic.KMusic
@@ -75,6 +80,7 @@ fun PlayerControlBar(
                     .build(),
                 contentDescription = "Album Art",
                 contentScale = ContentScale.Crop,
+                imageLoader = LocalContext.current.imageLoader,
 //                modifier = Modifier
 //                    .clip(RoundedCornerShape(8.dp)),
                 error = painterResource(id = R.drawable.album) // Use a local placeholder

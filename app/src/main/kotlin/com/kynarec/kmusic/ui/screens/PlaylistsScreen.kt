@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddToPhotos
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -132,7 +133,7 @@ fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostControl
                     }
                 ) {
                     Icon(
-                        Icons.Default.AddToPhotos,
+                        Icons.Default.Add,
                         contentDescription = "Add new playlist (Import CSV)",
                         tint = MaterialTheme.colorScheme.primary
                     )
