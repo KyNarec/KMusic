@@ -2,6 +2,7 @@ package com.kynarec.kmusic.ui.screens
 
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,19 +12,27 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddToPhotos
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -32,22 +41,29 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
+import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.ui.PlaylistScreen
 import com.kynarec.kmusic.ui.components.DismissBackground
+import com.kynarec.kmusic.ui.components.TwoByTwoImageGrid
+import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.importPlaylistFromCsv
 import io.github.vinceglb.filekit.FileKit
@@ -152,13 +168,13 @@ fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostControl
                 CircularWavyProgressIndicator()
             }
         } else {
-            LazyColumn(
+            LazyVerticalGrid(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
                     .padding(horizontal = 8.dp),
                 contentPadding = PaddingValues(top = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                columns = GridCells.Adaptive(minSize = 100.dp)
             ) {
                 items(playlists, key = { it.id }) { playlist ->
                     PlaylistListItem(playlist = playlist, navController, onRemove = {
@@ -196,70 +212,59 @@ fun PlaylistListItem(
     onRemove: (Playlist) -> Unit
 ) {
     val context = LocalContext.current
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = {
-            when (it) {
-                SwipeToDismissBoxValue.StartToEnd -> {
-                    onRemove(playlist)
-                    SmartMessage(
-                        "Deleted playlist ${playlist.name}",
-                        context = context,
-                        type = PopupType.Success
-                    )
-                }
+    val database = remember { KmusicDatabase.getDatabase(context) }
+    val songsThumbnailList = remember { mutableStateListOf<String>() }
 
-                SwipeToDismissBoxValue.EndToStart -> {
-                    onRemove(playlist)
+    LaunchedEffect(Unit) {
+        database.playlistDao()
+            .getFirstFourSongsForPlaylistFlow(playlist.id)
+            // Use the suspending collect function here
+            .collect { songsList ->
+                // This lambda runs every time the Flow emits a new list
+                songsThumbnailList.clear()
+                songsList.forEach { song ->
+                    songsThumbnailList.add(song.thumbnail)
                 }
-
-                SwipeToDismissBoxValue.Settled -> return@rememberSwipeToDismissBoxState false
             }
-            return@rememberSwipeToDismissBoxState true
+        // Note: Execution stops at .collect() until the Flow is cancelled (e.g., Composable leaves composition)
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 4.dp)
+            .background(Color.Transparent),
+        onClick = {
+            navController.navigate(PlaylistScreen(playlist.id))
         },
-        // positional threshold of 25%
-        positionalThreshold = { it * .25f }
-    )
-    SwipeToDismissBox(
-        state = dismissState,
-        backgroundContent = { DismissBackground(dismissState) },
-        content = {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .clickable {
-                        navController.navigate(PlaylistScreen(playlist.id))
-                    },
-                elevation = CardDefaults.cardElevation(2.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Placeholder for a playlist icon or thumbnail
-                    Icon(
-                        imageVector = Icons.Default.AddToPhotos, // Using same icon as placeholder
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .padding(end = 8.dp)
-                    )
-                    Column {
-                        Text(
-                            text = playlist.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        // Optional: Show playlist metadata like song count
-                        Text(
-                            text = "ID: ${playlist.id}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
-                    }
-                }
-            }
-        })
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
 
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(0.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(
+                Modifier
+                    .width(100.dp)
+                    .height(100.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+            {
+                TwoByTwoImageGrid(
+                    songsThumbnailList
+                )
+            }
+            ConditionalMarqueeText(
+                text = playlist.name,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+            )
+        }
+    }
 }

@@ -75,4 +75,14 @@ interface PlaylistDao {
     """)
     fun getSongsForPlaylist(playlistId: Long): Flow<List<Song>>
 
+    @Query(
+        """
+        SELECT * FROM Song
+            INNER JOIN SongPlaylistMap ON Song.id = SongPlaylistMap.songId
+            WHERE SongPlaylistMap.playlistId = :playlistId
+            ORDER BY SongPlaylistMap.position ASC
+            LIMIT 4
+        """
+    )
+    fun getFirstFourSongsForPlaylistFlow(playlistId: Long): Flow<List<Song>>
 }

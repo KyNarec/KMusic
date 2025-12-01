@@ -8,6 +8,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,7 +17,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
@@ -26,6 +29,7 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
+import com.kynarec.kmusic.service.innertube.getHighestDefinitionThumbnailFromPlayer
 import com.kynarec.kmusic.service.innertube.playSongByIdWithBestBitrate
 import innertube.CLIENTNAME
 import innertube.InnerTube
@@ -108,9 +112,10 @@ fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
 @Composable
 fun ConditionalMarqueeText(
     text: String,
-    fontSize: androidx.compose.ui.unit.TextUnit,
+    fontSize: TextUnit = TextUnit.Unspecified,
     maxLines: Int = 1,
     color: Color = Color.Unspecified,
+    style: TextStyle = LocalTextStyle.current,
     modifier: Modifier = Modifier
 ) {
     // Make state more stable
@@ -205,7 +210,8 @@ fun importPlaylistFromCsv(csvContent: String, context: Context): Flow<Int> = cha
                     artist = data[4],                   // Artists
                     duration = data[5],                 // Duration
 //                    thumbnail = data[6]                 // ThumbnailUrl
-                    thumbnail = InnerTube(CLIENTNAME.WEB_REMIX).getYoutubeThumbnail(data[2])?: ""
+                    thumbnail = getHighestDefinitionThumbnailFromPlayer(InnerTube(CLIENTNAME.WEB_REMIX).player(data[2]))?: ""
+//                    thumbnail = InnerTube(CLIENTNAME.WEB_REMIX).(data[2])?: ""
                     // likedAt and totalPlayTimeMs use defaults (null/0L)
                 )
 
