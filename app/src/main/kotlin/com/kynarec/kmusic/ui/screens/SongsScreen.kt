@@ -1,17 +1,18 @@
 package com.kynarec.kmusic.ui.screens
 
-import android.app.Application
-import android.content.ComponentName
+import android.os.Parcelable
 import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,20 +21,22 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
-import androidx.room.util.TableInfo
-import com.google.common.util.concurrent.MoreExecutors
-import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
-import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.ui.components.SongBottomSheet
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
+data class SortOption(
+    val text: String,
+): Parcelable
+
+
 
 @OptIn(UnstableApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -44,11 +47,27 @@ fun SongsScreen(
 ) {
     val context = LocalContext.current
 
-    var mediaController by remember { mutableStateOf<MediaController?>(null) }
     val showBottomSheet = remember { mutableStateOf(false) }
     var longClickSong by remember { mutableStateOf<Song?>(null) }
 
-    val songs = database.songDao().getSongsFlowWithPlaytime().collectAsState(initial = emptyList())
+    val songsWithPlaytime = database.songDao().getSongsFlowWithPlaytime().collectAsState(initial = emptyList())
+
+
+    val sortOptions = listOf(
+        SortOption("All"),
+        SortOption("Favorites"),
+        SortOption("Listened to"),
+    )
+//    val selectedSortOption = rememberSaveable { mutableStateOf(SortOption("Listened to"))}
+    val selectedSortOption = viewModel.uiState.collectAsState().value.songsSortOption
+
+    val sortedSongs = when(selectedSortOption.text) {
+        "All" -> database.songDao().getAllSongsFlow().collectAsState(initial = emptyList())
+        "Favorites" -> database.songDao().getFavouritesSongFlow().collectAsState(initial = emptyList())
+        "Listened to" -> database.songDao().getSongsFlowWithPlaytime().collectAsState(initial = emptyList())
+        else -> {database.songDao().getSongsFlowWithPlaytime().collectAsState(initial = emptyList())}
+    }
+
 
     rememberCoroutineScope()
 
@@ -56,18 +75,29 @@ fun SongsScreen(
     Column(
         Modifier.fillMaxSize()
     ) {
-        Row(
+        LazyRow(
             Modifier.fillMaxWidth()
         ) {
-            // TODO: Add filter bar
+            items(sortOptions) { sortOption ->
+                Button(
+                    onClick = {
+                        viewModel.setSortOption(sortOption)
+                    },
+                    enabled = selectedSortOption != sortOption,
+                    modifier = Modifier.padding(horizontal = 2.dp)
+
+                ) {
+                    Text(text = sortOption.text)
+                }
+            }
         }
 
         LazyColumn {
             items(
-                songs.value.size,
-                key = { index -> songs.value[index].id }
-            ) { index ->
-                val song = songs.value[index]
+                sortedSongs.value,
+                key = { song -> song.id }
+            ) { song ->
+                val song = song
                 // Create stable onClick callback
                 val onSongClick = remember(song.id) {
                     {

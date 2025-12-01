@@ -20,6 +20,7 @@ import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.parseDurationToMillis
 import com.kynarec.kmusic.service.innertube.getRadioFlow
+import com.kynarec.kmusic.ui.screens.SortOption
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +40,7 @@ data class MusicUiState(
     val currentPosition: Long = 0,
     val totalDuration: Long = 0,
     val showControlBar: Boolean = false,
+    val songsSortOption: SortOption = SortOption("All")
 )
 
 // The new, combined ViewModel
@@ -386,6 +388,12 @@ class MusicViewModel
         viewModelScope.launch {
             val updated = song.toggleLike()
             songDao.updateSong(updated)
+        }
+    }
+
+    fun setSortOption(sortOption: SortOption) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(songsSortOption = sortOption) }
         }
     }
 
