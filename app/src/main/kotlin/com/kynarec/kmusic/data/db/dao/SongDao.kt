@@ -14,6 +14,9 @@ interface SongDao {
     @Query("SELECT * FROM Song")
     suspend fun getAllSongs(): List<Song>
 
+    @Query("SELECT * FROM Song")
+    fun getAllSongsFlow(): Flow<List<Song>>
+
     @Query("SELECT * FROM Song WHERE id = :id")
     suspend fun getSongById(id: String): Song?
 
@@ -25,6 +28,9 @@ interface SongDao {
 
     @Query("SELECT * FROM Song WHERE totalPlayTimeMs > 0")
     fun getSongsFlowWithPlaytime(): Flow<List<Song>>
+
+    @Query("SELECT * FROM Song WHERE likedAt > 0")
+    fun getFavouritesSongFlow(): Flow<List<Song>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertSong(song: Song)
