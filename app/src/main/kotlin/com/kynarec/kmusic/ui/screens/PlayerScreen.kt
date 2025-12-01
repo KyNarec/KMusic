@@ -207,11 +207,11 @@ fun PlayerScreen(
 //            )
 
             val customSliderColors = SliderDefaults.colors(
-                activeTrackColor = Color(0xFFD4B67C),
-                inactiveTrackColor = Color(0xFF8E8A81),
+                activeTrackColor = MaterialTheme.colorScheme.inversePrimary,
+                inactiveTrackColor = MaterialTheme.colorScheme.secondary,
                 activeTickColor = Color.Transparent,
                 inactiveTickColor = Color.Transparent,
-                thumbColor = Color(0xFFD4B67C)
+                thumbColor = MaterialTheme.colorScheme.inversePrimary
             )
 
            // Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentPosition: ${uiState.currentPosition}")

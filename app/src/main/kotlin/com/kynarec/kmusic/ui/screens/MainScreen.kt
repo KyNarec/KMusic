@@ -35,6 +35,8 @@ import androidx.navigation.compose.rememberNavController
 import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.service.update.PlatformUpdateManager
 import com.kynarec.kmusic.ui.Navigation
+import com.kynarec.kmusic.ui.PlaylistScreen
+import com.kynarec.kmusic.ui.PlaylistsScreen
 import com.kynarec.kmusic.ui.SearchResultScreen
 import com.kynarec.kmusic.ui.SearchScreen
 import com.kynarec.kmusic.ui.SettingsScreen
@@ -90,9 +92,12 @@ fun MainScreen() {
     val isSettingsScreen = remember(currentRoute) {
         currentRoute?.startsWith(SettingsScreen::class.qualifiedName!!) == true
     }
+    val isPlaylistScreen = remember(currentRoute) {
+        currentRoute?.startsWith(PlaylistScreen::class.qualifiedName!!) == true
+    }
 
 
-    val shouldHideNavElements = isSearchScreen || isSearchResultScreen || isSettingsScreen
+    val shouldHideNavElements = isSearchScreen || isSearchResultScreen || isSettingsScreen || isPlaylistScreen
 
     DEFAULT_DARK_MODE = isSystemInDarkTheme()
     val darkTheme by settingsViewModel.darkModeFLow.collectAsState(DEFAULT_DARK_MODE)

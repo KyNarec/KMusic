@@ -231,40 +231,44 @@ fun SearchScreen(
 //            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             items(count = searchQueries.size) { index ->
-                Row(Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .clickable {
-                        keyboardController?.hide()
-                        focusManager.clearFocus()
-                        scope.launch {
-                            searchQueryDao.deleteQuery(searchQuery.text)
-                            searchQueryDao.insertQuery(SearchQuery(query = searchQuery.text))
-                        }
-                        navController.navigate(SearchResultScreen(searchQueries[index].query))
-                    },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                if (searchQueries[index].query != "") {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .clickable {
+                                keyboardController?.hide()
+                                focusManager.clearFocus()
+                                scope.launch {
+                                    searchQueryDao.deleteQuery(searchQuery.text)
+                                    searchQueryDao.insertQuery(SearchQuery(query = searchQuery.text))
+                                }
+                                navController.navigate(SearchResultScreen(searchQueries[index].query))
+                            },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
 
-                    Text(searchQueries[index].query)
+                        Text(searchQueries[index].query)
 
 
-                    Spacer(Modifier.weight(1f))
-                    IconButton(onClick = {
-                        scope.launch {
-                            searchQueryDao.deleteQuery(searchQueries[index].query)
+                        Spacer(Modifier.weight(1f))
+                        IconButton(onClick = {
+                            scope.launch {
+                                searchQueryDao.deleteQuery(searchQueries[index].query)
+                            }
+                        }) {
+                            Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
                         }
-                    }) {
-                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
-                    }
-                    IconButton(onClick = {
-                        scope.launch {
-                            searchQuery = TextFieldValue(searchQueries[index].query,
-                                selection = TextRange(searchQueries[index].query.length)
-                            )
+                        IconButton(onClick = {
+                            scope.launch {
+                                searchQuery = TextFieldValue(
+                                    searchQueries[index].query,
+                                    selection = TextRange(searchQueries[index].query.length)
+                                )
+                            }
+                        }) {
+                            Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
                         }
-                    }) {
-                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
                     }
                 }
             }
