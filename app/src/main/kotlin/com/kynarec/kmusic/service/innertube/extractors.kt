@@ -1,5 +1,6 @@
 package com.kynarec.kmusic.service.innertube
 
+import android.util.Log
 import com.kynarec.kmusic.data.db.entities.Song
 import innertube.CLIENTNAME
 import innertube.InnerTube
@@ -10,6 +11,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlin.collections.maxByOrNull
 
 
 @Serializable
@@ -71,6 +73,70 @@ fun searchSuggestions(input: String): Flow<String> = flow {
 
     } catch (e: Exception) {
         e.printStackTrace()
+    }
+}
+
+@Serializable
+data class FullResponse(
+    // We only need the path to the thumbnails
+    val videoDetails: VideoDetails? = null
+    // You can safely ignore other fields like playerAds, playbackTracking, etc.
+)
+
+// 2. The container for the video metadata
+@Serializable
+data class VideoDetails(
+    // The key that holds the thumbnail list
+    val thumbnail: ThumbnailContainerBetter? = null,
+    val title: String? = null,
+    val author: String? = null
+    // ... other video details
+)
+
+@Serializable
+data class ThumbnailContainerBetter(
+    // Maps to "thumbnails"
+    val thumbnails: List<ThumbnailBetter> = emptyList()
+)
+
+@Serializable
+data class ThumbnailBetter(
+    val url: String,
+    val width: Int,
+    val height: Int
+)
+
+fun getHighestDefinitionThumbnailFromPlayer(jsonString: String): String? {
+
+    val json = Json {
+        ignoreUnknownKeys = true // Safely ignore fields not defined in the data classes
+        isLenient = true // Allow parsing of some non-standard JSON elements if present
+    }
+
+    return try {
+        // 2. Deserialize the full JSON response
+        val response = json.decodeFromString<FullResponse>(jsonString)
+
+        // 3. Navigate the structure to get the list of thumbnails
+        val thumbnails = response
+            .videoDetails
+            ?.thumbnail
+            ?.thumbnails
+
+        thumbnails?.forEach {
+            println("Thumbnail found: ${it.url} (${it.width}x${it.height})")
+        }
+
+        // 4. Find the thumbnail with the largest area (width * height)
+        val highestResThumbnail = thumbnails?.maxByOrNull { it.width * it.height }
+
+        // 5. Return the URL
+        highestResThumbnail?.url
+
+    } catch (e: Exception) {
+        // Handle JSON parsing errors gracefully
+        println("Error during JSON deserialization or extraction: ${e.message}")
+        null
     }
 }
 
@@ -195,7 +261,9 @@ data class Thumbnail(
 
 @Serializable
 data class ThumbnailItem(
-    val url: String? = null
+    val url: String? = null,
+    val width: Int,
+    val height: Int
 )
 
 fun searchSongsFlow(query: String): Flow<Song> = flow {
@@ -244,15 +312,23 @@ fun searchSongsFlow(query: String): Flow<Song> = flow {
             val duration = artistRuns.lastOrNull()?.text ?: "Unknown Duration"
 
 //            // Thumbnail
-//            val thumbnail = renderer.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.firstOrNull()?.url
-//                ?: innerTubeClient.getYoutubeThumbnail(videoId)
-            val thumbnail = innerTubeClient.getYoutubeThumbnail(videoId)
+            val thumbnails = renderer.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails
+//            thumbnails?.forEach {
+//                Log.d("Thumbnail", "Thumbnail found: ${it.url} (${it.width}x${it.height})")
+//            }
+//            val desiredResolution = "=w1024-h1024-l90-rj"
+            val fistPartOfThumbnailUrl = thumbnails?.maxByOrNull {
+                it.width + it.height
+            }?.url?.split("=")?.getOrNull(0)
+//            val thumbnail = fistPartOfThumbnailUrl?.let {
+//                "$it$desiredResolution"
+//            }
 
             val song = Song(
                 id = videoId,
                 title = title,
                 artist = artists.joinToString(", "),
-                thumbnail = thumbnail ?: "",
+                thumbnail = fistPartOfThumbnailUrl ?: "",
                 duration = duration
             )
 
@@ -265,173 +341,6 @@ fun searchSongsFlow(query: String): Flow<Song> = flow {
     }
 }
 
-
-
-suspend fun oldSearchSongs(query: String): List<Song> {
-    val results = mutableListOf<Song>()
-    val innerTubeClient = InnerTube(CLIENTNAME.WEB_REMIX)
-
-    try {
-        val data = innerTubeClient.search(
-            query,
-            params = PARAMS.SONG.label,
-            continuation = null
-        )
-
-        println("Raw JSON response: $data")
-
-        val jsonData = JSONObject(data)
-        val tabs =
-            jsonData.optJSONObject("contents")?.optJSONObject("tabbedSearchResultsRenderer")?.optJSONArray("tabs")
-
-        if (tabs == null || tabs.length() == 0) {
-            println("No tabs found in JSON.")
-            return emptyList()
-        }
-
-        val sectionContents = tabs.optJSONObject(0)?.optJSONObject("tabRenderer")?.optJSONObject("content")
-            ?.optJSONObject("sectionListRenderer")?.optJSONArray("contents")
-
-        if (sectionContents == null) {
-            println("No sectionListRenderer.contents found.")
-            return emptyList()
-        }
-
-        println("Contents found, length: ${sectionContents.length()}")
-
-        // Find musicShelfRenderer
-        var musicShelf: JSONObject? = null
-        for (i in 0 until sectionContents.length()) {
-            val item = sectionContents.optJSONObject(i)
-            if (item?.has("musicShelfRenderer") == true) {
-                musicShelf = item.getJSONObject("musicShelfRenderer")
-                break
-            }
-        }
-
-        if (musicShelf == null) {
-            println("musicShelfRenderer not found!")
-            return emptyList()
-        }
-
-        val items = musicShelf.optJSONArray("contents") ?: JSONArray()
-        println("musicShelfRenderer found. Number of items: ${items.length()}")
-
-        for (i in 0 until items.length()) {
-            val renderer = items.optJSONObject(i)?.optJSONObject("musicResponsiveListItemRenderer") ?: continue
-
-            val flexColumns = renderer.optJSONArray("flexColumns")
-            if (flexColumns == null) {
-                println("flexColumns missing at index $i")
-                continue
-            }
-
-            // Extract videoId from first flexColumn -> navigationEndpoint -> watchEndpoint
-            val videoId = flexColumns.optJSONObject(0)?.optJSONObject("musicResponsiveListItemFlexColumnRenderer")
-                ?.optJSONObject("text")?.optJSONArray("runs")?.optJSONObject(0)?.optJSONObject("navigationEndpoint")
-                ?.optJSONObject("watchEndpoint")?.optString("videoId", "UnknownID") ?: "UnknownID"
-
-            if (videoId == "UnknownID") {
-                println("videoId missing at index $i")
-                continue
-            }
-
-            // Title
-            val title = flexColumns.optJSONObject(0)?.optJSONObject("musicResponsiveListItemFlexColumnRenderer")
-                ?.optJSONObject("text")?.optJSONArray("runs")?.optJSONObject(0)?.optString("text", "Unknown Title")
-                ?: "Unknown Title"
-
-            // Artist(s)
-            val artistRuns = flexColumns.optJSONObject(1)?.optJSONObject("musicResponsiveListItemFlexColumnRenderer")
-                ?.optJSONObject("text")?.optJSONArray("runs") ?: JSONArray()
-
-            val artists = mutableListOf<String>()
-            for (j in 0 until artistRuns.length()) {
-                val run = artistRuns.optJSONObject(j) ?: continue
-                val text = run.optString("text") ?: continue
-
-                // Only include runs that have a browseEndpoint for artist pages
-                val isArtist = run.optJSONObject("navigationEndpoint")?.optJSONObject("browseEndpoint")
-                    ?.optJSONObject("browseEndpointContextSupportedConfigs")
-                    ?.optJSONObject("browseEndpointContextMusicConfig")
-                    ?.optString("pageType") == "MUSIC_PAGE_TYPE_ARTIST"
-
-                if (isArtist) {
-                    artists.add(text)
-                }
-            }
-
-            // Fallback if no artists were found
-            if (artists.isEmpty()) artists.add("Unknown Artist")
-
-            // Duration (usually last run)
-            val duration = if (artistRuns.length() > 0) {
-                artistRuns.optJSONObject(artistRuns.length() - 1)?.optString("text", "Unknown Duration")
-                    ?: "Unknown Duration"
-            } else "Unknown Duration"
-
-            // Thumbnail
-            val thumbnail =
-                renderer.optJSONObject("thumbnail")?.optJSONObject("musicThumbnailRenderer")?.optJSONObject("thumbnail")
-                    ?.optJSONArray("thumbnails")?.optJSONObject(0)?.optString("url", innerTubeClient.getYoutubeThumbnail(videoId))
-                    ?: innerTubeClient.getYoutubeThumbnail(videoId)
-
-            results.add(
-                Song(
-                    id = videoId,
-                    title = title,
-                    artist = artists.ifEmpty { listOf("Unknown Artist") }.first(),
-                    thumbnail = thumbnail?: "",
-                    duration = duration
-                )
-            )
-
-            println("Parsed song #$i: id=$videoId, title=$title, artists=${artists.joinToString()}, duration=$duration")
-        }
-
-        println("Total songs parsed: ${results.size}")
-
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
-
-    return results
-}
-
-
-suspend fun oldPlaySongByIdWithBestBitrate(videoId: String): String {
-    val player = InnerTube(CLIENTNAME.ANDROID).player(
-        videoId
-    )
-    //println(player)
-    val data = JSONObject(player)
-    val streamingData = data.optJSONObject("streamingData")
-    val adaptiveFormats = streamingData?.optJSONArray("adaptiveFormats") ?: JSONArray()
-
-    var highestBitrate = 0
-    var bestUrl = ""
-
-    for (i in 0 until adaptiveFormats.length()) {
-        val item = adaptiveFormats.optJSONObject(i) ?: continue
-        val audioQuality = item.optString("audioQuality", "")
-        if (audioQuality == "AUDIO_QUALITY_HIGH" || audioQuality == "AUDIO_QUALITY_MEDIUM") {
-            val bitrate = item.optInt("averageBitrate", -1)
-            val url = item.optString("url", "")
-
-            println("Bitrate: $bitrate  URL: $url")
-
-            if (bitrate > highestBitrate && url.isNotEmpty()) {
-                highestBitrate = bitrate
-                bestUrl = url
-            }
-        }
-    }
-
-    println("Highest bitrate found: $highestBitrate")
-    println("Highest bitrate URL: $bestUrl")
-
-    return bestUrl
-}
 
 @Serializable
 data class PlayerResponse(
@@ -564,15 +473,21 @@ fun getRadioFlow(
 
             val duration = renderer.lengthText?.runs?.firstOrNull()?.text ?: ""
 
-            val thumbnail =
-                renderer.thumbnail?.thumbnails?.lastOrNull()?.url
-                    ?: innerTubeClient.getYoutubeThumbnail(id)
+//            val thumbnail = getHighestDefinitionThumbnailFromPlayer(
+//                InnerTube(CLIENTNAME.WEB_REMIX).player(id)
+//            )?: innerTubeClient.getYoutubeThumbnail(id)
+
+            val fistPartOfThumbnailUrl = renderer.thumbnail?.thumbnails?.maxByOrNull {
+                it.width + it.height
+            }?.url?.split("=")?.getOrNull(0)
+//                renderer.thumbnail?.thumbnails?.lastOrNull()?.url
+//                    ?: innerTubeClient.getYoutubeThumbnail(id)
 
             val song = Song(
                 id = id,
                 title = title,
                 artist = artists.joinToString(", "),
-                thumbnail = thumbnail ?: "",
+                thumbnail = fistPartOfThumbnailUrl ?: "",
                 duration = duration
             )
 
@@ -585,87 +500,4 @@ fun getRadioFlow(
         e.printStackTrace()
         // You can emit an error type or just end the flow
     }
-}
-
-
-suspend fun oldGetRadio(videoId: String): List<Song> {
-    val results = mutableListOf<Song>()
-    val innerTubeClient = InnerTube(CLIENTNAME.TVLITE)
-
-    try {
-        val data = innerTubeClient.next(
-            videoId = videoId,
-            playlistId = "RDAMVM$videoId",
-            params = null,
-            continuation = null
-        )
-        println("Raw JSON response for radio: ${data.take(100000)}")
-        // 3️⃣ Parse the JSON response
-        val json = JSONObject(data)
-        val playlist =
-            json.optJSONObject("contents")
-                ?.optJSONObject("singleColumnWatchNextResults")
-                ?.optJSONObject("playlist")
-                ?.optJSONObject("playlist")
-                ?: run {
-                    println("❌ Playlist not found in JSON.")
-                    return emptyList()
-                }
-
-        val title = playlist.optString("title", "Unknown Mix")
-        println("🎵 Radio playlist title: $title")
-
-        val contents = playlist.optJSONArray("contents") ?: JSONArray()
-        println("Found ${contents.length()} items in playlist.")
-
-        // 4️⃣ Loop through playlist videos
-        for (i in 0 until contents.length()) {
-            val item = contents.optJSONObject(i)
-                ?.optJSONObject("playlistPanelVideoRenderer")
-                ?: continue
-
-            val songId = item.optString("videoId", "UnknownID")
-            val titleText =
-                item.optJSONObject("title")?.optJSONArray("runs")?.optJSONObject(0)?.optString("text", "Unknown Title")
-                    ?: "Unknown Title"
-
-            val artistRuns =
-                item.optJSONObject("shortBylineText")?.optJSONArray("runs") ?: JSONArray()
-
-            val artists = mutableListOf<String>()
-            for (j in 0 until artistRuns.length()) {
-                val run = artistRuns.optJSONObject(j) ?: continue
-                val artist = run.optString("text", "")
-                if (artist.isNotEmpty()) artists.add(artist)
-            }
-
-            val duration =
-                item.optJSONObject("lengthText")?.optJSONArray("runs")?.optJSONObject(0)?.optString("text", "") ?: ""
-
-            val thumbnails =
-                item.optJSONObject("thumbnail")?.optJSONArray("thumbnails")
-            val thumbnailUrl =
-                thumbnails?.optJSONObject(thumbnails.length() - 1)?.optString("url", innerTubeClient.getYoutubeThumbnail(songId))
-                    ?: innerTubeClient.getYoutubeThumbnail(songId)
-
-            results.add(
-                Song(
-                    id = songId,
-                    title = titleText,
-                    artist = "asd",
-                    thumbnail = thumbnailUrl?: "",
-                    duration = duration
-                )
-            )
-
-            println("Parsed song #$i: id=$songId, title=$titleText, artists=${artists.joinToString()}, duration=$duration")
-        }
-
-        println("✅ Total radio songs parsed: ${results.size}")
-
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
-
-    return results
 }

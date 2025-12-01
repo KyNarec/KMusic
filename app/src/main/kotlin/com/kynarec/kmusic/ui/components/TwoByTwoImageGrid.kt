@@ -1,8 +1,11 @@
 package com.kynarec.kmusic.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -16,7 +19,9 @@ fun TwoByTwoImageGrid(imageUrls: List<String>) {
             .fillMaxWidth()
             .aspectRatio(1f) // Makes the overall grid a square
             .padding(4.dp)
-    ) {
+            .clip(RoundedCornerShape(8.dp)),
+
+        ) {
         // --- First Row (Top Half) ---
         Row(
             modifier = Modifier
@@ -45,12 +50,20 @@ fun TwoByTwoImageGrid(imageUrls: List<String>) {
 
 @Composable
 fun GridImage(url: String, modifier: Modifier) {
-    AsyncImage(
-        model = url, // The image URL or resource ID
-        contentDescription = null, // Set proper content description in a real app
-        contentScale = ContentScale.Crop, // Scales and crops to fill the container
-        modifier = modifier
+    Box(
+        modifier = modifier // This modifier should define the final 1:1 square size and shape
             .fillMaxHeight()
-            .aspectRatio(1f) // Makes each individual image a square
+            .aspectRatio(1f),
+        contentAlignment = Alignment.Center
     )
+    {
+        AsyncImage(
+            model = url, // The image URL or resource ID
+            contentDescription = null, // Set proper content description in a real app
+            contentScale = ContentScale.Fit, // Scales and crops to fill the container
+            modifier = modifier
+                .fillMaxSize()
+        )
+    }
+
 }

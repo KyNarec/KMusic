@@ -72,7 +72,7 @@ fun SongComponent(
         )
 
         // Spacer to replicate the margin between the image and the text
-        Spacer(modifier = Modifier.width(24.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
         // Column for the title and artist, with a weight to take up remaining space
         Column(
@@ -104,22 +104,4 @@ fun SongComponent(
                 .align(Alignment.Bottom)
         )
     }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun MediaItemPreview() {
-    SongComponent(
-        song = Song(
-            title = "Song Title",
-            artist = "Artist Name",
-            duration = "3:45",
-            thumbnail = "https://img.youtube.com/vi/0MUeHF1SOm8/maxresdefault.jpg",
-            id = "TODO",
-            likedAt = 912910293,
-            totalPlayTimeMs = 12318239
-        ),
-        onClick = {}
-    )
 }
