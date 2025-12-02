@@ -1,4 +1,4 @@
-package innertube
+package com.kynarec.kmusic.service.innertube
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit
 
 
 class InnerTube(
-    val clientName: CLIENTNAME,
+    val clientName: ClientName,
 ) {
     val musicResponsiveListItemRendererMask = "musicResponsiveListItemRenderer(flexColumns,fixedColumns,thumbnail,navigationEndpoint,badges)"
     val _QPmE9fYezr = "lEi9YM74OL"

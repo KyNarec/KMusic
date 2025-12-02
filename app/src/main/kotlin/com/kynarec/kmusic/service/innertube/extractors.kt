@@ -1,21 +1,14 @@
 package com.kynarec.kmusic.service.innertube
 
-import android.util.Log
 import com.kynarec.kmusic.data.db.entities.Song
-import innertube.CLIENTNAME
-import innertube.InnerTube
-import innertube.PARAMS
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.json.JSONArray
-import org.json.JSONObject
 import kotlin.collections.maxByOrNull
 
 fun searchSuggestions(input: String): Flow<String> = flow {
     val json = Json { ignoreUnknownKeys = true }
-    val innerTubeClient = InnerTube(CLIENTNAME.WEB_REMIX)
+    val innerTubeClient = InnerTube(ClientName.WebRemix)
 
     try {
         val raw = innerTubeClient.getYoutubeMusicSearchSuggestion(
@@ -77,7 +70,7 @@ fun getHighestDefinitionThumbnailFromPlayer(jsonString: String): String? {
 
 fun searchSongsFlow(query: String): Flow<Song> = flow {
     val json = Json { ignoreUnknownKeys = true }
-    val innerTubeClient = InnerTube(CLIENTNAME.WEB_REMIX)
+    val innerTubeClient = InnerTube(ClientName.WebRemix)
 
     try {
         val raw = innerTubeClient.search(
@@ -158,7 +151,7 @@ fun searchSongsFlow(query: String): Flow<Song> = flow {
 suspend fun playSongByIdWithBestBitrate(videoId: String): String {
     val json = Json { ignoreUnknownKeys = true }
 
-    val raw = InnerTube(CLIENTNAME.ANDROID).player(videoId)
+    val raw = InnerTube(ClientName.Android).player(videoId)
     val response = json.decodeFromString<PlayerResponse>(raw)
 
     val best = response.streamingData
@@ -176,13 +169,13 @@ fun getRadioFlow(
     videoId: String,
 ): Flow<Song> = flow {
     val json = Json { ignoreUnknownKeys = true }
-    val innerTubeClient = InnerTube(CLIENTNAME.TVLITE)
+    val innerTubeClient = InnerTube(ClientName.TvLite)
 
     try {
         val raw = innerTubeClient.betterNext(
             videoId = videoId,
             playlistId = "RDAMVM$videoId",
-            params = PARAMS.SONG.label,
+            params = Params.Song.label,
             continuation = null
         )
 
