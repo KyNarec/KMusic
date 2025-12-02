@@ -1,6 +1,5 @@
 package com.kynarec.kmusic.ui.screens
 
-import android.app.Application
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,17 +17,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.media3.common.util.Log
-import androidx.media3.common.util.UnstableApi
-import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
-import com.kynarec.kmusic.ui.components.SongBottomSheet
+import com.kynarec.kmusic.ui.components.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import io.ktor.client.request.forms.formData
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,7 +75,7 @@ fun QueueScreen(
         if (showInfoSheet.value && longClickSong != null) {
 //            Log.i("SongsScreen", "Showing bottom sheet")
 //            Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
-            SongBottomSheet(
+            SongOptionsBottomSheet(
                 songId = longClickSong!!.id,
                 onDismiss = { showInfoSheet.value = false },
                 viewModel = viewModel,

@@ -175,7 +175,8 @@ fun Navigation(
             PlaylistScreen(
                 playlistId = args.playlistId,
                 viewModel = musicViewModel,
-                database = database
+                database = database,
+                navController = navController
             )
         }
         composable<AlbumsScreen> {

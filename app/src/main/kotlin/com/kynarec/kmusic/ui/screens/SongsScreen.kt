@@ -26,7 +26,7 @@ import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
-import com.kynarec.kmusic.ui.components.SongBottomSheet
+import com.kynarec.kmusic.ui.components.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import kotlinx.parcelize.Parcelize
@@ -115,7 +115,7 @@ fun SongsScreen(
         if (showBottomSheet.value && longClickSong != null) {
             Log.i("SongsScreen", "Showing bottom sheet")
             Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
-            SongBottomSheet(
+            SongOptionsBottomSheet(
                 songId = longClickSong!!.id,
                 onDismiss = { showBottomSheet.value = false },
                 viewModel = viewModel,
