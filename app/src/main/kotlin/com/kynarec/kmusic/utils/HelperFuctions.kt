@@ -2,9 +2,6 @@ package com.kynarec.kmusic.utils
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.basicMarquee
@@ -31,18 +28,12 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
 import com.kynarec.kmusic.service.innertube.getHighestDefinitionThumbnailFromPlayer
 import com.kynarec.kmusic.service.innertube.playSongByIdWithBestBitrate
-import innertube.CLIENTNAME
-import innertube.InnerTube
+import com.kynarec.kmusic.service.innertube.ClientName
+import com.kynarec.kmusic.service.innertube.InnerTube
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
-import java.net.HttpURLConnection
-import java.net.URL
 
 
 fun parseDurationToMillis(durationStr: String): Long {
@@ -213,7 +204,7 @@ fun importPlaylistFromCsv(
                     artist = data[4],                   // Artists
                     duration = data[5],                 // Duration
 //                    thumbnail = data[6]                 // ThumbnailUrl
-                    thumbnail = getHighestDefinitionThumbnailFromPlayer(InnerTube(CLIENTNAME.WEB_REMIX).player(data[2]))?: ""
+                    thumbnail = getHighestDefinitionThumbnailFromPlayer(InnerTube(ClientName.WebRemix).player(data[2]))?: ""
 //                    thumbnail = InnerTube(CLIENTNAME.WEB_REMIX).(data[2])?: ""
                     // likedAt and totalPlayTimeMs use defaults (null/0L)
                 )
