@@ -231,7 +231,6 @@ fun PlaylistListItem(
                     songsThumbnailList.add(song.thumbnail)
                 }
             }
-        // Note: Execution stops at .collect() until the Flow is cancelled (e.g., Composable leaves composition)
     }
 
     Card(

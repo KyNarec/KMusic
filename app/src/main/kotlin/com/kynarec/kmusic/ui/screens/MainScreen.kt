@@ -64,7 +64,8 @@ fun MainScreen() {
 
     val musicViewModel: MusicViewModel = viewModel(
         factory = MusicViewModel.Factory(
-            (application as KMusic).database.songDao(),
+            database.songDao(),
+            database.playlistDao(),
             LocalContext.current
         )
     )

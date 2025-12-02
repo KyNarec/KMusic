@@ -2,7 +2,6 @@
 
 package com.kynarec.kmusic.ui.screens
 
-import android.app.Application
 import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,16 +18,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
-import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.service.innertube.searchSongsFlow
-import com.kynarec.kmusic.ui.components.SongBottomSheet
+import com.kynarec.kmusic.ui.components.SongOptionsBottomSheet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 
@@ -116,7 +113,7 @@ fun SearchResultScreen(
                 Log.i("SongsScreen", "Showing bottom sheet")
                 Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
                 viewModel.maybeAddSongToDB(longClickSong!!)
-                SongBottomSheet(
+                SongOptionsBottomSheet(
                     songId = longClickSong!!.id,
                     onDismiss = { showBottomSheet.value = false },
                     viewModel = viewModel,
