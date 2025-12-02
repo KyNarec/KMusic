@@ -23,10 +23,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import com.kynarec.kmusic.KMusic
+import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.SongBottomSheet
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import io.ktor.client.request.forms.formData
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,9 +36,10 @@ import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 fun QueueScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as KMusic).database.songDao(),LocalContext.current)),
+    viewModel: MusicViewModel,
     sheetState: SheetState,
     showBottomSheet: MutableState<Boolean>,
+    database: KmusicDatabase
 //    hazeState: HazeState
 ) {
 
@@ -82,7 +85,8 @@ fun QueueScreen(
             SongBottomSheet(
                 songId = longClickSong!!.id,
                 onDismiss = { showInfoSheet.value = false },
-                viewModel = viewModel
+                viewModel = viewModel,
+                database =  database
             )
         }
     }

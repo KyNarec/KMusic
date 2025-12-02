@@ -60,7 +60,7 @@ fun GridImage(url: String, modifier: Modifier) {
         AsyncImage(
             model = url, // The image URL or resource ID
             contentDescription = null, // Set proper content description in a real app
-            contentScale = ContentScale.Fit, // Scales and crops to fill the container
+            contentScale = ContentScale.Crop, // Scales and crops to fill the container
             modifier = modifier
                 .fillMaxSize()
         )

@@ -21,6 +21,7 @@ import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.parseDurationToMillis
 import com.kynarec.kmusic.service.innertube.getRadioFlow
 import com.kynarec.kmusic.ui.screens.SortOption
+import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,6 +69,31 @@ class MusicViewModel
             // When the song changes, find it in our list and update the state
             val currentSong = _uiState.value.songsList.find { it.id == mediaItem?.mediaId }
             val newTotalDuration = mediaController?.duration ?: 0L
+            val index = _uiState.value.songsList.indexOf(currentSong)
+            val songList = _uiState.value.songsList
+            val controller = mediaController ?: return
+            viewModelScope.launch {
+                val songBefore = if (index - 1 != -2 && index -1 != -1) {
+                    withContext(Dispatchers.IO) {
+                        createMediaItemFromSong(songList[index - 1], context)
+                    }
+                } else {
+                    null
+                }
+                val songAfter = if (index + 1 < songList.size) {
+                    withContext(Dispatchers.IO) {
+                        createMediaItemFromSong(songList[index + 1], context)
+                    }
+                } else {
+                    null
+                }
+                if (songBefore != null)
+                    controller.replaceMediaItem(index - 1, songBefore)
+                if (songAfter != null)
+                    controller.replaceMediaItem(index + 1, songAfter)
+            }
+
+
             val newCurrentDuration = parseDurationToMillis(currentSong?.duration ?: "0")
 
             _uiState.update {
@@ -139,18 +165,39 @@ class MusicViewModel
         val songList = _uiState.value.songsList
 
         // Find the index of the tapped song
-        songList.indexOf(song)
+
         _uiState.update { it.copy(currentSong = song) }
 
         if (!songList.contains(song)) {
             _uiState.update { it.copy(songsList = songList + song) }
         }
+        val index = songList.indexOf(song)
+
 
         viewModelScope.launch {
+            val songBefore = if (index - 1 != -2) {
+                withContext(Dispatchers.IO) {
+                    createMediaItemFromSong(songList[index - 1], context)
+                }
+            } else {
+                null
+            }
+            val songAfter = if (index + 1 < songList.size) {
+                withContext(Dispatchers.IO) {
+                    createMediaItemFromSong(songList[index + 1], context)
+                }
+            } else {
+                null
+            }
+
             val mediaItem = withContext(Dispatchers.IO) {
                 createMediaItemFromSong(song, context)
             }
+            if (songBefore != null)
+                controller.replaceMediaItem(index - 1, songBefore)
             controller.setMediaItem(mediaItem)
+            if (songAfter != null)
+                controller.replaceMediaItem(index + 1, songAfter)
             controller.prepare()
             controller.play()
 
@@ -229,7 +276,7 @@ class MusicViewModel
         withContext(Dispatchers.IO) {
             chunksToProcess.forEach { chunk ->
                 val mediaItems = chunk.map {
-                    com.kynarec.kmusic.utils.createPartialMediaItemFromSong(
+                    createPartialMediaItemFromSong(
                         it,
                         context
                     )
@@ -264,7 +311,7 @@ class MusicViewModel
                     .flowOn(Dispatchers.IO) // network + parsing off main
                     .collect { radioSong ->
                         if (radioSong.id != song.id) {
-                            val mediaItem = createMediaItemFromSong(radioSong, context)
+                            val mediaItem = createPartialMediaItemFromSong(radioSong, context)
 
                             // Update UI immediately for each song
                             withContext(Dispatchers.Main) {
@@ -331,6 +378,16 @@ class MusicViewModel
                 e.printStackTrace()
                 Log.e(tag, "Failed to play next song ${song.title}")
             }
+        }
+    }
+
+    /**
+     * Only adds Song, when it is not already in the db
+     */
+    fun maybeAddSongToDB(song: Song) {
+        viewModelScope.launch {
+            if (songDao.getSongById(song.id) != null) return@launch
+            songDao.insertSong(song)
         }
     }
 

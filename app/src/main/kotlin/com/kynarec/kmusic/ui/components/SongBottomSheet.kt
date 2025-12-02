@@ -68,30 +68,16 @@ fun SongBottomSheet(
     onDismiss: () -> Unit,
     onInformation: () -> Unit = {},
     onAddToPlaylist: () -> Unit = {},
-    viewModel: MusicViewModel
+    viewModel: MusicViewModel,
+    database: KmusicDatabase
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val database = remember { KmusicDatabase.getDatabase(context) }
 
     val song by database.songDao()
         .getSongFlowById(songId)
         .collectAsState(initial = null)
-
-    // Until DB loads, show nothing or a loader
-//    if (song == null) {
-//        ModalBottomSheet(
-//            onDismissRequest = onDismiss,
-//            sheetState = sheetState,
-//            containerColor = MaterialTheme.colorScheme.surface,
-//            tonalElevation = 8.dp
-//        ) {
-//            CircularWavyProgressIndicator()
-//        }
-//        return
-//    }
-
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,

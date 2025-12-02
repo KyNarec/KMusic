@@ -50,9 +50,6 @@ fun SongsScreen(
     val showBottomSheet = remember { mutableStateOf(false) }
     var longClickSong by remember { mutableStateOf<Song?>(null) }
 
-    val songsWithPlaytime = database.songDao().getSongsFlowWithPlaytime().collectAsState(initial = emptyList())
-
-
     val sortOptions = listOf(
         SortOption("All"),
         SortOption("Favorites"),
@@ -121,7 +118,8 @@ fun SongsScreen(
             SongBottomSheet(
                 songId = longClickSong!!.id,
                 onDismiss = { showBottomSheet.value = false },
-                viewModel = viewModel
+                viewModel = viewModel,
+                database = database
             )
         }
     }

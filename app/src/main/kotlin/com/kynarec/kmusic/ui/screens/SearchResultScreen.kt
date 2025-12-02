@@ -23,6 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import com.kynarec.kmusic.KMusic
+import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
@@ -37,8 +38,9 @@ import kotlinx.coroutines.flow.flowOn
 @Composable
 fun SearchResultScreen(
     query: String,
-    viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as KMusic).database.songDao(),LocalContext.current)),
-    modifier: Modifier = Modifier
+    viewModel: MusicViewModel,
+    modifier: Modifier = Modifier,
+    database: KmusicDatabase
 ) {
     LocalContext.current
     var songs by remember { mutableStateOf(emptyList<Song>()) }
@@ -91,12 +93,6 @@ fun SearchResultScreen(
                     // Create stable onClick callback
                     val onSongClick = remember(song.id) {
                         {
-//                    mediaController?.let { controller ->
-//                        val mediaItem = createMediaItemFromSong(song, context)
-//                        controller.setMediaItem(mediaItem)
-//                        controller.prepare()
-//                        controller.playSong()
-//                    }
                             Log.d("SongClick", "Song clicked: ${song.title}")
                             //viewModel.playSong(song)
                             Log.i("PlayerControlBar", "Song clicked: ${song.title}")
@@ -119,10 +115,12 @@ fun SearchResultScreen(
             if (showBottomSheet.value && longClickSong != null) {
                 Log.i("SongsScreen", "Showing bottom sheet")
                 Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
+                viewModel.maybeAddSongToDB(longClickSong!!)
                 SongBottomSheet(
                     songId = longClickSong!!.id,
                     onDismiss = { showBottomSheet.value = false },
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    database = database
                 )
             }
         }

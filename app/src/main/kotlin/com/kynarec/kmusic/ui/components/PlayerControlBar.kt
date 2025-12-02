@@ -51,7 +51,7 @@ import com.kynarec.kmusic.utils.Constants.THUMBNAIL_ROUNDNESS
 @Composable
 fun PlayerControlBar(
     onBarClick: () -> Unit,
-    viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as KMusic).database.songDao(),LocalContext.current))
+    viewModel: MusicViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
     Row(
@@ -144,15 +144,5 @@ fun PlayerControlBar(
                 )
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PlayerControlBarPreview() {
-    MaterialTheme {
-        PlayerControlBar(
-            onBarClick = {},
-        )
     }
 }

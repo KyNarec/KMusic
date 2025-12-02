@@ -64,9 +64,11 @@ import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.R
+import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.parseMillisToDuration
+import io.ktor.client.request.forms.formData
 import ir.mahozad.multiplatform.wavyslider.WaveDirection
 import ir.mahozad.multiplatform.wavyslider.material.WavySlider
 
@@ -79,7 +81,8 @@ import ir.mahozad.multiplatform.wavyslider.material.WavySlider
 @Composable
 fun PlayerScreen(
     onClose: () -> Unit,
-    viewModel: MusicViewModel = viewModel(factory = MusicViewModel.Factory((LocalContext.current.applicationContext as Application as KMusic).database.songDao(),LocalContext.current))
+    viewModel: MusicViewModel,
+    database: KmusicDatabase
 ) {
     //val playerViewModel = viewModel
     //val uiState by playerViewModel.uiState.collectAsState()
@@ -126,10 +129,11 @@ fun PlayerScreen(
                     tint = MaterialTheme.colorScheme.onBackground
                 )
             }
-            Image(
+            Icon(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = "App icon",
-                modifier = Modifier.size(30.dp)
+                tint = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.size(48.dp)
             )
         }
 
@@ -347,6 +351,7 @@ fun PlayerScreen(
                 onClose = { showBottomSheet.value = false },
                 sheetState = sheetState,
                 showBottomSheet = showBottomSheet,
+                database = database
             )
         }
     }

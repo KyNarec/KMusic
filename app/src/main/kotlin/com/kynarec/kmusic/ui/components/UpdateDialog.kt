@@ -1,4 +1,4 @@
-package com.kynarec.kmusic.ui.screens
+package com.kynarec.kmusic.ui.components
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight

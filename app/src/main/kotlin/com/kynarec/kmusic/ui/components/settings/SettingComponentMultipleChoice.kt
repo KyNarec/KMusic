@@ -1,4 +1,4 @@
-package com.kynarec.kmusic.ui.screens.settings
+package com.kynarec.kmusic.ui.components.settings
 
 import android.util.Log
 import androidx.compose.foundation.clickable
