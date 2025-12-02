@@ -164,8 +164,11 @@ fun parseCsvLine(line: String): List<String>? {
     }
 }
 
-fun importPlaylistFromCsv(csvContent: String, context: Context): Flow<Int> = channelFlow {
-    val database = KmusicDatabase.getDatabase(context)
+fun importPlaylistFromCsv(
+    csvContent: String,
+    context: Context,
+    database: KmusicDatabase
+): Flow<Int> = channelFlow {
     val songDao = database.songDao()
     val playlistDao = database.playlistDao()
 

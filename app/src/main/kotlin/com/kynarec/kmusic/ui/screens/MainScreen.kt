@@ -60,6 +60,8 @@ fun MainScreen() {
     val updateViewModel = remember { UpdateViewModel(updateManager) }
 
     val application = LocalContext.current.applicationContext as Application
+    val database = remember { (application as KMusic).database }
+
     val musicViewModel: MusicViewModel = viewModel(
         factory = MusicViewModel.Factory(
             (application as KMusic).database.songDao(),
@@ -67,6 +69,7 @@ fun MainScreen() {
         )
     )
     val ksafeInstance = remember { (application as KMusic).ksafe }
+    DEFAULT_DARK_MODE = isSystemInDarkTheme()
     val settingsViewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModel.Factory(
             ksafeInstance, // Use the remembered, stable KSafe instance
@@ -99,7 +102,6 @@ fun MainScreen() {
 
     val shouldHideNavElements = isSearchScreen || isSearchResultScreen || isSettingsScreen || isPlaylistScreen
 
-    DEFAULT_DARK_MODE = isSystemInDarkTheme()
     val darkTheme by settingsViewModel.darkModeFLow.collectAsState(DEFAULT_DARK_MODE)
 
     val dynamicColors by settingsViewModel.dynamicColorsFlow.collectAsState(DEFAULT_DYNAMIC_COLORS)
@@ -115,15 +117,6 @@ fun MainScreen() {
         darkTheme = darkTheme,
         dynamicColor = dynamicColors
     ) {
-        // The top-level Box for layering
-//        Box(
-//            modifier = Modifier.fillMaxSize()
-//        ) {
-//            Surface(
-//                modifier = Modifier.fillMaxSize(),
-//                color = MaterialTheme.colorScheme.background
-//            ) {
-        // Main UI Scaffold, including the NavHost
         Scaffold(
             topBar = {
                 Box(modifier = Modifier.padding(top = 16.dp)) {
@@ -148,7 +141,14 @@ fun MainScreen() {
                         modifier = Modifier
                             .fillMaxSize()
                     ) {
-                        Navigation(navController, settingsViewModel = settingsViewModel, updateManager, updateViewModel)
+                        Navigation(
+                            navController = navController,
+                            settingsViewModel = settingsViewModel,
+                            updateManager = updateManager,
+                            updateViewModel = updateViewModel,
+                            musicViewModel = musicViewModel,
+                            database = database
+                        )
                     }
                 }
 
@@ -196,7 +196,8 @@ fun MainScreen() {
                                     }
                                 }
                             },
-                            viewModel = musicViewModel
+                            viewModel = musicViewModel,
+                            database = database
                         )
                     }
                 }

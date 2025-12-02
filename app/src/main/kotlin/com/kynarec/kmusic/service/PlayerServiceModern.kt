@@ -18,6 +18,7 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.upstream.DefaultAllocator
+import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
@@ -29,6 +30,7 @@ import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
 import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.KMusic
+import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
@@ -327,6 +329,10 @@ class PlayerServiceModern : MediaLibraryService() {
             songDao = (application as KMusic).database.songDao()
             Log.i("PlayerService", "songDao has been initialized.")
 
+            val notificationProvider = DefaultMediaNotificationProvider(this)
+            notificationProvider.setSmallIcon(R.drawable.ic_launcher_foreground_scaled)
+            setMediaNotificationProvider(notificationProvider)
+
             val cacheDataSourceFactory = CacheDataSource.Factory()
                 .setCache(getCache())
                 .setUpstreamDataSourceFactory(DefaultDataSource.Factory(this))
@@ -355,27 +361,6 @@ class PlayerServiceModern : MediaLibraryService() {
             val intent = Intent(this, MainActivity::class.java)
             val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
             mediaLibrarySession?.setSessionActivity(pendingIntent)
-
-            // Commented out the debug song deletion code. You can uncomment this if needed for testing.
-            CoroutineScope(Dispatchers.IO).launch {
-//                songDao.deleteSongById("s6GIT4RhFv0")
-//                songDao.deleteSongById("O-A7It0bZ2w")
-//                songDao.deleteSongById("4UnU3r0M3zg")
-//                songDao.deleteSongById("D4INE2zO9OU")
-//                songDao.deleteSongById("8901V1M5lDk")
-//                songDao.deleteSongById("A__cH65WRvE")
-//                songDao.deleteSongById("4FkfyssnHqU")
-//                songDao.deleteSongById("ZHLNudYcQ0c")
-//                songDao.deleteSongById("RRQwn8rmZfo")
-//                songDao.deleteSongById("hfyi9cewKe4")
-//                songDao.deleteSongById("0-HQzVZRO68")
-//                songDao.deleteSongById("63xPXEB4fjA")
-//                songDao.deleteSongById("_Zm6Iy0wMWk")
-//                songDao.deleteSongById("X-o8eGhKhlI")
-//                songDao.deleteSongById("ZICUilv4KF0")
-//                songDao.deleteSongById("XhjqmAoBKCQ")
-//                songDao.deleteSongById("_UWOHofs0kA")
-            }
         } catch (e: Exception) {
             Log.e(tag, "Error initializing PlayerService: ${e.message}", e)
         }

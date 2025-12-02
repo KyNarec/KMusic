@@ -29,8 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.service.update.UpdateManager
-import com.kynarec.kmusic.ui.screens.settings.SettingComponentEnumChoice
-import com.kynarec.kmusic.ui.screens.settings.SettingComponentSwitch
+import com.kynarec.kmusic.ui.components.UpdateDialog
+import com.kynarec.kmusic.ui.components.settings.SettingComponentEnumChoice
+import com.kynarec.kmusic.ui.components.settings.SettingComponentSwitch
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
 import com.kynarec.kmusic.utils.Constants.DARK_MODE_KEY

@@ -26,6 +26,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.kynarec.kmusic.KMusic
+import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.service.update.UpdateManager
@@ -50,23 +51,15 @@ fun Navigation(
     settingsViewModel: SettingsViewModel,
     updateManager: UpdateManager,
     updateViewModel: UpdateViewModel,
+    musicViewModel: MusicViewModel,
+    database: KmusicDatabase
 ) {
     // Get the Application context using LocalContext.
     // This is safe to use in a Composable because it's tied to the Composable's scope.
     val application = LocalContext.current.applicationContext as Application
 
     // Use a custom ViewModel factory to inject the database DAO.
-    val database = remember { (application as KMusic).database }
     val songDao = remember { database.songDao() }
-    // Use a custom ViewModel factory to inject the stable DAO instance.
-    val musicViewModel: MusicViewModel = viewModel(
-        factory = MusicViewModel.Factory(
-            songDao, // Use the remembered, stable DAO
-            LocalContext.current
-        )
-    )
-
-
 
     val transitionEffect by settingsViewModel.transitionEffectFlow.collectAsState()
 
@@ -172,11 +165,18 @@ fun Navigation(
         }
         composable<PlaylistsScreen> {
             val playlists =
-            PlaylistsScreen(navController = navController)
+            PlaylistsScreen(
+                navController = navController,
+                database = database
+            )
         }
         composable<PlaylistScreen> {
             val args = it.toRoute<PlaylistScreen>()
-            PlaylistScreen(playlistId = args.playlistId, viewModel = musicViewModel)
+            PlaylistScreen(
+                playlistId = args.playlistId,
+                viewModel = musicViewModel,
+                database = database
+            )
         }
         composable<AlbumsScreen> {
             AlbumsScreen()
@@ -186,7 +186,7 @@ fun Navigation(
         }
         composable<SearchResultScreen> {
             val args = it.toRoute<SearchResultScreen>()
-            SearchResultScreen(args.query, musicViewModel)
+            SearchResultScreen(args.query, musicViewModel, database = database)
         }
         composable<SettingsScreen> {
             SettingsScreen(prefs = settingsViewModel, navController = navController, updateManager = updateManager, updateViewModel = updateViewModel)

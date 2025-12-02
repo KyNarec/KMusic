@@ -10,19 +10,20 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.service.update.PlatformContext
 import com.kynarec.kmusic.ui.screens.MainScreen
-import com.kynarec.kmusic.ui.theme.KMusicTheme
 import com.kynarec.kmusic.utils.setJustStartedUp
 import com.kynarec.kmusic.utils.setPlayerOpen
 import io.github.vinceglb.filekit.FileKit
@@ -72,19 +73,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestNotificationPermission()
         PlatformContext.initialize(applicationContext)
         FileKit.init(this)
         setContent {
-            KMusicTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    MainScreen()
-                }
-            }
+            MainScreen()
         }
 
 
@@ -96,6 +92,7 @@ class MainActivity : AppCompatActivity() {
         Log.i(tag, "Started Media3 PlayerServiceModern")
     }
 
+    @OptIn(UnstableApi::class)
     override fun onStart() {
         super.onStart()
         // Connect to the service's MediaSession on start.
@@ -119,20 +116,5 @@ class MainActivity : AppCompatActivity() {
         mediaController?.removeListener(playerListener)
         mediaController?.release()
         mediaController = null
-    }
-
-    private fun initializeMediaController() {
-        val sessionToken = SessionToken(this, ComponentName(this, PlayerServiceModern::class.java))
-        val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
-        controllerFuture.addListener({
-            mediaController = controllerFuture.get()
-            mediaController?.addListener(playerListener)
-
-            // Perform an initial check when the controller connects.
-            // mediaItemCount is the number of songs in the queue.
-            mediaController?.mediaItemCount == 0
-//            hidePlayerControlBar(isQueueEmpty)
-
-        }, MoreExecutors.directExecutor())
     }
 }

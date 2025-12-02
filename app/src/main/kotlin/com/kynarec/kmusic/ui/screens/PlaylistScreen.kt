@@ -30,11 +30,11 @@ fun PlaylistScreen(
     modifier: Modifier = Modifier,
     playlistId: Long,
     viewModel: MusicViewModel,
+    database: KmusicDatabase
 ) {
     Log.i("PlaylistScreen", "PlaylistScreen: $playlistId")
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val database = remember { KmusicDatabase.getDatabase(context) }
 
     val playlistFlow = remember(playlistId) {
         database.playlistDao().getPlaylistByIdFlow(playlistId)
@@ -83,7 +83,8 @@ fun PlaylistScreen(
         SongBottomSheet(
             songId = longClickSong!!.id,
             onDismiss = { showBottomSheet.value = false },
-            viewModel = viewModel
+            viewModel = viewModel,
+            database = database
         )
     }
 }

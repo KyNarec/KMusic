@@ -78,10 +78,13 @@ import kotlin.collections.emptyList
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostController) {
+fun PlaylistsScreen(
+    modifier: Modifier = Modifier,
+    navController: NavHostController,
+    database: KmusicDatabase
+) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val database = remember { KmusicDatabase.getDatabase(context) }
 
     val playlists: List<Playlist> by remember(database) {
         database.playlistDao().getAllPlaylists()
@@ -120,7 +123,7 @@ fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostControl
                                 isImportingPlaylist.value = true
                                 try {
                                     // 3. Start the import and collect progress
-                                    importPlaylistFromCsv(csvContent, context) // Use stored content
+                                    importPlaylistFromCsv(csvContent, context, database) // Use stored content
                                         .collect { currentIndex ->
                                             currentLine.intValue =
                                                 currentIndex + 1 // Increment to show songs processed (1-based)
@@ -151,7 +154,6 @@ fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostControl
                     Icon(
                         Icons.Default.Add,
                         contentDescription = "Add new playlist (Import CSV)",
-                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -177,11 +179,14 @@ fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostControl
                 columns = GridCells.Adaptive(minSize = 100.dp)
             ) {
                 items(playlists, key = { it.id }) { playlist ->
-                    PlaylistListItem(playlist = playlist, navController, onRemove = {
-                        scope.launch {
-                            database.playlistDao().deletePlaylist(it)
-                        }
-                    })
+                    PlaylistListItem(
+                        playlist = playlist, navController, onRemove = {
+                            scope.launch {
+                                database.playlistDao().deletePlaylist(it)
+                            }
+                        },
+                        database = database
+                    )
                 }
                 if (isImportingPlaylist.value && totalLines.intValue > 0) {
                     item {
@@ -209,10 +214,10 @@ fun PlaylistsScreen(modifier: Modifier = Modifier, navController: NavHostControl
 fun PlaylistListItem(
     playlist: Playlist,
     navController: NavHostController,
-    onRemove: (Playlist) -> Unit
+    onRemove: (Playlist) -> Unit,
+    database: KmusicDatabase
 ) {
     val context = LocalContext.current
-    val database = remember { KmusicDatabase.getDatabase(context) }
     val songsThumbnailList = remember { mutableStateListOf<String>() }
 
     LaunchedEffect(Unit) {
