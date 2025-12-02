@@ -141,17 +141,45 @@ fun ConditionalMarqueeText(
     )
 }
 
-
-/**
- * Parses a single CSV line into a list of strings.
- * This is a simple parser that assumes comma separation and no internal commas/quotes.
- */
 fun parseCsvLine(line: String): List<String>? {
-    return try {
-        line.split(",").map { it.trim() }
-    } catch (e: Exception) {
-        Log.e("DataImportService", "Error parsing CSV line: $line", e)
-        null
+    if (line.isBlank()) return null
+    val result = mutableListOf<String>()
+    val sb = StringBuilder()
+    var inQuotes = false
+
+    // State machine-like parsing
+    for (i in line.indices) {
+        val char = line[i]
+
+        if (char == '"') {
+            if (i + 1 < line.length && line[i + 1] == '"' && inQuotes) {
+                // Escaped quote: "" becomes " inside the field
+                sb.append('"')
+                // Note: The loop naturally advances i, no need to manually skip in this 'for' structure.
+            } else {
+                // Toggle quote state
+                inQuotes = !inQuotes
+            }
+        } else if (char == ',' && !inQuotes) {
+            // Comma outside of quotes is a delimiter
+            result.add(sb.toString().trim())
+            sb.clear()
+        } else {
+            // Regular character
+            sb.append(char)
+        }
+    }
+    // Add the last field
+    result.add(sb.toString().trim())
+
+    // Post-processing to remove surrounding quotes from fields if they exist
+    return result.map { field ->
+        if (field.length >= 2 && field.startsWith('"') && field.endsWith('"')) {
+            // Unescape inner quotes for true CSV format (e.g. "" becomes ")
+            field.substring(1, field.length - 1).replace("\"\"", "\"")
+        } else {
+            field
+        }
     }
 }
 
@@ -198,10 +226,14 @@ fun importPlaylistFromCsv(
         lines.forEachIndexed { index, line ->
             val data = parseCsvLine(line)
             if (data != null && data.size >= 7) {
+                val cleanedArtists = data[4]
+                    .replace(",", ", ") // Simple: Replaces all ',' with ', '
+                    .replace(",  ", ", ") // Optional cleanup for any double spaces created
+
                 val songEntity = Song(
                     id = data[2],                       // MediaId
                     title = data[3],                    // Title
-                    artist = data[4],                   // Artists
+                    artist = cleanedArtists,                   // Artists
                     duration = data[5],                 // Duration
 //                    thumbnail = data[6]                 // ThumbnailUrl
                     thumbnail = getHighestDefinitionThumbnailFromPlayer(InnerTube(ClientName.WebRemix).player(data[2]))?: ""
