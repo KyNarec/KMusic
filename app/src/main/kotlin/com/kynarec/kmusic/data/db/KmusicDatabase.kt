@@ -30,7 +30,7 @@ import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
         Album::class,
         SongAlbumMap::class
                ],  // add others as needed
-    version = 5
+    version = 6
 )
 abstract class KmusicDatabase : RoomDatabase() {
     abstract fun songDao(): SongDao

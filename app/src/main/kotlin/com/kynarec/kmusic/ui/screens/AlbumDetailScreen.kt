@@ -1,16 +1,24 @@
 package com.kynarec.kmusic.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,19 +30,26 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import androidx.navigation.navOptions
 import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.innertube.getAlbumAndSongs
+import com.kynarec.kmusic.ui.components.AlbumOptionsBottomSheet
 import com.kynarec.kmusic.ui.components.SongComponent
+import com.kynarec.kmusic.ui.components.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -42,7 +57,8 @@ fun AlbumDetailScreen(
     modifier: Modifier = Modifier,
     albumId: String,
     viewModel: MusicViewModel,
-    database: KmusicDatabase
+    database: KmusicDatabase,
+    navController: NavHostController
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -53,6 +69,11 @@ fun AlbumDetailScreen(
 
     var isLoading by remember { mutableStateOf(false) }
 
+    var longClickSong by remember { mutableStateOf<Song?>(null) }
+    val showAlbumOptionsBottomSheet = remember { mutableStateOf(false) }
+    val showSongDetailBottomSheet = remember { mutableStateOf(false) }
+
+
 
     LaunchedEffect(Unit) {
         if (albumFLow == null) {
@@ -62,7 +83,12 @@ fun AlbumDetailScreen(
                     albumWithSongs.songs.forEach {
                         songs = songs + it
                     }
-                    database.albumDao().insertAlbum(albumWithSongs.album)
+                    Log.i("AlbumDetailScreen", "upserting album")
+                    withContext(Dispatchers.IO){
+                        database.albumDao().upsertAlbum(albumWithSongs.album)
+                    }
+                    Log.i("AlbumDetailScreen", "upserting album done")
+
                 }
                 isLoading = false
             }
@@ -79,7 +105,9 @@ fun AlbumDetailScreen(
                 AsyncImage(
                     model = albumFLow?.thumbnailUrl,
                     contentDescription = null,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth()
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(8.dp)),
                     imageLoader = LocalContext.current.imageLoader
                 )
             }
@@ -102,7 +130,7 @@ fun AlbumDetailScreen(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     ConditionalMarqueeText(
-                        text = "${albumFLow?.year} - songs count",
+                        text = "${albumFLow?.year} - ${songs.size} Songs",
 //                    style = MaterialTheme.typography.titleLarge
                     )
                 }
@@ -114,12 +142,26 @@ fun AlbumDetailScreen(
                 Modifier
                     .fillMaxWidth()
                     .padding(8.dp),
-                horizontalArrangement = Arrangement.Start
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 ConditionalMarqueeText(
                     text = "Songs",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.titleLargeEmphasized.copy(fontWeight = FontWeight.SemiBold),
                 )
+
+                Spacer(Modifier.weight(1f))
+
+                IconButton(
+                    onClick = {
+                        showAlbumOptionsBottomSheet.value = true
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "More Options"
+                    )
+                }
             }
         }
         if (isLoading){
@@ -137,10 +179,36 @@ fun AlbumDetailScreen(
             items(songs) {
                 SongComponent(
                     song = it,
-                    onClick = {},
-                    onLongClick = {},
+                    onClick = {
+                        scope.launch {
+                            viewModel.playPlaylist(songs, it)
+                        }
+                    },
+                    onLongClick = {
+                        longClickSong = it
+                        showSongDetailBottomSheet.value = true
+                    }
                 )
             }
         }
+    }
+    if (showSongDetailBottomSheet.value && longClickSong != null) {
+        Log.i("SongsScreen", "Showing bottom sheet")
+        Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
+        SongOptionsBottomSheet(
+            songId = longClickSong!!.id,
+            onDismiss = { showSongDetailBottomSheet.value = false },
+            viewModel = viewModel,
+            database = database
+        )
+    }
+    if (showAlbumOptionsBottomSheet.value) {
+        AlbumOptionsBottomSheet(
+            albumId = albumId,
+            onDismiss = { showAlbumOptionsBottomSheet.value = false },
+            viewModel = viewModel,
+            database = database,
+            navController = navController
+        )
     }
 }

@@ -3,7 +3,6 @@ package com.kynarec.kmusic.ui.viewModels
 import android.content.ComponentName
 import android.content.Context
 import androidx.annotation.OptIn
-import androidx.compose.runtime.currentRecomposeScope
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -14,9 +13,10 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
+import com.kynarec.kmusic.data.db.dao.AlbumDao
 import com.kynarec.kmusic.data.db.dao.PlaylistDao
-import com.kynarec.kmusic.data.db.dao.PlaylistDao_Impl
 import com.kynarec.kmusic.data.db.dao.SongDao
+import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerServiceModern
@@ -54,6 +54,7 @@ class MusicViewModel
     (
     private val songDao: SongDao,
     private val playlistDao: PlaylistDao,
+    private val albumDao: AlbumDao,
     private val context: Context
 ) : ViewModel() {
     private val tag = "MusicViewModel"
@@ -446,10 +447,17 @@ class MusicViewModel
         }
     }
 
-    fun toggleFavorite(song: Song) {
+    fun toggleFavoriteSong(song: Song) {
         viewModelScope.launch {
             val updated = song.toggleLike()
             songDao.updateSong(updated)
+        }
+    }
+
+    fun toggleFacoriteAlbum(album: Album) {
+        viewModelScope.launch {
+            val updated = album.toggleBookmark()
+            albumDao.updateAlbum(updated)
         }
     }
 
@@ -483,12 +491,13 @@ class MusicViewModel
     class Factory(
         private val songDao: SongDao,
         private val playlistDao: PlaylistDao,
+        private val albumDao: AlbumDao,
         private val context: Context
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(MusicViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return MusicViewModel(songDao, playlistDao, context) as T
+                return MusicViewModel(songDao, playlistDao, albumDao, context) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

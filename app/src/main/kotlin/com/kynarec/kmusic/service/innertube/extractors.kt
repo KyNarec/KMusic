@@ -378,9 +378,12 @@ fun getAlbumAndSongs(browseId: String): Flow<AlbumWithSongsAndIndices> = flow {
 
         }
 
+        val artist = songList.firstOrNull()?.artist?: "NA"
+
         val finalAlbum = Album(
             id = browseId,
             title = title?: "",
+            artist = artist,
             thumbnailUrl = thumbnailURL.toString(),
             year = year?: "",
             authorsText = authorsText?: "",

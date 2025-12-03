@@ -67,6 +67,7 @@ fun MainScreen() {
         factory = MusicViewModel.Factory(
             database.songDao(),
             database.playlistDao(),
+            database.albumDao(),
             LocalContext.current
         )
     )

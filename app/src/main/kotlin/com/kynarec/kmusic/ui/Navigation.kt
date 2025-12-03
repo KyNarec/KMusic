@@ -205,7 +205,8 @@ fun Navigation(
             AlbumDetailScreen(
                 albumId = args.albumId,
                 viewModel = musicViewModel,
-                database = database
+                database = database,
+                navController = navController
             )
         }
     }

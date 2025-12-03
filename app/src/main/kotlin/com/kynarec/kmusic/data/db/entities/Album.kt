@@ -11,6 +11,7 @@ import kotlinx.parcelize.Parcelize
 data class Album (
     @PrimaryKey val id: String,
     val title: String,
+    val artist: String,
     val thumbnailUrl: String,
     val year: String,
     val authorsText: String,
@@ -25,4 +26,7 @@ data class Album (
             bookmarkedAt = if (bookmarkedAt == null) System.currentTimeMillis() else null
         )
     }
+
+    val isLiked: Boolean
+        get() = bookmarkedAt != null
 }

@@ -202,7 +202,7 @@ fun SongOptionsBottomSheet(
                     icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     text = if (isLiked) "Remove from favorites" else "Add to favorites",
                     onClick = {
-                        viewModel.toggleFavorite(song!!)
+                        viewModel.toggleFavoriteSong(song!!)
                     }
                 )
 

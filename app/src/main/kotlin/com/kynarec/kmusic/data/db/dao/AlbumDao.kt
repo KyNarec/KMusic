@@ -1,5 +1,6 @@
 package com.kynarec.kmusic.data.db.dao
 
+import androidx.compose.runtime.collectAsState
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -18,6 +19,20 @@ interface AlbumDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAlbum(album: Album): Long
 
+    suspend fun upsertAlbum(album: Album) {
+        val existing = getAlbumById(album.id)
+        if (existing == null) {
+            // Song doesn't exist, insert it
+            insertAlbum(album)
+        } else {
+            // Song exists, update metadata but preserve user data
+            updateAlbum(album.copy(
+                bookmarkedAt = existing.bookmarkedAt,
+                isYoutubeAlbum = existing.isYoutubeAlbum
+            ))
+        }
+    }
+
     @Delete
     suspend fun deleteAlbum(album: Album)
 
@@ -29,6 +44,18 @@ interface AlbumDao {
 
     @Query("SELECT * FROM Album WHERE id = :id")
     fun getAlbumByIdFlow(id: String): Flow<Album?>
+
+    @Query("SELECT * FROM Album WHERE id = :id")
+    fun getAlbumById(id: String): Album?
+
+    @Query("SELECT * FROM Album WHERE bookmarkedAt > 0")
+    fun getFavouritesAlbumsFlow(): Flow<List<Album>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSongToAlbum(crossRef: SongAlbumMap)
+
+    @Query("DELETE FROM SongAlbumMap WHERE albumId = :albumId AND songId = :songId")
+    suspend fun removeSongFromAlbum(albumId: String, songId: String)
 
     @Transaction // Required when using @Relation annotation
     @Query("SELECT * FROM Album WHERE id = :albumId")
