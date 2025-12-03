@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.imageLoader
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
@@ -105,7 +106,8 @@ fun SongOptionsBottomSheet(
                         modifier = Modifier
                             .size(64.dp)
                             .aspectRatio(1f)
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(8.dp)),
+                        imageLoader = LocalContext.current.imageLoader
                     )
 
                     Spacer(modifier = Modifier.width(16.dp))

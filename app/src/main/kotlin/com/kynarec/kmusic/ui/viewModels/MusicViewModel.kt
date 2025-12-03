@@ -44,7 +44,8 @@ data class MusicUiState(
     val currentPosition: Long = 0,
     val totalDuration: Long = 0,
     val showControlBar: Boolean = false,
-    val songsSortOption: SortOption = SortOption("All")
+    val songsSortOption: SortOption = SortOption("All"),
+    val searchParam: SortOption = SortOption("Song")
 )
 
 // The new, combined ViewModel
@@ -455,6 +456,12 @@ class MusicViewModel
     fun setSortOption(sortOption: SortOption) {
         viewModelScope.launch {
             _uiState.update { it.copy(songsSortOption = sortOption) }
+        }
+    }
+
+    fun setSearchParam(searchParam: SortOption){
+        viewModelScope.launch {
+            _uiState.update { it.copy(searchParam = searchParam) }
         }
     }
 

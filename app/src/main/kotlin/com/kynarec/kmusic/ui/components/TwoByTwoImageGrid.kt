@@ -7,8 +7,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.imageLoader
 
 @Composable
 fun TwoByTwoImageGrid(imageUrls: List<String>) {
@@ -62,7 +64,8 @@ fun GridImage(url: String, modifier: Modifier) {
             contentDescription = null, // Set proper content description in a real app
             contentScale = ContentScale.Crop, // Scales and crops to fill the container
             modifier = modifier
-                .fillMaxSize()
+                .fillMaxSize(),
+            imageLoader = LocalContext.current.imageLoader
         )
     }
 

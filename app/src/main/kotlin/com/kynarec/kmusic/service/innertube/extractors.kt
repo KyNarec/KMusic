@@ -1,5 +1,7 @@
 package com.kynarec.kmusic.service.innertube
 
+import com.kynarec.kmusic.data.db.entities.Album
+import com.kynarec.kmusic.data.db.entities.AlbumPreview
 import com.kynarec.kmusic.data.db.entities.Song
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -236,5 +238,207 @@ fun getRadioFlow(
     } catch (e: Exception) {
         e.printStackTrace()
         // You can emit an error type or just end the flow
+    }
+}
+
+fun getAlbum(browseId: String): Flow<Album> = flow {
+    val innerTubeClient = InnerTube(ClientName.WebRemix)
+    try {
+        val raw = innerTubeClient.browse(browseId)
+
+        val json = Json { ignoreUnknownKeys = true }
+
+        val parsed = json.decodeFromString<AlbumBrowseResponse>(raw)
+
+
+        val albumItems = parsed
+            .contents
+            ?.twoColumnBrowseResultsRenderer
+            ?.secondaryContents
+            ?.sectionListRenderer
+            ?.contents
+            ?.firstOrNull()
+            ?.musicShelfRenderer
+            ?.contents
+
+        val album = parsed
+            .contents
+            ?.twoColumnBrowseResultsRenderer
+            ?.tabs
+            ?.firstOrNull()
+            ?.tabRenderer
+            ?.content
+            ?.sectionListRenderer
+            ?.contents
+            ?.firstOrNull()
+            ?.musicResponsiveHeaderRenderer
+
+        for (item in albumItems.orEmpty()) {
+            val songId = item
+                .musicResponsiveListItemRenderer
+                ?.playlistItemData
+                ?.videoId ?: continue
+
+            val songIndex = item
+                .musicResponsiveListItemRenderer
+                .index
+                ?.runs
+                ?.firstOrNull()
+                ?.text
+            println("Emitting album with id: $songId at index: $songIndex")
+        }
+
+        val thumbnailURL = parsed
+            .microformat
+            ?.microformatDataRenderer
+            ?.thumbnail
+            ?.thumbnails
+            ?.maxByOrNull {
+                it.width + it.height
+            }?.url?.split("=")?.getOrNull(0)
+
+        val title = album
+            ?.title
+            ?.runs
+            ?.firstOrNull()
+            ?.text
+
+        val year = album
+            ?.subtitle
+            ?.runs
+            ?.lastOrNull()
+            ?.text
+
+        val authorsText = album
+            ?.description
+            ?.musicDescriptionShelfRenderer
+            ?.description
+            ?.runs
+            ?.firstOrNull()
+            ?.text
+            ?.split(" (")?.getOrNull(0)
+
+        val copyright = album
+            ?.description
+            ?.musicDescriptionShelfRenderer
+            ?.description
+            ?.runs
+            ?.get(2)
+            ?.text
+            ?.split(")")?.getOrNull(1)
+            ?.split("(")?.getOrNull(0)
+
+        val shareUrl = parsed
+            .microformat
+            ?.microformatDataRenderer
+            ?.urlCanonical
+
+
+        println("Album thumbnail URL: $thumbnailURL")
+
+        emit(
+            Album(
+                id = browseId,
+                title = title ?: "",
+                thumbnailUrl = thumbnailURL.toString(),
+                year = year ?: "",
+                authorsText = authorsText ?: "",
+                copyright = copyright ?: "",
+                shareUrl = shareUrl ?: "",
+                timestamp = System.currentTimeMillis(),
+                bookmarkedAt = null,
+                isYoutubeAlbum = false
+            )
+        )
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+fun searchAlbums(searchQuery: String): Flow<AlbumPreview> = flow {
+    val innerTubeClient = InnerTube(ClientName.WebRemix)
+    try {
+        val raw = innerTubeClient
+            .search(
+                query = searchQuery,
+                params = InnerTube.SearchFilter.Album.value
+            )
+
+        val json = Json { ignoreUnknownKeys = true }
+
+        val parsed = json.decodeFromString<SearchAlbumsResponse>(raw)
+
+        val contents = parsed
+            .contents
+            ?.tabbedSearchResultsRenderer
+            ?.tabs
+            ?.firstOrNull()
+            ?.tabRenderer
+            ?.content
+            ?.sectionListRenderer
+            ?.contents
+            ?.get(1)
+            ?.musicShelfRenderer
+
+        for (album in contents?.contents.orEmpty()) {
+            val musicResponsiveListItemRenderer = album
+                .musicResponsiveListItemRenderer
+
+            val id = musicResponsiveListItemRenderer
+                ?.navigationEndpoint
+                ?.browseEndpoint
+                ?.browseId
+
+            val title = musicResponsiveListItemRenderer
+                ?.flexColumns
+                ?.firstOrNull()
+                ?.musicResponsiveListItemFlexColumnRenderer
+                ?.text
+                ?.runs
+                ?.firstOrNull()
+                ?.text
+
+            val runs = musicResponsiveListItemRenderer
+                ?.flexColumns
+
+            val artist = runs
+                ?.get(1)
+                ?.musicResponsiveListItemFlexColumnRenderer
+                ?.text
+                ?.runs
+                ?.get(2)
+                ?.text
+
+            val year = runs
+                ?.get(1)
+                ?.musicResponsiveListItemFlexColumnRenderer
+                ?.text
+                ?.runs
+                ?.lastOrNull()
+                ?.text
+
+            val thumbnail = musicResponsiveListItemRenderer
+                ?.thumbnail
+                ?.musicThumbnailRenderer
+                ?.thumbnail
+                ?.thumbnails
+                ?.maxByOrNull {
+                    it.width + it.height
+                }?.url?.split("=")?.getOrNull(0)
+
+
+            emit(
+                AlbumPreview(
+                    id = id ?: "",
+                    title = title ?: "",
+                    artist = artist ?: "",
+                    year = year ?: "",
+                    thumbnail = thumbnail ?: ""
+                )
+            )
+        }
+
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
 }

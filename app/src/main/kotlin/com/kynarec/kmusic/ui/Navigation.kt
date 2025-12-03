@@ -180,14 +180,18 @@ fun Navigation(
             )
         }
         composable<AlbumsScreen> {
-            AlbumsScreen()
+            AlbumsScreen(
+                viewModel = musicViewModel,
+                database = database,
+                navController = navController
+            )
         }
         composable<SearchScreen> {
             SearchScreen(navController)
         }
         composable<SearchResultScreen> {
             val args = it.toRoute<SearchResultScreen>()
-            SearchResultScreen(args.query, musicViewModel, database = database)
+            SearchResultScreen(args.query, musicViewModel, database = database, navController = navController)
         }
         composable<SettingsScreen> {
             SettingsScreen(prefs = settingsViewModel, navController = navController, updateManager = updateManager, updateViewModel = updateViewModel)

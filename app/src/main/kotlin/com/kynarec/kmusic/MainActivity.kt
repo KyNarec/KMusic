@@ -29,7 +29,6 @@ import com.kynarec.kmusic.utils.setPlayerOpen
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
 
-
 class MainActivity : AppCompatActivity() {
 
     private val tag = "MainActivity"

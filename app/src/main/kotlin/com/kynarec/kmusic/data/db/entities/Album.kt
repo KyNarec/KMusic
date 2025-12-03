@@ -4,7 +4,9 @@ import android.os.Parcel
 import android.os.Parcelable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.parcelize.Parcelize
 
+@Parcelize
 @Entity(tableName = "Album")
 data class Album (
     @PrimaryKey val id: String,
@@ -12,38 +14,15 @@ data class Album (
     val thumbnailUrl: String,
     val year: String,
     val authorsText: String,
+    val copyright: String,
     val shareUrl: String,
-    val timestamp: Int,
-    val bookmarkedAt: Int,
-    val isYoutubeAlbum: Int
-)  : Parcelable {
-    constructor(parcel: Parcel) : this(
-        parcel.readString() ?: "",
-        parcel.readString() ?: "",
-        parcel.readString() ?: "",
-        parcel.readString() ?: "",
-        parcel.readString() ?: "",
-        parcel.readString() ?: "",
-        parcel.readInt(),
-        parcel.readInt(),
-        parcel.readInt(),
-    )
-
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(id)
-        parcel.writeString(title)
-        parcel.writeString(year)
-        parcel.writeString(authorsText)
-        parcel.writeString(thumbnailUrl)
-        parcel.writeInt(timestamp)
-        parcel.writeInt(bookmarkedAt)
-        parcel.writeInt(isYoutubeAlbum)
-    }
-
-    override fun describeContents(): Int = 0
-
-    companion object CREATOR : Parcelable.Creator<Album> {
-        override fun createFromParcel(parcel: Parcel): Album = Album(parcel)
-        override fun newArray(size: Int): Array<Album?> = arrayOfNulls(size)
+    val timestamp: Long? = null,
+    val bookmarkedAt: Long? = null,
+    val isYoutubeAlbum: Boolean = false,
+) : Parcelable {
+    fun toggleBookmark(): Album {
+        return copy(
+            bookmarkedAt = if (bookmarkedAt == null) System.currentTimeMillis() else null
+        )
     }
 }

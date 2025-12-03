@@ -81,8 +81,6 @@ fun PlayerControlBar(
                 contentDescription = "Album Art",
                 contentScale = ContentScale.Crop,
                 imageLoader = LocalContext.current.imageLoader,
-//                modifier = Modifier
-//                    .clip(RoundedCornerShape(8.dp)),
                 error = painterResource(id = R.drawable.album) // Use a local placeholder
             )
         }
