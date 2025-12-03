@@ -1,6 +1,7 @@
 package com.kynarec.kmusic.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,16 +34,15 @@ import com.kynarec.kmusic.utils.ConditionalMarqueeText
 fun AlbumComponent(
     modifier: Modifier = Modifier,
     albumPreview: AlbumPreview,
-    navController: NavHostController
+    navController: NavHostController,
+    onClick: () -> Unit,
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp)
             .background(Color.Transparent),
-        onClick = {
-//            navController.navigate(PlaylistScreen())
-        },
+        onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
 
     ) {

@@ -241,15 +241,19 @@ fun getRadioFlow(
     }
 }
 
-fun getAlbum(browseId: String): Flow<Album> = flow {
+data class AlbumWithSongsAndIndices(
+    val album: Album,
+    val songs: List<Song>
+)
+fun getAlbumAndSongs(browseId: String): Flow<AlbumWithSongsAndIndices> = flow {
     val innerTubeClient = InnerTube(ClientName.WebRemix)
+    var songList = emptyList<Song>()
     try {
         val raw = innerTubeClient.browse(browseId)
 
         val json = Json { ignoreUnknownKeys = true }
 
         val parsed = json.decodeFromString<AlbumBrowseResponse>(raw)
-
 
         val albumItems = parsed
             .contents
@@ -272,21 +276,6 @@ fun getAlbum(browseId: String): Flow<Album> = flow {
             ?.contents
             ?.firstOrNull()
             ?.musicResponsiveHeaderRenderer
-
-        for (item in albumItems.orEmpty()) {
-            val songId = item
-                .musicResponsiveListItemRenderer
-                ?.playlistItemData
-                ?.videoId ?: continue
-
-            val songIndex = item
-                .musicResponsiveListItemRenderer
-                .index
-                ?.runs
-                ?.firstOrNull()
-                ?.text
-            println("Emitting album with id: $songId at index: $songIndex")
-        }
 
         val thumbnailURL = parsed
             .microformat
@@ -333,23 +322,82 @@ fun getAlbum(browseId: String): Flow<Album> = flow {
             ?.microformatDataRenderer
             ?.urlCanonical
 
+        for (item in albumItems.orEmpty()) {
+            val songId = item
+                .musicResponsiveListItemRenderer
+                ?.playlistItemData
+                ?.videoId ?: continue
 
-        println("Album thumbnail URL: $thumbnailURL")
+            val songTitle = item
+                .musicResponsiveListItemRenderer
+                .flexColumns
+                ?.firstOrNull()
+                ?.musicResponsiveListItemFlexColumnRenderer
+                ?.text
+                ?.runs
+                ?.firstOrNull()
+                ?.text
+
+            val songIndex = item
+                .musicResponsiveListItemRenderer
+                .index
+                ?.runs
+                ?.firstOrNull()
+                ?.text
+
+            val songDuration = item
+                .musicResponsiveListItemRenderer
+                .fixedColumns
+                ?.firstOrNull()
+                ?.musicResponsiveListItemFixedColumnRenderer
+                ?.text
+                ?.runs
+                ?.firstOrNull()
+                ?.text
+
+            val songArtist = item
+                .musicResponsiveListItemRenderer
+                .overlay
+                ?.musicItemThumbnailOverlayRenderer
+                ?.content
+                ?.musicPlayButtonRenderer
+                ?.accessibilityPlayData
+                ?.accessibilityData
+                ?.label?.split("- ")?.getOrNull(1)
+
+            songList = songList + Song(
+                id = songId,
+                title = songTitle?: "",
+                artist = songArtist?: "",
+                duration = songDuration?: "",
+                thumbnail = thumbnailURL?: ""
+            )
+
+            println("Emitting Song with id: $songId at index: $songIndex")
+            println("Thumbnail: $thumbnailURL, artist: $songArtist, $songDuration, $songTitle")
+
+        }
+
+        val finalAlbum = Album(
+            id = browseId,
+            title = title?: "",
+            thumbnailUrl = thumbnailURL.toString(),
+            year = year?: "",
+            authorsText = authorsText?: "",
+            copyright = copyright?: "",
+            shareUrl = shareUrl?: "",
+            timestamp = System.currentTimeMillis(),
+            bookmarkedAt = null,
+            isYoutubeAlbum = false
+        )
 
         emit(
-            Album(
-                id = browseId,
-                title = title ?: "",
-                thumbnailUrl = thumbnailURL.toString(),
-                year = year ?: "",
-                authorsText = authorsText ?: "",
-                copyright = copyright ?: "",
-                shareUrl = shareUrl ?: "",
-                timestamp = System.currentTimeMillis(),
-                bookmarkedAt = null,
-                isYoutubeAlbum = false
+            AlbumWithSongsAndIndices(
+                album = finalAlbum,
+                songs = songList
             )
         )
+
     } catch (e: Exception) {
         e.printStackTrace()
     }

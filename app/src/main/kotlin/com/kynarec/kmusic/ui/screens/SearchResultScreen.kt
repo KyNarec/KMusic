@@ -45,6 +45,7 @@ import com.kynarec.kmusic.service.innertube.searchAlbums
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.service.innertube.searchSongsFlow
+import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.components.AlbumComponent
 import com.kynarec.kmusic.ui.components.SongOptionsBottomSheet
 import kotlinx.coroutines.Dispatchers
@@ -97,7 +98,7 @@ fun SearchResultScreen(
                         }
 
                     if (songs.isEmpty()) {
-                        Log.w("SearchResultScreen", "No results found for '$query'.")
+                        Log.w("SearchResultScreen", "No results found for Song '$query'.")
                     }
                 }
             }
@@ -117,7 +118,7 @@ fun SearchResultScreen(
                         }
 
                     if (albums.isEmpty()) {
-                        Log.w("SearchResultScreen", "No results found for '$query'.")
+                        Log.w("SearchResultScreen", "No results found for Album '$query'.")
                     }
                 }
             }
@@ -234,7 +235,10 @@ fun SearchResultScreen(
                                     items(albums, key = { it.id }) { album ->
                                         AlbumComponent(
                                             albumPreview = album,
-                                            navController = navController
+                                            navController = navController,
+                                            onClick = {
+                                                navController.navigate(AlbumDetailScreen(album.id))
+                                            }
                                         )
                                     }
 

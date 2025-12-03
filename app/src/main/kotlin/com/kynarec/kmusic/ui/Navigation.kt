@@ -1,6 +1,7 @@
 package com.kynarec.kmusic.ui
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -27,9 +28,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.service.update.UpdateManager
+import com.kynarec.kmusic.ui.screens.AlbumDetailScreen
 import com.kynarec.kmusic.ui.screens.AlbumsScreen
 import com.kynarec.kmusic.ui.screens.ArtistsScreen
 import com.kynarec.kmusic.ui.screens.HomeScreen
@@ -196,6 +199,15 @@ fun Navigation(
         composable<SettingsScreen> {
             SettingsScreen(prefs = settingsViewModel, navController = navController, updateManager = updateManager, updateViewModel = updateViewModel)
         }
+        composable<AlbumDetailScreen> {
+            Log.i("Navigation", "AlbumDetailScreen")
+            val args = it.toRoute<AlbumDetailScreen>()
+            AlbumDetailScreen(
+                albumId = args.albumId,
+                viewModel = musicViewModel,
+                database = database
+            )
+        }
     }
 }
 
@@ -236,3 +248,8 @@ data class SearchResultScreen(
 
 @Serializable
 object SettingsScreen
+
+@Serializable
+data class AlbumDetailScreen(
+    val albumId: String
+)

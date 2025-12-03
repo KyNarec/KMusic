@@ -2,32 +2,32 @@ package com.kynarec.kmusic.data.db.entities
 
 import android.os.Parcel
 import android.os.Parcelable
+import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import kotlinx.parcelize.Parcelize
 
-@Entity(tableName = "SongAlbumMap")
-data class SongAlbumMap (
-    @PrimaryKey val songId: String,
-    @PrimaryKey val albumId: String,
-    val position: Int,
-)  : Parcelable {
-    constructor(parcel: Parcel) : this(
-        parcel.readString() ?: "",
-        parcel.readString() ?: "",
-        parcel.readInt()
-    )
-
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeString(songId)
-        parcel.writeString(albumId)
-        parcel.writeInt(position)
-
-    }
-
-    override fun describeContents(): Int = 0
-
-    companion object CREATOR : Parcelable.Creator<SongAlbumMap> {
-        override fun createFromParcel(parcel: Parcel): SongAlbumMap = SongAlbumMap(parcel)
-        override fun newArray(size: Int): Array<SongAlbumMap?> = arrayOfNulls(size)
-    }
-}
+@Parcelize
+@Entity(
+    primaryKeys = ["songId", "albumId"],
+    foreignKeys = [
+        ForeignKey(
+            entity = Song::class,
+            parentColumns = ["id"],
+            childColumns = ["songId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = Album::class,
+            parentColumns = ["id"],
+            childColumns = ["albumId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
+data class SongAlbumMap(
+    @ColumnInfo(index = true) val songId: String,
+    @ColumnInfo(index = true) val albumId: String,
+    val position: Int
+) : Parcelable

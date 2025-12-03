@@ -262,10 +262,11 @@ data class TextRuns(
 
 @Serializable
 data class Run(
-    val text: String? = null
+    val text: String? = null,
+    val navigationEndpoint: AlbumAndSongsNavigationEndpoint? = null
 )
 
-// ========================================== getAlbum
+// ========================================== getAlbumAndSongs
 
 @Serializable
 data class AlbumBrowseResponse(
@@ -312,7 +313,65 @@ data class MusicItemAlbum(
 @Serializable
 data class MusicResponsiveListItemRendererAlbum(
     val playlistItemData: PlaylistItemData? = null,
-    val index: AlbumIndex? = null
+    val index: AlbumIndex? = null,
+    val overlay: AlbumAndSongsOverlay? = null,
+    val flexColumns: List<AlbumAndSongsFlexColumns>? = null,
+    val fixedColumns: List<AlbumAndSongsFixedColumns>? = null
+)
+
+@Serializable
+data class AlbumAndSongsFlexColumns(
+    val musicResponsiveListItemFlexColumnRenderer: FlexColumnRenderer? = null
+)
+
+@Serializable
+data class AlbumAndSongsNavigationEndpoint(
+    val watchEndpoint: AlbumAndSongsWatchEndpoint? = null
+)
+
+@Serializable
+data class AlbumAndSongsWatchEndpoint(
+    val videoId: String? = null
+)
+
+@Serializable
+data class AlbumAndSongsFixedColumns(
+    val musicResponsiveListItemFixedColumnRenderer: AlbumAndSongsMusicResponsiveListItemFixedColumnRenderer
+)
+
+@Serializable
+data class AlbumAndSongsMusicResponsiveListItemFixedColumnRenderer(
+    val text: TextRuns?= null
+)
+
+@Serializable
+data class AlbumAndSongsOverlay(
+    val musicItemThumbnailOverlayRenderer: AlbumAndSongsMusicItemThumbnailOverlayRenderer? = null
+)
+
+@Serializable
+data class AlbumAndSongsMusicItemThumbnailOverlayRenderer(
+    val content: AlbumAndSongsContent? = null
+)
+
+@Serializable
+data class AlbumAndSongsContent(
+    val musicPlayButtonRenderer: AlbumAndSongsMusicPlayButtonRenderer? = null
+)
+
+@Serializable
+data class AlbumAndSongsMusicPlayButtonRenderer(
+    val accessibilityPlayData: AlbumAndSongsAccessibilityPlayData? = null
+)
+
+@Serializable
+data class AlbumAndSongsAccessibilityPlayData(
+    val accessibilityData: AlbumAndSongsAccessibilityData? = null
+)
+
+@Serializable
+data class AlbumAndSongsAccessibilityData(
+    val label: String? = null
 )
 
 @Serializable
