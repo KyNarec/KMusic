@@ -6,7 +6,6 @@ import com.kynarec.kmusic.data.db.entities.Song
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
-import kotlin.collections.maxByOrNull
 
 fun searchSuggestions(input: String): Flow<String> = flow {
     val json = Json { ignoreUnknownKeys = true }
@@ -177,7 +176,7 @@ fun getRadioFlow(
         val raw = innerTubeClient.betterNext(
             videoId = videoId,
             playlistId = "RDAMVM$videoId",
-            params = Params.Song.label,
+            params = null,
             continuation = null
         )
 
@@ -305,7 +304,7 @@ fun getAlbumAndSongs(browseId: String): Flow<AlbumWithSongsAndIndices> = flow {
             ?.runs
             ?.firstOrNull()
             ?.text
-            ?.split(" (")?.getOrNull(0)
+            ?.split("\nFrom Wikipedia")?.getOrNull(0)
 
         val copyright = album
             ?.description
@@ -387,7 +386,7 @@ fun getAlbumAndSongs(browseId: String): Flow<AlbumWithSongsAndIndices> = flow {
             thumbnailUrl = thumbnailURL.toString(),
             year = year?: "",
             authorsText = authorsText?: "",
-            copyright = copyright?: "",
+            copyright = ("From Wikipedia$copyright"),
             shareUrl = shareUrl?: "",
             timestamp = System.currentTimeMillis(),
             bookmarkedAt = null,

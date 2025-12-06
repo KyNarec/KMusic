@@ -21,22 +21,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.data.db.KmusicDatabase
-import com.kynarec.kmusic.data.db.entities.Album
-import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.service.update.UpdateManager
 import com.kynarec.kmusic.ui.screens.AlbumDetailScreen
 import com.kynarec.kmusic.ui.screens.AlbumsScreen
 import com.kynarec.kmusic.ui.screens.ArtistsScreen
 import com.kynarec.kmusic.ui.screens.HomeScreen
-import com.kynarec.kmusic.ui.screens.PlaylistScreen
+import com.kynarec.kmusic.ui.screens.PlaylistDetailScreen
 import com.kynarec.kmusic.ui.screens.PlaylistsScreen
 import com.kynarec.kmusic.ui.screens.SearchResultScreen
 import com.kynarec.kmusic.ui.screens.SearchScreen
@@ -175,7 +171,7 @@ fun Navigation(
         }
         composable<PlaylistScreen> {
             val args = it.toRoute<PlaylistScreen>()
-            PlaylistScreen(
+            PlaylistDetailScreen(
                 playlistId = args.playlistId,
                 viewModel = musicViewModel,
                 database = database,

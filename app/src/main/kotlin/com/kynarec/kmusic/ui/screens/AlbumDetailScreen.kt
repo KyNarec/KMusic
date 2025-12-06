@@ -1,6 +1,7 @@
 package com.kynarec.kmusic.ui.screens
 
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -32,14 +36,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.navOptions
 import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.data.db.KmusicDatabase
-import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.innertube.getAlbumAndSongs
 import com.kynarec.kmusic.ui.components.AlbumOptionsBottomSheet
@@ -73,6 +77,9 @@ fun AlbumDetailScreen(
     val showAlbumOptionsBottomSheet = remember { mutableStateOf(false) }
     val showSongDetailBottomSheet = remember { mutableStateOf(false) }
 
+    var readMore by remember { mutableStateOf(false) }
+
+    val showControlBar = viewModel.uiState.collectAsState().value.showControlBar
 
 
     LaunchedEffect(Unit) {
@@ -116,6 +123,7 @@ fun AlbumDetailScreen(
             Column(
                 Modifier.fillMaxWidth(),
             ) {
+                Spacer(Modifier.height(16.dp))
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
@@ -135,8 +143,72 @@ fun AlbumDetailScreen(
                     )
                 }
             }
-
         }
+
+        if (albumFLow?.authorsText?.isNotEmpty() == true) {
+            item {
+                Row(
+                    modifier = Modifier
+                        .padding(vertical = 16.dp, horizontal = 8.dp)
+                ) {
+                    Text(
+                        text = "“",
+                        style = MaterialTheme.typography.titleLargeEmphasized,
+                        modifier = Modifier
+                            .offset(y = (-8).dp)
+                            .align(Alignment.Top),
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    if (!readMore)
+                        Text(
+                            text = albumFLow?.authorsText?.substring(
+                                0,
+                                if ((albumFLow?.authorsText?.length
+                                        ?: 0) >= 100
+                                ) 100 else albumFLow?.authorsText?.length ?: 0
+                            ).plus("..."),
+//                        style = typography().xxs.secondary.align(TextAlign.Justify),
+//                        style = MaterialTheme.typography.bodySmall.textAlign,
+                            style = TextStyle.Default.copy(textAlign = TextAlign.Justify),
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp)
+                                .weight(1f)
+                                .clickable {
+                                    readMore = !readMore
+                                }
+                        )
+
+                    if (readMore)
+                        Text(
+                            text = albumFLow?.authorsText ?: "NA",
+                            style = TextStyle.Default.copy(textAlign = TextAlign.Justify),
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp)
+                                .weight(1f)
+                                .clickable {
+                                    readMore = !readMore
+                                }
+                        )
+
+                    Text(
+                        text = "„",
+                        style = MaterialTheme.typography.titleLargeEmphasized,
+                        modifier = Modifier
+                            .offset(y = 4.dp)
+                            .align(Alignment.Bottom),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Text(
+                    text = albumFLow?.copyright ?: "NA",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+        }
+
         item {
             Row(
                 Modifier
@@ -191,6 +263,10 @@ fun AlbumDetailScreen(
                 )
             }
         }
+        if (showControlBar)
+            item {
+                Spacer(Modifier.height(70.dp))
+            }
     }
     if (showSongDetailBottomSheet.value && longClickSong != null) {
         Log.i("SongsScreen", "Showing bottom sheet")

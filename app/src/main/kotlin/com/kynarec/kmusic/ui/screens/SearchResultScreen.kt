@@ -3,13 +3,13 @@
 package com.kynarec.kmusic.ui.screens
 
 import androidx.annotation.OptIn
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -19,10 +19,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularWavyProgressIndicator
-import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,19 +39,17 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.AlbumPreview
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.innertube.searchAlbums
-import com.kynarec.kmusic.ui.components.SongComponent
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.service.innertube.searchSongsFlow
 import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.components.AlbumComponent
+import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.components.SongOptionsBottomSheet
+import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.launch
 
 @OptIn(
-    UnstableApi::class, ExperimentalMaterial3ExpressiveApi::class,
-    ExperimentalMaterial3ExpressiveApi::class
+    UnstableApi::class, ExperimentalMaterial3ExpressiveApi::class
 )
 @Composable
 fun SearchResultScreen(
@@ -74,6 +69,9 @@ fun SearchResultScreen(
     val showBottomSheet = remember { mutableStateOf(false) }
     var longClickSong by remember { mutableStateOf<Song?>(null) }
     val selectedSearchParam = viewModel.uiState.collectAsState().value.searchParam
+
+    val showControlBar = viewModel.uiState.collectAsState().value.showControlBar
+    val bottomPadding = if (showControlBar) 70.dp else 0.dp
 
     val searchParams = listOf(
         SortOption("Song"),
@@ -202,13 +200,17 @@ fun SearchResultScreen(
 
                                         SongComponent(
                                             song = song,
-                                            onClick = onSongClick as () -> Unit,
+                                            onClick = onSongClick,
                                             onLongClick = {
                                                 longClickSong = song
                                                 showBottomSheet.value = true
                                             }
                                         )
                                     }
+                                    if (showControlBar)
+                                        item {
+                                            Spacer(Modifier.height(70.dp))
+                                        }
                                 }
                             }
                         }
@@ -229,7 +231,10 @@ fun SearchResultScreen(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .padding(horizontal = 8.dp),
-                                    contentPadding = PaddingValues(top = 8.dp),
+                                    contentPadding = PaddingValues(
+                                        top = 8.dp,
+                                        bottom = bottomPadding
+                                    ),
                                     columns = GridCells.Adaptive(minSize = 100.dp)
                                 ) {
                                     items(albums, key = { it.id }) { album ->
@@ -241,7 +246,6 @@ fun SearchResultScreen(
                                             }
                                         )
                                     }
-
                                 }
                             }
                         }

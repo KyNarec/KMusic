@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -24,23 +25,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavController
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
-import com.kynarec.kmusic.ui.components.SongComponent
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.data.db.entities.Song
-import com.kynarec.kmusic.enums.PopupType
-import com.kynarec.kmusic.ui.PlaylistsScreen
 import com.kynarec.kmusic.ui.components.PlaylistOptionsBottomSheet
+import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.components.SongOptionsBottomSheet
-import com.kynarec.kmusic.utils.SmartMessage
+import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import kotlinx.coroutines.launch
-import kotlin.collections.emptyList
 
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-fun PlaylistScreen(
+fun PlaylistDetailScreen(
     modifier: Modifier = Modifier,
     playlistId: Long,
     viewModel: MusicViewModel,
@@ -65,6 +62,9 @@ fun PlaylistScreen(
     val showPlaylistOptionsBottomSheet = remember { mutableStateOf(false) }
 
     var longClickSong by remember { mutableStateOf<Song?>(null) }
+
+    val showControlBar = viewModel.uiState.collectAsState().value.showControlBar
+
 
     Log.i(
         "PlaylistScreen",
@@ -109,6 +109,10 @@ fun PlaylistScreen(
                     }
                 )
             }
+            if (showControlBar)
+                item {
+                    Spacer(Modifier.height(70.dp))
+                }
         }
     }
 
