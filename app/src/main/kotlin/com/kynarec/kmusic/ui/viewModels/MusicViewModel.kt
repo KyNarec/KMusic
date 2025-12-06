@@ -274,7 +274,7 @@ class MusicViewModel
     }
 
     private suspend fun loadChunks(songs: List<Song>, append: Boolean) {
-        val chunkSize = 20
+        val chunkSize = 30
         val chunks = songs.chunked(chunkSize)
 
         val chunksToProcess = if (append) chunks else chunks.asReversed()
@@ -318,21 +318,27 @@ class MusicViewModel
                     .collect { radioSong ->
                         if (radioSong.id != song.id) {
                             val mediaItem = createPartialMediaItemFromSong(radioSong, context)
-
+                            _uiState.update {
+                                it.copy(songsList = it.songsList + radioSong)
+                            }
                             // Update UI immediately for each song
                             withContext(Dispatchers.Main) {
-                                _uiState.update {
-                                    it.copy(songsList = it.songsList + radioSong)
-                                }
                                 mediaController?.addMediaItem(mediaItem)
+                                Log.i(tag, "Added radio song ${radioSong.title}")
                             }
                         }
                     }
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.e(tag, "Failed to load radio songs for ${song.id}")
+            } finally {
+                val nextMediaItem = createMediaItemFromSong(_uiState.value.songsList[1], context)
+                withContext(Dispatchers.Main) {
+                    mediaController?.replaceMediaItem(1, nextMediaItem)
+                }
             }
         }
+        Log.i(tag, "playSongByIdWithRadio done")
     }
 
     fun playNext(song: Song) {
@@ -343,7 +349,7 @@ class MusicViewModel
                 val currentMediaIndex = mediaController?.currentMediaItemIndex ?: 0
                 val nextIndex = currentMediaIndex + 1
                 Log.i(
-                    "MusicViewModel",
+                    tag,
                     "Current index: $currentMediaIndex, Insertion index: $nextIndex"
                 )
 
