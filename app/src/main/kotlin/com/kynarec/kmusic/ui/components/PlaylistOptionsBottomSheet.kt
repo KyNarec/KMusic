@@ -24,7 +24,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
@@ -35,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
@@ -59,13 +59,13 @@ fun PlaylistOptionsBottomSheet(
 
     val playlist by database.playlistDao()
         .getPlaylistByIdFlow(playlistId)
-        .collectAsState(null)
+        .collectAsStateWithLifecycle(null)
 
     val songsThumbnailList = remember { mutableStateListOf<String>() }
     val songsFlow = remember(playlistId) {
         database.playlistDao().getSongsForPlaylist(playlistId)
     }
-    val songs by songsFlow.collectAsState(initial = emptyList())
+    val songs by songsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
 
     LaunchedEffect(Unit) {
         database.playlistDao()

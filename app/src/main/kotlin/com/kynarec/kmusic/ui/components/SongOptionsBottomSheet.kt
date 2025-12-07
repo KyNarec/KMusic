@@ -30,7 +30,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.imageLoader
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
@@ -66,7 +67,7 @@ fun SongOptionsBottomSheet(
 
     val song by database.songDao()
         .getSongFlowById(songId)
-        .collectAsState(initial = null)
+        .collectAsStateWithLifecycle(null)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -105,7 +106,8 @@ fun SongOptionsBottomSheet(
                         modifier = Modifier
                             .size(64.dp)
                             .aspectRatio(1f)
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(8.dp)),
+                        imageLoader = LocalContext.current.imageLoader
                     )
 
                     Spacer(modifier = Modifier.width(16.dp))
@@ -200,7 +202,7 @@ fun SongOptionsBottomSheet(
                     icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     text = if (isLiked) "Remove from favorites" else "Add to favorites",
                     onClick = {
-                        viewModel.toggleFavorite(song!!)
+                        viewModel.toggleFavoriteSong(song!!)
                     }
                 )
 

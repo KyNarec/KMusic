@@ -545,4 +545,68 @@ class InnerTube(
             return ""
         }
     }
+
+    @Serializable
+    data class BrowseRequest(
+        val browseId: String,
+        val context: BrowseContext
+    )
+
+    @Serializable
+    data class BrowseContext(
+        val client: BrowseClient
+    )
+
+    @Serializable
+    data class BrowseClient(
+        val clientName: String,
+        val clientVersion: String
+    )
+
+    suspend fun browse(
+        browseId: String,
+    ): String {
+        val url = "https://youtubei.googleapis.com/youtubei/v1/browse"
+
+        val requestBody = BrowseRequest(
+            browseId = browseId,
+            context = BrowseContext(
+                client = BrowseClient(
+                    clientName = ClientName.WebRemix.label,
+                    clientVersion = ClientName.WebRemix.version
+                )
+            )
+        )
+
+        val json = Json { ignoreUnknownKeys = true }
+
+        println(json.encodeToString(BrowseRequest.serializer(), requestBody))
+
+        try {
+            val response = client.post(url) {
+                contentType(ContentType.Application.Json)
+                setBody(requestBody)
+
+                headers {
+//                    append(
+//                        "X-Goog-FieldMask",
+//                        "contents.tabbedSearchResultsRenderer.tabs.tabRenderer.content.sectionListRenderer.contents.musicShelfRenderer(continuations,contents.musicResponsiveListItemRenderer(flexColumns,fixedColumns,thumbnail,navigationEndpoint,badges))"
+//                    )
+                    append("Accept", "*/*")
+                    append("Accept-Charset", "UTF-8")
+                    append("User-Agent", clientName.userAgent)
+                }
+            }
+
+            if (!response.status.isSuccess()) {
+                throw kotlinx.io.IOException("Unexpected response code: ${response.status}")
+            }
+
+            return response.bodyAsText()
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return ""
+        }
+    }
 }

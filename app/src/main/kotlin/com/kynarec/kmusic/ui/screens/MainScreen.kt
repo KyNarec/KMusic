@@ -19,7 +19,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +34,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.service.update.PlatformUpdateManager
+import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.Navigation
 import com.kynarec.kmusic.ui.PlaylistScreen
 import com.kynarec.kmusic.ui.PlaylistsScreen
@@ -66,6 +67,7 @@ fun MainScreen() {
         factory = MusicViewModel.Factory(
             database.songDao(),
             database.playlistDao(),
+            database.albumDao(),
             LocalContext.current
         )
     )
@@ -77,7 +79,7 @@ fun MainScreen() {
             LocalContext.current
         )
     )
-    val showControlBar = musicViewModel.uiState.collectAsState().value.showControlBar
+    val showControlBar = musicViewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
 
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -99,13 +101,16 @@ fun MainScreen() {
     val isPlaylistScreen = remember(currentRoute) {
         currentRoute?.startsWith(PlaylistScreen::class.qualifiedName!!) == true
     }
+    val isAlbumDetailScreen = remember(currentRoute) {
+        currentRoute?.startsWith(AlbumDetailScreen::class.qualifiedName!!) == true
+    }
 
 
-    val shouldHideNavElements = isSearchScreen || isSearchResultScreen || isSettingsScreen || isPlaylistScreen
+    val shouldHideNavElements = isSearchScreen || isSearchResultScreen || isSettingsScreen || isPlaylistScreen || isAlbumDetailScreen
 
-    val darkTheme by settingsViewModel.darkModeFLow.collectAsState(DEFAULT_DARK_MODE)
+    val darkTheme by settingsViewModel.darkModeFLow.collectAsStateWithLifecycle(DEFAULT_DARK_MODE)
 
-    val dynamicColors by settingsViewModel.dynamicColorsFlow.collectAsState(DEFAULT_DYNAMIC_COLORS)
+    val dynamicColors by settingsViewModel.dynamicColorsFlow.collectAsStateWithLifecycle(DEFAULT_DYNAMIC_COLORS)
 
 
     LaunchedEffect(sheetState.isVisible) {
@@ -136,7 +141,7 @@ fun MainScreen() {
                         .fillMaxSize()
                 ) {
                     if (!shouldHideNavElements) {
-                        MyNavigationRailComponent(navController)
+                        MyNavigationRailComponent(navController, currentRoute)
                     }
                     Box(
                         modifier = Modifier

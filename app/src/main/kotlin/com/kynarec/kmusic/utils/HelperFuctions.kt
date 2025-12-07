@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
@@ -59,6 +60,34 @@ fun parseDurationToMillis(durationStr: String): Long {
 fun parseMillisToDuration(timeMs: Long): String {
     val minutes = timeMs / 1000 / 60
     val seconds = (timeMs / 1000 % 60).toString().padStart(2, '0')
+    return "$minutes:$seconds"
+}
+
+@JvmName("StringParseDurationToMillis")
+fun String.parseDurationToMillis(): Long {
+    val parts = this.split(":")
+    return when (parts.size) {
+        2 -> {
+            val minutes = parts[0].toLongOrNull() ?: 0L
+            val seconds = parts[1].toLongOrNull() ?: 0L
+            (minutes * 60 + seconds) * 1000
+        }
+
+        3 -> { // For "HH:mm:ss" format
+            val hours = parts[0].toLongOrNull() ?: 0L
+            val minutes = parts[1].toLongOrNull() ?: 0L
+            val seconds = parts[2].toLongOrNull() ?: 0L
+            (hours * 3600 + minutes * 60 + seconds) * 1000
+        }
+
+        else -> 0L
+    }
+}
+
+@JvmName("LongParseMillisToDuration")
+fun Long.parseMillisToDuration(): String {
+    val minutes = this / 1000 / 60
+    val seconds = (this / 1000 % 60).toString().padStart(2, '0')
     return "$minutes:$seconds"
 }
 
@@ -109,9 +138,12 @@ fun ConditionalMarqueeText(
     style: TextStyle = LocalTextStyle.current,
     modifier: Modifier = Modifier
 ) {
-    // Make state more stable
+    // 1. State to track overflow status and check completion
     var isTextOverflowing by remember(text) { mutableStateOf(false) }
     var hasCheckedOverflow by remember(text) { mutableStateOf(false) }
+
+    // 2. Condition to apply the marquee modifier
+    val shouldMarqueeRun = isTextOverflowing && hasCheckedOverflow && text.length > 30
 
     Text(
         text = text,
@@ -119,22 +151,25 @@ fun ConditionalMarqueeText(
         maxLines = maxLines,
         color = color,
         overflow = TextOverflow.Ellipsis,
-        onTextLayout = { textLayoutResult ->
+        style = style,
+        // 3. Check for overflow on the first layout pass
+        onTextLayout = { textLayoutResult: TextLayoutResult ->
             if (!hasCheckedOverflow) {
+                // Changing this state triggers the needed recomposition
                 isTextOverflowing = textLayoutResult.hasVisualOverflow
                 hasCheckedOverflow = true
             }
         },
         modifier = modifier.then(
-            // Only apply marquee after we've determined overflow AND text is long enough
-            if (isTextOverflowing && hasCheckedOverflow && text.length > 30) {
+            // 4. Conditionally apply the ENTIRE basicMarquee modifier
+            if (shouldMarqueeRun) {
                 Modifier.basicMarquee(
                     animationMode = MarqueeAnimationMode.Immediately,
-//                    delayMillis = 1000,
                     initialDelayMillis = 1000,
                     velocity = 30.dp
                 )
             } else {
+                // Must return a simple Modifier when the condition is false
                 Modifier
             }
         )

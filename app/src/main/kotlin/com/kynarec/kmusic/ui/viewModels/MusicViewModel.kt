@@ -3,7 +3,6 @@ package com.kynarec.kmusic.ui.viewModels
 import android.content.ComponentName
 import android.content.Context
 import androidx.annotation.OptIn
-import androidx.compose.runtime.currentRecomposeScope
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -14,9 +13,10 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
+import com.kynarec.kmusic.data.db.dao.AlbumDao
 import com.kynarec.kmusic.data.db.dao.PlaylistDao
-import com.kynarec.kmusic.data.db.dao.PlaylistDao_Impl
 import com.kynarec.kmusic.data.db.dao.SongDao
+import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerServiceModern
@@ -42,9 +42,11 @@ data class MusicUiState(
     var currentSong: Song? = null,
     val isPlaying: Boolean = false,
     val currentPosition: Long = 0,
-    val totalDuration: Long = 0,
+    val currentDurationLong: Long = 0,
+    val currentDurationString: String = "0:00",
     val showControlBar: Boolean = false,
-    val songsSortOption: SortOption = SortOption("All")
+    val songsSortOption: SortOption = SortOption("All"),
+    val searchParam: SortOption = SortOption("Song")
 )
 
 // The new, combined ViewModel
@@ -53,6 +55,7 @@ class MusicViewModel
     (
     private val songDao: SongDao,
     private val playlistDao: PlaylistDao,
+    private val albumDao: AlbumDao,
     private val context: Context
 ) : ViewModel() {
     private val tag = "MusicViewModel"
@@ -72,7 +75,8 @@ class MusicViewModel
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             // When the song changes, find it in our list and update the state
             val currentSong = _uiState.value.songsList.find { it.id == mediaItem?.mediaId }
-            val newTotalDuration = mediaController?.duration ?: 0L
+//            val newTotalDuration = mediaController?.duration ?: 0L
+            val newTotalDuration = _uiState.value.currentSong?.duration?: 0L
             val index = _uiState.value.songsList.indexOf(currentSong)
             val songList = _uiState.value.songsList
             val controller = mediaController ?: return
@@ -98,12 +102,14 @@ class MusicViewModel
             }
 
 
-            val newCurrentDuration = parseDurationToMillis(currentSong?.duration ?: "0")
+//            val newCurrentDuration = parseDurationToMillis(currentSong?.duration ?: "0")
 
             _uiState.update {
                 it.copy(
                     currentSong = currentSong,
-                    totalDuration = if (newTotalDuration > 0) newTotalDuration else 0L,
+//                    currentDurationLong = if (newTotalDuration > 0) newTotalDuration else 0L,
+                    currentDurationLong = _uiState.value.currentSong?.duration?.parseDurationToMillis()?: 0L,
+                    currentDurationString = _uiState.value.currentSong?.duration?: "0:00"
                 )
             }
         }
@@ -146,8 +152,8 @@ class MusicViewModel
                 val totalDuration = mediaController?.duration ?: 0L // Fetch total duration
 
                 _uiState.update {
-                    if (it.currentPosition != currentPosition || it.totalDuration != totalDuration) {
-                        it.copy(currentPosition = currentPosition, totalDuration = totalDuration)
+                    if (it.currentPosition != currentPosition || it.currentDurationLong != totalDuration) {
+                        it.copy(currentPosition = currentPosition, currentDurationLong = totalDuration)
                     } else {
                         it
                     }
@@ -232,7 +238,7 @@ class MusicViewModel
             val startIndex = songs.indexOfFirst { it.id == startSong.id }.takeIf { it != -1 } ?: 0
 
             // Define the window of songs to load immediately (e.g., 5 before and 5 after)
-            val windowSize = 1
+            val windowSize = 2
             val windowStart = (startIndex - windowSize).coerceAtLeast(0)
             val windowEnd = (startIndex + windowSize).coerceAtMost(songs.size - 1)
 
@@ -272,7 +278,7 @@ class MusicViewModel
     }
 
     private suspend fun loadChunks(songs: List<Song>, append: Boolean) {
-        val chunkSize = 20
+        val chunkSize = 30
         val chunks = songs.chunked(chunkSize)
 
         val chunksToProcess = if (append) chunks else chunks.asReversed()
@@ -316,21 +322,27 @@ class MusicViewModel
                     .collect { radioSong ->
                         if (radioSong.id != song.id) {
                             val mediaItem = createPartialMediaItemFromSong(radioSong, context)
-
+                            _uiState.update {
+                                it.copy(songsList = it.songsList + radioSong)
+                            }
                             // Update UI immediately for each song
                             withContext(Dispatchers.Main) {
-                                _uiState.update {
-                                    it.copy(songsList = it.songsList + radioSong)
-                                }
                                 mediaController?.addMediaItem(mediaItem)
+                                Log.i(tag, "Added radio song ${radioSong.title}")
                             }
                         }
                     }
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.e(tag, "Failed to load radio songs for ${song.id}")
+            } finally {
+                val nextMediaItem = createMediaItemFromSong(_uiState.value.songsList[1], context)
+                withContext(Dispatchers.Main) {
+                    mediaController?.replaceMediaItem(1, nextMediaItem)
+                }
             }
         }
+        Log.i(tag, "playSongByIdWithRadio done")
     }
 
     fun playNext(song: Song) {
@@ -341,7 +353,7 @@ class MusicViewModel
                 val currentMediaIndex = mediaController?.currentMediaItemIndex ?: 0
                 val nextIndex = currentMediaIndex + 1
                 Log.i(
-                    "MusicViewModel",
+                    tag,
                     "Current index: $currentMediaIndex, Insertion index: $nextIndex"
                 )
 
@@ -445,16 +457,29 @@ class MusicViewModel
         }
     }
 
-    fun toggleFavorite(song: Song) {
+    fun toggleFavoriteSong(song: Song) {
         viewModelScope.launch {
             val updated = song.toggleLike()
             songDao.updateSong(updated)
         }
     }
 
+    fun toggleFacoriteAlbum(album: Album) {
+        viewModelScope.launch {
+            val updated = album.toggleBookmark()
+            albumDao.updateAlbum(updated)
+        }
+    }
+
     fun setSortOption(sortOption: SortOption) {
         viewModelScope.launch {
             _uiState.update { it.copy(songsSortOption = sortOption) }
+        }
+    }
+
+    fun setSearchParam(searchParam: SortOption){
+        viewModelScope.launch {
+            _uiState.update { it.copy(searchParam = searchParam) }
         }
     }
 
@@ -476,12 +501,13 @@ class MusicViewModel
     class Factory(
         private val songDao: SongDao,
         private val playlistDao: PlaylistDao,
+        private val albumDao: AlbumDao,
         private val context: Context
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(MusicViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return MusicViewModel(songDao, playlistDao, context) as T
+                return MusicViewModel(songDao, playlistDao, albumDao, context) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

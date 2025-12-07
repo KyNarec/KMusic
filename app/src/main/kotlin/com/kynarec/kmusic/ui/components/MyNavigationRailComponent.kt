@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -28,6 +29,7 @@ import com.kynarec.kmusic.ui.AlbumsScreen
 import com.kynarec.kmusic.ui.ArtistsScreen
 import com.kynarec.kmusic.ui.HomeScreen
 import com.kynarec.kmusic.ui.PlaylistsScreen
+import com.kynarec.kmusic.ui.SearchScreen
 import com.kynarec.kmusic.ui.SongsScreen
 
 // Define data for navigation destinations
@@ -40,8 +42,11 @@ data class NavigationDestination(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyNavigationRailComponent(
-    navController: NavHostController
+    navController: NavHostController,
+    currentRoute: String?
 ) {
+
+
     val destinations = listOf(
         NavigationDestination("Home", { Icon(Icons.Default.Home, contentDescription = "Home") }, HomeScreen),
         NavigationDestination("Songs", { Icon(Icons.Default.MusicNote, contentDescription = "Songs") }, SongsScreen),
@@ -51,6 +56,32 @@ fun MyNavigationRailComponent(
     )
 
     var selectedDestination by rememberSaveable { mutableIntStateOf(0) }
+
+    val isHomeScreen = remember(currentRoute) {
+        currentRoute?.startsWith(HomeScreen::class.qualifiedName!!) == true
+    }
+    if (isHomeScreen) selectedDestination = 0
+
+    val isSongsScreen = remember(currentRoute) {
+        currentRoute?.startsWith(SongsScreen::class.qualifiedName!!) == true
+    }
+    if (isSongsScreen) selectedDestination = 1
+
+    val isArtistsScreen = remember(currentRoute) {
+        currentRoute?.startsWith(ArtistsScreen::class.qualifiedName!!) == true
+    }
+    if (isArtistsScreen) selectedDestination = 2
+
+    val isAlbumsScreen = remember(currentRoute) {
+        currentRoute?.startsWith(AlbumsScreen::class.qualifiedName!!) == true
+    }
+    if (isAlbumsScreen) selectedDestination = 3
+
+    val isPlaylistsScreen = remember(currentRoute) {
+        currentRoute?.startsWith(PlaylistsScreen::class.qualifiedName!!) == true
+    }
+    if (isPlaylistsScreen) selectedDestination = 4
+
 
     Column {
         NavigationRail(

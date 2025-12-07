@@ -1,9 +1,6 @@
 package com.kynarec.kmusic.ui.screens
 
-import android.app.Application
-import android.util.Log
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
@@ -26,7 +23,6 @@ import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.Button
@@ -38,11 +34,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,21 +52,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.imageLoader
-import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
-import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.parseMillisToDuration
-import io.ktor.client.request.forms.formData
 import ir.mahozad.multiplatform.wavyslider.WaveDirection
 import ir.mahozad.multiplatform.wavyslider.material.WavySlider
 
@@ -88,8 +78,8 @@ fun PlayerScreen(
     database: KmusicDatabase
 ) {
     //val playerViewModel = viewModel
-    //val uiState by playerViewModel.uiState.collectAsState()
-    val uiState by viewModel.uiState.collectAsState()
+    //val uiState by playerViewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val showBottomSheet = remember { mutableStateOf(false) }
@@ -224,9 +214,9 @@ fun PlayerScreen(
            // Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentPosition: ${uiState.currentPosition}")
 
             WavySlider(
-                value = if (uiState.totalDuration != 0L) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,
+                value = if (uiState.currentDurationLong != 0L) uiState.currentPosition.toFloat() / uiState.currentDurationLong.toFloat() else 0f,
                 onValueChange = { newValue ->
-                    viewModel.seekTo((newValue * uiState.totalDuration).toLong())
+                    viewModel.seekTo((newValue * uiState.currentDurationLong).toLong())
                 },
                 modifier = Modifier.fillMaxWidth(),
                 waveHeight = if (uiState.isPlaying) 4.dp else 0.dp,
@@ -288,7 +278,8 @@ fun PlayerScreen(
                 )
                 Text(
 //                    text = "${uiState.currentDuration / 1000 / 60}:${(uiState.totalDuration / 1000 % 60).toString().padStart(2, '0')}",
-                    text = parseMillisToDuration(uiState.totalDuration),
+//                    text = parseMillisToDuration(uiState.currentDurationLong),
+                    text = uiState.currentDurationString,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
@@ -338,7 +329,8 @@ fun PlayerScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+//        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
         Row(
             modifier = Modifier.fillMaxWidth()

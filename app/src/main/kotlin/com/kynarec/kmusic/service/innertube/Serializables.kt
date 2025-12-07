@@ -107,7 +107,8 @@ data class SectionListRenderer(
 
 @Serializable
 data class SectionContent(
-    val musicShelfRenderer: MusicShelfRenderer? = null
+    val musicShelfRenderer: MusicShelfRenderer? = null,
+    val musicResponsiveHeaderRenderer: MusicResponsiveHeaderRenderer?= null
 )
 
 @Serializable
@@ -261,5 +262,276 @@ data class TextRuns(
 
 @Serializable
 data class Run(
-    val text: String? = null
+    val text: String? = null,
+    val navigationEndpoint: AlbumAndSongsNavigationEndpoint? = null
+)
+
+// ========================================== getAlbumAndSongs
+
+@Serializable
+data class AlbumBrowseResponse(
+    val contents: SearchAlbumContents? = null,
+    val microformat: Microformat? = null
+)
+
+@Serializable
+data class SearchAlbumContents(
+    val twoColumnBrowseResultsRenderer: TwoColumnBrowseResultsRenderer? = null
+)
+
+@Serializable
+data class TwoColumnBrowseResultsRenderer(
+    val secondaryContents: SecondaryContents? = null,
+    val tabs: List<Tab>
+)
+
+@Serializable
+data class SecondaryContents(
+    val sectionListRenderer: SectionListRendererAlbum? = null
+)
+
+@Serializable
+data class SectionListRendererAlbum(
+    val contents: List<SectionContentAlbum>? = null
+)
+@Serializable
+data class SectionContentAlbum(
+    val musicShelfRenderer: MusicShelfRendererAlbum? = null,
+    val musicCarouselShelfRenderer: MusicCarouselShelfRenderer? = null
+)
+
+@Serializable
+data class MusicShelfRendererAlbum(
+    val contents: List<MusicItemAlbum>? = null
+)
+
+@Serializable
+data class MusicItemAlbum(
+    val musicResponsiveListItemRenderer: MusicResponsiveListItemRendererAlbum? = null
+)
+
+@Serializable
+data class MusicResponsiveListItemRendererAlbum(
+    val playlistItemData: PlaylistItemData? = null,
+    val index: AlbumIndex? = null,
+    val overlay: AlbumAndSongsOverlay? = null,
+    val flexColumns: List<AlbumAndSongsFlexColumns>? = null,
+    val fixedColumns: List<AlbumAndSongsFixedColumns>? = null
+)
+
+@Serializable
+data class AlbumAndSongsFlexColumns(
+    val musicResponsiveListItemFlexColumnRenderer: FlexColumnRenderer? = null
+)
+
+@Serializable
+data class AlbumAndSongsNavigationEndpoint(
+    val watchEndpoint: AlbumAndSongsWatchEndpoint? = null
+)
+
+@Serializable
+data class AlbumAndSongsWatchEndpoint(
+    val videoId: String? = null
+)
+
+@Serializable
+data class AlbumAndSongsFixedColumns(
+    val musicResponsiveListItemFixedColumnRenderer: AlbumAndSongsMusicResponsiveListItemFixedColumnRenderer
+)
+
+@Serializable
+data class AlbumAndSongsMusicResponsiveListItemFixedColumnRenderer(
+    val text: TextRuns?= null
+)
+
+@Serializable
+data class AlbumAndSongsOverlay(
+    val musicItemThumbnailOverlayRenderer: AlbumAndSongsMusicItemThumbnailOverlayRenderer? = null
+)
+
+@Serializable
+data class AlbumAndSongsMusicItemThumbnailOverlayRenderer(
+    val content: AlbumAndSongsContent? = null
+)
+
+@Serializable
+data class AlbumAndSongsContent(
+    val musicPlayButtonRenderer: AlbumAndSongsMusicPlayButtonRenderer? = null
+)
+
+@Serializable
+data class AlbumAndSongsMusicPlayButtonRenderer(
+    val accessibilityPlayData: AlbumAndSongsAccessibilityPlayData? = null
+)
+
+@Serializable
+data class AlbumAndSongsAccessibilityPlayData(
+    val accessibilityData: AlbumAndSongsAccessibilityData? = null
+)
+
+@Serializable
+data class AlbumAndSongsAccessibilityData(
+    val label: String? = null
+)
+
+@Serializable
+data class PlaylistItemData(
+    val videoId: String? = null,
+    val playlistSetVideoId: String? = null
+)
+
+@Serializable
+data class AlbumIndex(
+    val runs: List<Run>? = null
+)
+
+@Serializable
+data class MusicCarouselShelfRenderer(
+    val contents: List<Item>? = null
+)
+
+@Serializable
+data class Item(
+    val musicTwoRowItemRenderer: MusicTwoRowItemRenderer? = null
+)
+
+@Serializable
+data class MusicTwoRowItemRenderer(
+    val thumbnailRenderer: ThumbnailRendererAlbum? = null,
+)
+
+@Serializable
+data class ThumbnailRendererAlbum(
+    val musicThumbnailRenderer: MusicThumbnailRendererAlbum? = null
+)
+
+@Serializable
+data class MusicThumbnailRendererAlbum(
+    val thumbnail: ThumbnailAlbum? = null
+)
+@Serializable
+data class ThumbnailAlbum(
+    val thumbnails: List<ThumbnailBetter> = emptyList()
+)
+
+@Serializable
+data class MusicResponsiveHeaderRenderer(
+    val thumbnail: ThumbnailRendererAlbum? = null,
+    val title: TextRuns? = null,
+    val subtitle: TextRuns? = null,
+    val description: Description? = null
+)
+
+@Serializable
+data class Description(
+    val musicDescriptionShelfRenderer: MusicDescriptionShelfRenderer? = null
+)
+
+@Serializable
+data class MusicDescriptionShelfRenderer(
+    val description: TextRuns? = null
+)
+
+@Serializable
+data class Microformat(
+    val microformatDataRenderer: MicroformatDataRenderer? = null
+)
+
+@Serializable
+data class MicroformatDataRenderer(
+    val urlCanonical: String? = null,
+    val thumbnail: ThumbnailAlbum? = null
+)
+
+// ========================================== searchAlbums
+// x.contents.tabbedSearchResultsRenderer.tabs[0]
+// .tabRenderer.content.sectionListRenderer.contents[1]
+// .musicShelfRenderer.contents
+
+@Serializable
+data class SearchAlbumsResponse(
+    val contents: SearchAlbumsContents? = null
+)
+
+@Serializable
+data class SearchAlbumsContents(
+    val tabbedSearchResultsRenderer: TabbedAlbumsSearchResultsRenderer? = null
+)
+
+@Serializable
+data class TabbedAlbumsSearchResultsRenderer(
+    val tabs: List<SearchAlbumsTabs>? = null
+)
+
+@Serializable
+data class SearchAlbumsTabs(
+    val tabRenderer: SearchAlbumsTabRenderer? = null
+)
+
+@Serializable
+data class SearchAlbumsTabRenderer(
+    val content: SearchAlbumsContent? = null
+)
+
+@Serializable
+data class SearchAlbumsContent(
+    val sectionListRenderer: SearchAlbumsSectionListRenderer? = null
+)
+
+@Serializable
+data class SearchAlbumsSectionListRenderer(
+    val contents: List<SearchAlbumsContents2>? = null
+)
+
+@Serializable
+data class SearchAlbumsContents2(
+    val musicShelfRenderer: SearchAlbumsMusicShelfRenderer? = null
+)
+
+@Serializable
+data class SearchAlbumsMusicShelfRenderer(
+    val contents: List<SearchAlbumsContents3>? = null,
+    val continuations: List<SearchAlbumsContinuations>? = null
+)
+
+@Serializable
+data class SearchAlbumsContents3(
+    val musicResponsiveListItemRenderer: SearchAlbumsMusicResponsiveListItemRenderer? = null,
+)
+
+@Serializable
+data class SearchAlbumsMusicResponsiveListItemRenderer(
+    val thumbnail: ThumbnailRendererAlbum? = null,
+    val flexColumns: List<SearchAlbumsFlexColumns>? = null,
+    val navigationEndpoint: SearchAlbumsNavigationEndpoint? = null
+)
+
+@Serializable
+data class SearchAlbumsFlexColumns(
+    val musicResponsiveListItemFlexColumnRenderer: SearchAlbumsText? = null
+)
+
+@Serializable
+data class SearchAlbumsText(
+    val text: TextRuns? = null
+)
+
+@Serializable
+data class SearchAlbumsNavigationEndpoint(
+    val browseEndpoint: SearchAlbumsBrowseEndpoint? = null
+)
+
+@Serializable
+data class SearchAlbumsBrowseEndpoint(
+    val browseId: String? = null
+)
+
+@Serializable
+data class SearchAlbumsContinuations(
+    val nextContinuationData: SearchAlbumsNextContinuationData
+)
+
+@Serializable
+data class SearchAlbumsNextContinuationData(
+    val continuation: String? = null
 )

@@ -1,6 +1,7 @@
 package com.kynarec.kmusic.ui
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -15,25 +16,23 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.data.db.KmusicDatabase
-import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.service.update.UpdateManager
+import com.kynarec.kmusic.ui.screens.AlbumDetailScreen
 import com.kynarec.kmusic.ui.screens.AlbumsScreen
 import com.kynarec.kmusic.ui.screens.ArtistsScreen
 import com.kynarec.kmusic.ui.screens.HomeScreen
-import com.kynarec.kmusic.ui.screens.PlaylistScreen
+import com.kynarec.kmusic.ui.screens.PlaylistDetailScreen
 import com.kynarec.kmusic.ui.screens.PlaylistsScreen
 import com.kynarec.kmusic.ui.screens.SearchResultScreen
 import com.kynarec.kmusic.ui.screens.SearchScreen
@@ -61,7 +60,7 @@ fun Navigation(
     // Use a custom ViewModel factory to inject the database DAO.
     val songDao = remember { database.songDao() }
 
-    val transitionEffect by settingsViewModel.transitionEffectFlow.collectAsState()
+    val transitionEffect by settingsViewModel.transitionEffectFlow.collectAsStateWithLifecycle()
 
     NavHost(
         navController = navController,
@@ -156,8 +155,8 @@ fun Navigation(
         }
 
         composable<SongsScreen> {
-//            val songs = viewModel.songsList.collectAsState()
-//            val songs = musicViewModel.uiState.collectAsState().value.songsList
+//            val songs = viewModel.songsList.collectAsStateWithLifecycle()
+//            val songs = musicViewModel.uiState.collectAsStateWithLifecycle().value.songsList
             SongsScreen(viewModel = musicViewModel, database = database)
         }
         composable<ArtistsScreen> {
@@ -172,7 +171,7 @@ fun Navigation(
         }
         composable<PlaylistScreen> {
             val args = it.toRoute<PlaylistScreen>()
-            PlaylistScreen(
+            PlaylistDetailScreen(
                 playlistId = args.playlistId,
                 viewModel = musicViewModel,
                 database = database,
@@ -180,17 +179,31 @@ fun Navigation(
             )
         }
         composable<AlbumsScreen> {
-            AlbumsScreen()
+            AlbumsScreen(
+                viewModel = musicViewModel,
+                database = database,
+                navController = navController
+            )
         }
         composable<SearchScreen> {
             SearchScreen(navController)
         }
         composable<SearchResultScreen> {
             val args = it.toRoute<SearchResultScreen>()
-            SearchResultScreen(args.query, musicViewModel, database = database)
+            SearchResultScreen(args.query, musicViewModel, database = database, navController = navController)
         }
         composable<SettingsScreen> {
             SettingsScreen(prefs = settingsViewModel, navController = navController, updateManager = updateManager, updateViewModel = updateViewModel)
+        }
+        composable<AlbumDetailScreen> {
+            Log.i("Navigation", "AlbumDetailScreen")
+            val args = it.toRoute<AlbumDetailScreen>()
+            AlbumDetailScreen(
+                albumId = args.albumId,
+                viewModel = musicViewModel,
+                database = database,
+                navController = navController
+            )
         }
     }
 }
@@ -232,3 +245,8 @@ data class SearchResultScreen(
 
 @Serializable
 object SettingsScreen
+
+@Serializable
+data class AlbumDetailScreen(
+    val albumId: String
+)
