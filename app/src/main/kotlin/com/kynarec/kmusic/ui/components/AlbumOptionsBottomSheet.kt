@@ -75,7 +75,7 @@ fun AlbumOptionsBottomSheet(
 //                        viewModel.deletePlaylist(playlist!!)
 //                        navController.navigate(PlaylistsScreen)
                         viewModel.toggleFacoriteAlbum(album!!)
-                        onDismiss()
+//                        onDismiss()
                     }
                 )
             }
