@@ -141,7 +141,7 @@ fun MainScreen() {
                         .fillMaxSize()
                 ) {
                     if (!shouldHideNavElements) {
-                        MyNavigationRailComponent(navController)
+                        MyNavigationRailComponent(navController, currentRoute)
                     }
                     Box(
                         modifier = Modifier
