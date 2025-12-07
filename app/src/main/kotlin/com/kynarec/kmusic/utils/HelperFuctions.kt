@@ -63,6 +63,34 @@ fun parseMillisToDuration(timeMs: Long): String {
     return "$minutes:$seconds"
 }
 
+@JvmName("StringParseDurationToMillis")
+fun String.parseDurationToMillis(): Long {
+    val parts = this.split(":")
+    return when (parts.size) {
+        2 -> {
+            val minutes = parts[0].toLongOrNull() ?: 0L
+            val seconds = parts[1].toLongOrNull() ?: 0L
+            (minutes * 60 + seconds) * 1000
+        }
+
+        3 -> { // For "HH:mm:ss" format
+            val hours = parts[0].toLongOrNull() ?: 0L
+            val minutes = parts[1].toLongOrNull() ?: 0L
+            val seconds = parts[2].toLongOrNull() ?: 0L
+            (hours * 3600 + minutes * 60 + seconds) * 1000
+        }
+
+        else -> 0L
+    }
+}
+
+@JvmName("LongParseMillisToDuration")
+fun Long.parseMillisToDuration(): String {
+    val minutes = this / 1000 / 60
+    val seconds = (this / 1000 % 60).toString().padStart(2, '0')
+    return "$minutes:$seconds"
+}
+
 suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = withContext(Dispatchers.IO) {
     val uri = playSongByIdWithBestBitrate(song.id) ?: return@withContext MediaItem.Builder().build()
 

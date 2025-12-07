@@ -16,7 +16,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,15 +55,15 @@ fun PlaylistDetailScreen(
         database.playlistDao().getSongsForPlaylist(playlistId)
     }
 
-    val playlist by playlistFlow.collectAsState(initial = null)
-    val songs by songsFlow.collectAsState(initial = emptyList())
+    val playlist by playlistFlow.collectAsStateWithLifecycle(null)
+    val songs by songsFlow.collectAsStateWithLifecycle(emptyList())
 
     val showSongDetailBottomSheet = remember { mutableStateOf(false) }
     val showPlaylistOptionsBottomSheet = remember { mutableStateOf(false) }
 
     var longClickSong by remember { mutableStateOf<Song?>(null) }
 
-    val showControlBar = viewModel.uiState.collectAsState().value.showControlBar
+    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
 
 
     Log.i(

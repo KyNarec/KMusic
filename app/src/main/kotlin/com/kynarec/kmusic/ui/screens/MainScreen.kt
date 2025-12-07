@@ -19,7 +19,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -79,7 +79,7 @@ fun MainScreen() {
             LocalContext.current
         )
     )
-    val showControlBar = musicViewModel.uiState.collectAsState().value.showControlBar
+    val showControlBar = musicViewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
 
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -108,9 +108,9 @@ fun MainScreen() {
 
     val shouldHideNavElements = isSearchScreen || isSearchResultScreen || isSettingsScreen || isPlaylistScreen || isAlbumDetailScreen
 
-    val darkTheme by settingsViewModel.darkModeFLow.collectAsState(DEFAULT_DARK_MODE)
+    val darkTheme by settingsViewModel.darkModeFLow.collectAsStateWithLifecycle(DEFAULT_DARK_MODE)
 
-    val dynamicColors by settingsViewModel.dynamicColorsFlow.collectAsState(DEFAULT_DYNAMIC_COLORS)
+    val dynamicColors by settingsViewModel.dynamicColorsFlow.collectAsStateWithLifecycle(DEFAULT_DYNAMIC_COLORS)
 
 
     LaunchedEffect(sheetState.isVisible) {

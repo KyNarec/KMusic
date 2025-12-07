@@ -34,7 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,8 +78,8 @@ fun PlayerScreen(
     database: KmusicDatabase
 ) {
     //val playerViewModel = viewModel
-    //val uiState by playerViewModel.uiState.collectAsState()
-    val uiState by viewModel.uiState.collectAsState()
+    //val uiState by playerViewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val showBottomSheet = remember { mutableStateOf(false) }
@@ -214,9 +214,9 @@ fun PlayerScreen(
            // Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentPosition: ${uiState.currentPosition}")
 
             WavySlider(
-                value = if (uiState.totalDuration != 0L) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,
+                value = if (uiState.currentDurationLong != 0L) uiState.currentPosition.toFloat() / uiState.currentDurationLong.toFloat() else 0f,
                 onValueChange = { newValue ->
-                    viewModel.seekTo((newValue * uiState.totalDuration).toLong())
+                    viewModel.seekTo((newValue * uiState.currentDurationLong).toLong())
                 },
                 modifier = Modifier.fillMaxWidth(),
                 waveHeight = if (uiState.isPlaying) 4.dp else 0.dp,
@@ -278,7 +278,8 @@ fun PlayerScreen(
                 )
                 Text(
 //                    text = "${uiState.currentDuration / 1000 / 60}:${(uiState.totalDuration / 1000 % 60).toString().padStart(2, '0')}",
-                    text = parseMillisToDuration(uiState.totalDuration),
+//                    text = parseMillisToDuration(uiState.currentDurationLong),
+                    text = uiState.currentDurationString,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )

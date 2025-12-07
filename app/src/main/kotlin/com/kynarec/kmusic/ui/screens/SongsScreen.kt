@@ -13,7 +13,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,13 +56,13 @@ fun SongsScreen(
         SortOption("Listened to"),
     )
 //    val selectedSortOption = rememberSaveable { mutableStateOf(SortOption("Listened to"))}
-    val selectedSortOption = viewModel.uiState.collectAsState().value.songsSortOption
+    val selectedSortOption = viewModel.uiState.collectAsStateWithLifecycle().value.songsSortOption
 
     val sortedSongs = when(selectedSortOption.text) {
-        "All" -> database.songDao().getAllSongsFlow().collectAsState(initial = emptyList())
-        "Favorites" -> database.songDao().getFavouritesSongFlow().collectAsState(initial = emptyList())
-        "Listened to" -> database.songDao().getSongsFlowWithPlaytime().collectAsState(initial = emptyList())
-        else -> {database.songDao().getSongsFlowWithPlaytime().collectAsState(initial = emptyList())}
+        "All" -> database.songDao().getAllSongsFlow().collectAsStateWithLifecycle(emptyList())
+        "Favorites" -> database.songDao().getFavouritesSongFlow().collectAsStateWithLifecycle(emptyList())
+        "Listened to" -> database.songDao().getSongsFlowWithPlaytime().collectAsStateWithLifecycle(emptyList())
+        else -> {database.songDao().getSongsFlowWithPlaytime().collectAsStateWithLifecycle(emptyList())}
     }
 
 

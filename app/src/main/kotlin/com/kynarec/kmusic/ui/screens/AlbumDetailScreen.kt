@@ -26,7 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,7 +67,7 @@ fun AlbumDetailScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val albumFLow by database.albumDao().getAlbumByIdFlow(albumId).collectAsState(initial = null)
+    val albumFLow by database.albumDao().getAlbumByIdFlow(albumId).collectAsStateWithLifecycle(null)
 
     var songs by remember { mutableStateOf(emptyList<Song>()) }
 
@@ -79,7 +79,7 @@ fun AlbumDetailScreen(
 
     var readMore by remember { mutableStateOf(false) }
 
-    val showControlBar = viewModel.uiState.collectAsState().value.showControlBar
+    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
 
 
     LaunchedEffect(Unit) {

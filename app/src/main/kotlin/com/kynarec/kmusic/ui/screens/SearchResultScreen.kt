@@ -23,7 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,9 +68,9 @@ fun SearchResultScreen(
 
     val showBottomSheet = remember { mutableStateOf(false) }
     var longClickSong by remember { mutableStateOf<Song?>(null) }
-    val selectedSearchParam = viewModel.uiState.collectAsState().value.searchParam
+    val selectedSearchParam = viewModel.uiState.collectAsStateWithLifecycle().value.searchParam
 
-    val showControlBar = viewModel.uiState.collectAsState().value.showControlBar
+    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
     val bottomPadding = if (showControlBar) 70.dp else 0.dp
 
     val searchParams = listOf(

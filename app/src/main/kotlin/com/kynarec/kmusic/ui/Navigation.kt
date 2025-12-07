@@ -16,7 +16,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -60,7 +60,7 @@ fun Navigation(
     // Use a custom ViewModel factory to inject the database DAO.
     val songDao = remember { database.songDao() }
 
-    val transitionEffect by settingsViewModel.transitionEffectFlow.collectAsState()
+    val transitionEffect by settingsViewModel.transitionEffectFlow.collectAsStateWithLifecycle()
 
     NavHost(
         navController = navController,
@@ -155,8 +155,8 @@ fun Navigation(
         }
 
         composable<SongsScreen> {
-//            val songs = viewModel.songsList.collectAsState()
-//            val songs = musicViewModel.uiState.collectAsState().value.songsList
+//            val songs = viewModel.songsList.collectAsStateWithLifecycle()
+//            val songs = musicViewModel.uiState.collectAsStateWithLifecycle().value.songsList
             SongsScreen(viewModel = musicViewModel, database = database)
         }
         composable<ArtistsScreen> {

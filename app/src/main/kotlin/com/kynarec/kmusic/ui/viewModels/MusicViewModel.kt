@@ -42,7 +42,8 @@ data class MusicUiState(
     var currentSong: Song? = null,
     val isPlaying: Boolean = false,
     val currentPosition: Long = 0,
-    val totalDuration: Long = 0,
+    val currentDurationLong: Long = 0,
+    val currentDurationString: String = "0:00",
     val showControlBar: Boolean = false,
     val songsSortOption: SortOption = SortOption("All"),
     val searchParam: SortOption = SortOption("Song")
@@ -74,7 +75,8 @@ class MusicViewModel
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             // When the song changes, find it in our list and update the state
             val currentSong = _uiState.value.songsList.find { it.id == mediaItem?.mediaId }
-            val newTotalDuration = mediaController?.duration ?: 0L
+//            val newTotalDuration = mediaController?.duration ?: 0L
+            val newTotalDuration = _uiState.value.currentSong?.duration?: 0L
             val index = _uiState.value.songsList.indexOf(currentSong)
             val songList = _uiState.value.songsList
             val controller = mediaController ?: return
@@ -100,12 +102,14 @@ class MusicViewModel
             }
 
 
-            val newCurrentDuration = parseDurationToMillis(currentSong?.duration ?: "0")
+//            val newCurrentDuration = parseDurationToMillis(currentSong?.duration ?: "0")
 
             _uiState.update {
                 it.copy(
                     currentSong = currentSong,
-                    totalDuration = if (newTotalDuration > 0) newTotalDuration else 0L,
+//                    currentDurationLong = if (newTotalDuration > 0) newTotalDuration else 0L,
+                    currentDurationLong = _uiState.value.currentSong?.duration?.parseDurationToMillis()?: 0L,
+                    currentDurationString = _uiState.value.currentSong?.duration?: "0:00"
                 )
             }
         }
@@ -148,8 +152,8 @@ class MusicViewModel
                 val totalDuration = mediaController?.duration ?: 0L // Fetch total duration
 
                 _uiState.update {
-                    if (it.currentPosition != currentPosition || it.totalDuration != totalDuration) {
-                        it.copy(currentPosition = currentPosition, totalDuration = totalDuration)
+                    if (it.currentPosition != currentPosition || it.currentDurationLong != totalDuration) {
+                        it.copy(currentPosition = currentPosition, currentDurationLong = totalDuration)
                     } else {
                         it
                     }
@@ -234,7 +238,7 @@ class MusicViewModel
             val startIndex = songs.indexOfFirst { it.id == startSong.id }.takeIf { it != -1 } ?: 0
 
             // Define the window of songs to load immediately (e.g., 5 before and 5 after)
-            val windowSize = 1
+            val windowSize = 2
             val windowStart = (startIndex - windowSize).coerceAtLeast(0)
             val windowEnd = (startIndex + windowSize).coerceAtMost(songs.size - 1)
 

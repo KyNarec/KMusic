@@ -16,12 +16,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.enums.PopupType
@@ -41,7 +42,7 @@ fun AlbumOptionsBottomSheet(
     val context = LocalContext.current
 
     val album by database.albumDao().getAlbumByIdFlow(albumId)
-        .collectAsState(initial = null)
+        .collectAsStateWithLifecycle(null)
 
 
 

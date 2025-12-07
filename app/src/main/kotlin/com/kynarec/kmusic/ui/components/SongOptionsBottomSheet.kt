@@ -30,7 +30,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -67,7 +67,7 @@ fun SongOptionsBottomSheet(
 
     val song by database.songDao()
         .getSongFlowById(songId)
-        .collectAsState(initial = null)
+        .collectAsStateWithLifecycle(null)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
