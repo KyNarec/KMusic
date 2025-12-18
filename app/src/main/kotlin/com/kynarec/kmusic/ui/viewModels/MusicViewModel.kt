@@ -20,11 +20,11 @@ import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerServiceModern
-import com.kynarec.kmusic.utils.createMediaItemFromSong
-import com.kynarec.kmusic.utils.parseDurationToMillis
 import com.kynarec.kmusic.service.innertube.getRadioFlow
 import com.kynarec.kmusic.ui.screens.SortOption
+import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
+import com.kynarec.kmusic.utils.parseDurationToMillis
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -303,6 +303,13 @@ class MusicViewModel
         }
     }
 
+    fun playShuffledPlaylist(songs: List<Song>) {
+        Log.i(tag, "playShuffledPlaylist called with ${songs.size} songs")
+        val shuffledSongs = songs.shuffled()
+
+        playPlaylist(shuffledSongs, shuffledSongs.first())
+    }
+
     fun playSongByIdWithRadio(song: Song, removeViewModelList: Boolean = true) {
         Log.i(tag, "playSongByIdWithRadio called with songId: ${song.id}")
 
@@ -464,7 +471,7 @@ class MusicViewModel
         }
     }
 
-    fun toggleFacoriteAlbum(album: Album) {
+    fun toggleFavoriteAlbum(album: Album) {
         viewModelScope.launch {
             val updated = album.toggleBookmark()
             albumDao.updateAlbum(updated)
