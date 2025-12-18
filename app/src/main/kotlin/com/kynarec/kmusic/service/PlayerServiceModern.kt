@@ -28,8 +28,8 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
-import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.KMusic
+import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.utils.createMediaItemFromSong
@@ -121,38 +121,58 @@ class PlayerServiceModern : MediaLibraryService() {
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>
         ): ListenableFuture<MutableList<MediaItem>> {
-            Log.d(tag, "onAddMediaItems called with ${mediaItems.size} items")
-            val future = SettableFuture.create<MutableList<MediaItem>>()
-            
-            if (mediaItems.isEmpty()) {
-                future.set(mutableListOf())
-                return future
-            }
-
-            serviceScope.launch(Dispatchers.IO) {
-                val resolvedItems = mutableListOf<MediaItem>()
-                try {
-                    for (item in mediaItems) {
-                        val mediaId = item.mediaId
-                        if (mediaId == MediaItem.DEFAULT_MEDIA_ID) continue
-
-                        val song = songDao.getSongById(mediaId)
-                        if (song != null) {
-                            // Log.i(tag, "Found song in database: ${song.title}")
-                            val fullMediaItem = createMediaItemFromSong(context = applicationContext, song = song)
-                            resolvedItems.add(fullMediaItem)
-                        } else {
-                            Log.e(tag, "Song not found for mediaId: $mediaId")
-                        }
-                    }
-                    future.set(resolvedItems)
-                } catch (e: Exception) {
-                    Log.e(tag, "Error retrieving songs from database.", e)
-                    future.setException(e)
+            val updatedItems = mediaItems.map { item ->
+                // is only false when partialMediaItem was created
+                if (item.mediaMetadata.isPlayable == false)
+                {
+                    item.buildUpon()
+                        .setUri(item.mediaId) // Set the URI to the ID temporarily or a dummy value
+                        .build()
+                } else {
+                    item
                 }
-            }
-            return future
+            }.toMutableList()
+
+            return Futures.immediateFuture(updatedItems)
         }
+
+//        override fun onAddMediaItems(
+//            mediaSession: MediaSession,
+//            controller: MediaSession.ControllerInfo,
+//            mediaItems: MutableList<MediaItem>
+//        ): ListenableFuture<MutableList<MediaItem>> {
+//            Log.d(tag, "onAddMediaItems called with ${mediaItems.size} items")
+//            val future = SettableFuture.create<MutableList<MediaItem>>()
+//
+//            if (mediaItems.isEmpty()) {
+//                future.set(mutableListOf())
+//                return future
+//            }
+//
+//            serviceScope.launch(Dispatchers.IO) {
+//                val resolvedItems = mutableListOf<MediaItem>()
+//                try {
+//                    for (item in mediaItems) {
+//                        val mediaId = item.mediaId
+//                        if (mediaId == MediaItem.DEFAULT_MEDIA_ID) continue
+//
+//                        val song = songDao.getSongById(mediaId)
+//                        if (song != null) {
+//                            // Log.i(tag, "Found song in database: ${song.title}")
+//                            val fullMediaItem = createMediaItemFromSong(context = applicationContext, song = song)
+//                            resolvedItems.add(fullMediaItem)
+//                        } else {
+//                            Log.e(tag, "Song not found for mediaId: $mediaId")
+//                        }
+//                    }
+//                    future.set(resolvedItems)
+//                } catch (e: Exception) {
+//                    Log.e(tag, "Error retrieving songs from database.", e)
+//                    future.setException(e)
+//                }
+//            }
+//            return future
+//        }
 
 
         // MODIFIED: This is where Android Auto requests the root of your media library.

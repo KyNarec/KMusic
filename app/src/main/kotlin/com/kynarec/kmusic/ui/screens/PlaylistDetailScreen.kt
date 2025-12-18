@@ -3,20 +3,20 @@ package com.kynarec.kmusic.ui.screens
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
@@ -44,7 +45,7 @@ fun PlaylistDetailScreen(
     database: KmusicDatabase,
     navController: NavHostController
 ) {
-    Log.i("PlaylistScreen", "PlaylistScreen: $playlistId")
+//    Log.i("PlaylistScreen", "PlaylistScreen: $playlistId")
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -66,29 +67,45 @@ fun PlaylistDetailScreen(
     val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
 
 
-    Log.i(
-        "PlaylistScreen",
-        "State: Playlist: ${playlist?.name ?: "N/A"}, Songs: ${songs.size}"
-    )
+//    Log.i(
+//        "PlaylistScreen",
+//        "State: Playlist: ${playlist?.name ?: "N/A"}, Songs: ${songs.size}"
+//    )
     Column(
         Modifier.fillMaxSize()
     ) {
-        Row(
+        LazyRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Spacer(Modifier.weight(1f))
-
-            IconButton(
-                onClick = {
-                    showPlaylistOptionsBottomSheet.value = true
+//            item {
+//                            Spacer(Modifier.weight(1f))
+//
+//            }
+            item {
+                IconButton(
+                    onClick = {
+                        viewModel.playShuffledPlaylist(songs)
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Shuffle,
+                        contentDescription = "Shuffle"
+                    )
                 }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "More Options"
-                )
+            }
+            item {
+                IconButton(
+                    onClick = {
+                        showPlaylistOptionsBottomSheet.value = true
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "More Options"
+                    )
+                }
             }
         }
         LazyColumn(
