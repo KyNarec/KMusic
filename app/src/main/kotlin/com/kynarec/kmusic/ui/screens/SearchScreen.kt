@@ -49,16 +49,12 @@ import androidx.navigation.NavHostController
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.SearchQuery
-import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.innertube.searchSuggestions
 import com.kynarec.kmusic.ui.SearchResultScreen
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
-import org.schabi.newpipe.extractor.timeago.patterns.it
 
 @Composable
 fun SearchScreen(
@@ -190,8 +186,8 @@ fun SearchScreen(
                             keyboardController?.hide()
                             focusManager.clearFocus()
                             scope.launch {
-                                searchQueryDao.deleteQuery(searchQuery.text)
-                                searchQueryDao.insertQuery(SearchQuery(query = searchQuery.text))
+                                searchQueryDao.deleteQuery(searchSuggestions[index])
+                                searchQueryDao.insertQuery(SearchQuery(query = searchSuggestions[index]))
                             }
                             navController.navigate(SearchResultScreen(searchSuggestions[index]))
                         },
