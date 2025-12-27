@@ -1,7 +1,6 @@
 package com.kynarec.kmusic.ui.screens
 
 import android.app.Application
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -19,7 +18,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -37,7 +36,6 @@ import com.kynarec.kmusic.service.update.PlatformUpdateManager
 import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.Navigation
 import com.kynarec.kmusic.ui.PlaylistScreen
-import com.kynarec.kmusic.ui.PlaylistsScreen
 import com.kynarec.kmusic.ui.SearchResultScreen
 import com.kynarec.kmusic.ui.SearchScreen
 import com.kynarec.kmusic.ui.SettingsScreen
@@ -203,7 +201,8 @@ fun MainScreen() {
                                 }
                             },
                             viewModel = musicViewModel,
-                            database = database
+                            database = database,
+                            navController = navController
                         )
                     }
                 }

@@ -2,7 +2,6 @@ package com.kynarec.kmusic.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,14 +23,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
-import io.ktor.client.content.LocalFileContent
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -42,7 +39,7 @@ fun SongComponent(
 ) {
     // The main Row acts as the container, mimicking the XML's fixed height and clickable behavior.
     val title = song.title
-    val artist = song.artist
+    val artist = song.artists.joinToString(", ") { it.name }
     val duration = song.duration
     val imageUrl = song.thumbnail
     Row(

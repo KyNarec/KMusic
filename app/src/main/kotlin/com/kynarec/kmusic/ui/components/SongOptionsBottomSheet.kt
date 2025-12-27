@@ -30,7 +30,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -41,6 +40,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.data.db.KmusicDatabase
@@ -124,7 +124,7 @@ fun SongOptionsBottomSheet(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         ConditionalMarqueeText(
-                            text = song!!.artist,
+                            text = song!!.artists.joinToString(", ") { it.name },
                             fontSize = 14.sp,
                             maxLines = 1,
                             //overflow = TextOverflow.Ellipsis,

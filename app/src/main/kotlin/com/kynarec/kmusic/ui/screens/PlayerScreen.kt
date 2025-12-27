@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.SliderDefaults
 import androidx.compose.material.icons.Icons
@@ -34,7 +36,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,12 +57,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import com.kynarec.kmusic.utils.parseMillisToDuration
 import ir.mahozad.multiplatform.wavyslider.WaveDirection
 import ir.mahozad.multiplatform.wavyslider.material.WavySlider
 
@@ -75,34 +78,24 @@ import ir.mahozad.multiplatform.wavyslider.material.WavySlider
 fun PlayerScreen(
     onClose: () -> Unit,
     viewModel: MusicViewModel,
-    database: KmusicDatabase
+    database: KmusicDatabase,
+    navController: NavHostController
 ) {
-    //val playerViewModel = viewModel
-    //val uiState by playerViewModel.uiState.collectAsStateWithLifecycle()
+
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val showBottomSheet = remember { mutableStateOf(false) }
-//    val hazeState = rememberHazeState()
 
     // Handle system back button press
     BackHandler {
         onClose()
     }
 
-    // This DraggableState handles the swipe-down-to-dismiss gesture
-//    val draggableState = rememberDraggableState(onDelta = { delta ->
-//        if (delta > 50) { // A small threshold to prevent accidental dismissal
-//            onClose()
-//        }
-//    })
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-//            .background(Color(0xFF2B3233))
             .background(MaterialTheme.colorScheme.secondaryContainer)
-//            .hazeSource(state = hazeState)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -134,12 +127,14 @@ fun PlayerScreen(
 
         // Album art
         Box(
-            modifier = Modifier.size(300.dp)
+            modifier = Modifier
+                .size(300.dp)
                 .multiLayersShadow(
                     elevation = 10.dp,
                     transparencyMultiplier = 0.2f,
                     layers = 10,
-                    shape = RoundedCornerShape(16.dp))
+                    shape = RoundedCornerShape(16.dp)
+                )
         ) {
             AsyncImage(
                 model = uiState.currentSong?.thumbnail,
@@ -158,7 +153,12 @@ fun PlayerScreen(
 
         // Song title
         Button(
-            onClick = { /* TODO: Navigate to song details */ },
+            onClick = {
+                if (uiState.currentSong?.albumId != "") {
+                    onClose()
+                    navController.navigate(AlbumDetailScreen(uiState.currentSong?.albumId!!))
+                }
+            },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0f, 0f, 0f, 0f))
         ) {
             Text(
@@ -173,18 +173,22 @@ fun PlayerScreen(
         }
 
         // Song artist
-        Button(
-            onClick = { /* TODO: Navigate to artist details */ },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0f, 0f, 0f, 0f))
-        ) {
-            Text(
-                text = uiState.currentSong?.artist ?: "NA",
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.basicMarquee()
-            )
+        LazyRow( ){
+            items(uiState.currentSong?.artists?: emptyList()) {
+                Button(
+                    onClick = { /* TODO: Navigate to artist details */ },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0f, 0f, 0f, 0f))
+                ) {
+                    Text(
+                        text = it.name,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.basicMarquee()
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -333,7 +337,8 @@ fun PlayerScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         Row(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .clickable(true, onClick = {
                     showBottomSheet.value = true
                 })

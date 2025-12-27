@@ -1,6 +1,5 @@
 package com.kynarec.kmusic.ui.components
 
-import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
@@ -22,7 +21,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,18 +30,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.ImageLoader
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
-import coil.disk.DiskCache
 import coil.imageLoader
-import coil.memory.MemoryCache
-import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.transform.RoundedCornersTransformation
-import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.Constants.THUMBNAIL_ROUNDNESS
@@ -104,7 +96,7 @@ fun PlayerControlBar(
                 )
             )
             Text(
-                text = uiState.currentSong?.artist ?: "NA",
+                text = uiState.currentSong?.artists?.joinToString(", ") { it.name } ?: "NA",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                 maxLines = 1,

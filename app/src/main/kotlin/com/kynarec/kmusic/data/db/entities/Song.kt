@@ -1,6 +1,5 @@
 package com.kynarec.kmusic.data.db.entities
 
-import android.os.Parcel
 import android.os.Parcelable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
@@ -12,7 +11,8 @@ import kotlinx.parcelize.Parcelize
 data class Song(
     @PrimaryKey val id: String,
     val title: String,
-    @ColumnInfo(name = "artistsText") val artist: String,
+    @ColumnInfo(name = "artistsText") val artists: List<SongArtist>,
+    @ColumnInfo(name = "albumId") val albumId: String? = null,
     @ColumnInfo(name = "durationText") val duration: String,
     @ColumnInfo(name = "thumbnailUrl") val thumbnail: String,
 
