@@ -70,7 +70,7 @@ interface SongDao {
             likedSong.copy(
                 id = song.id,
                 title = song.title,
-                artist = song.artist,
+                artists = song.artists,
                 duration = song.duration,
                 thumbnail = song.thumbnail,
                 totalPlayTimeMs = song.totalPlayTimeMs

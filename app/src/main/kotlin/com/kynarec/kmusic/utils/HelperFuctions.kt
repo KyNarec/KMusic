@@ -26,11 +26,12 @@ import androidx.room.withTransaction
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.data.db.entities.SongArtist
 import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
-import com.kynarec.kmusic.service.innertube.getHighestDefinitionThumbnailFromPlayer
-import com.kynarec.kmusic.service.innertube.playSongByIdWithBestBitrate
 import com.kynarec.kmusic.service.innertube.ClientName
 import com.kynarec.kmusic.service.innertube.InnerTube
+import com.kynarec.kmusic.service.innertube.getHighestDefinitionThumbnailFromPlayer
+import com.kynarec.kmusic.service.innertube.playSongByIdWithBestBitrate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -96,7 +97,7 @@ suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = w
 
     val mediaMetadataBuilder = MediaMetadata.Builder()
         .setTitle(song.title)
-        .setArtist(song.artist)
+        .setArtist(song.artists.joinToString(", ") { it.name })
         .setIsBrowsable(false)
         .setIsPlayable(true)
         .setArtworkUri(song.thumbnail.toUri())
@@ -120,7 +121,7 @@ fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setTitle(song.title)
-                .setArtist(song.artist)
+                .setArtist(song.artists.joinToString(", ") { it.name })
                 .setArtworkUri(song.thumbnail.toUri())
                 .setIsBrowsable(false) // Songs are not folders.
                 .setIsPlayable(true)   // Songs are playable.
@@ -265,12 +266,20 @@ fun importPlaylistFromCsv(
                     .replace(",", ", ") // Simple: Replaces all ',' with ', '
                     .replace(",  ", ", ") // Optional cleanup for any double spaces created
 
+                val artists = mutableListOf<SongArtist>()
+                for (index in 0..<cleanedArtists.split(", ").size) {
+                    artists.add(SongArtist(
+                        id = data[9].split(",").get(index),
+                        name = cleanedArtists.split(", ").get(index)
+                    ))
+                }
                 val songEntity = Song(
                     id = data[2],                       // MediaId
                     title = data[3],                    // Title
-                    artist = cleanedArtists,                   // Artists
+                    artists = artists,                   // Artists
                     duration = data[5],                 // Duration
 //                    thumbnail = data[6]                 // ThumbnailUrl
+                    albumId = data[7],
                     thumbnail = getHighestDefinitionThumbnailFromPlayer(InnerTube(ClientName.WebRemix).player(data[2]))?: ""
 //                    thumbnail = InnerTube(CLIENTNAME.WEB_REMIX).(data[2])?: ""
                     // likedAt and totalPlayTimeMs use defaults (null/0L)

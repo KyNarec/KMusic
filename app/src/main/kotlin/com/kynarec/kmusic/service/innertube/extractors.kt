@@ -3,6 +3,7 @@ package com.kynarec.kmusic.service.innertube
 import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.AlbumPreview
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.data.db.entities.SongArtist
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
@@ -104,43 +105,51 @@ fun searchSongsFlow(query: String): Flow<Song> = flow {
             val flex1 =
                 renderer.flexColumns.getOrNull(1)?.musicResponsiveListItemFlexColumnRenderer
             val artistRuns = flex1?.text?.runs.orEmpty()
+            var duration = "Unknown Duration"
+            var albumId = "Unknown AlbumId"
+            val artistsList = mutableListOf<SongArtist>()
+            var dotCount = 0
+            for (index in 0..<artistRuns.size) {
+                if (artistRuns[index].text != " • ") {
+                    when (dotCount) {
+                        0 -> {
+                            val run = artistRuns[index]
+                            val artistId = run.navigationEndpoint?.browseEndpoint?.browseId ?: continue
+                            val artistName = run.text ?: "Unknown Artist"
+                            artistsList.add(SongArtist(id = artistId, name = artistName))
+                            continue
+                        }
+                        1 -> {
+                            val run = artistRuns[index]
+                            albumId = run.navigationEndpoint?.browseEndpoint?.browseId ?: continue
+                        }
+                        else -> {
+                            val run = artistRuns[index]
+                            duration = run.text ?: "Unknown Duration"
+                        }
+                    }
 
-            val artists = artistRuns
-                .filter { run ->
-                    run.navigationEndpoint?.browseEndpoint
-                        ?.browseEndpointContextSupportedConfigs
-                        ?.browseEndpointContextMusicConfig
-                        ?.pageType == "MUSIC_PAGE_TYPE_ARTIST"
+                } else {
+                    dotCount++
                 }
-                .mapNotNull { it.text }
-                .ifEmpty { listOf("Unknown Artist") }
-
-
-            // Duration (last run of flex1)
-            val duration = artistRuns.lastOrNull()?.text ?: "Unknown Duration"
+            }
 
 //            // Thumbnail
             val thumbnails = renderer.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails
-//            thumbnails?.forEach {
-//                Log.d("Thumbnail", "Thumbnail found: ${it.url} (${it.width}x${it.height})")
-//            }
-//            val desiredResolution = "=w1024-h1024-l90-rj"
             val fistPartOfThumbnailUrl = thumbnails?.maxByOrNull {
                 it.width + it.height
             }?.url?.split("=")?.getOrNull(0)
-//            val thumbnail = fistPartOfThumbnailUrl?.let {
-//                "$it$desiredResolution"
-//            }
 
             val song = Song(
                 id = videoId,
                 title = title,
-                artist = artists.joinToString(", "),
+                artists = artistsList,
+                albumId = albumId,
                 thumbnail = fistPartOfThumbnailUrl ?: "",
                 duration = duration
             )
 
-            println("Emitting song: $title by ${artists.joinToString()}")
+            println("Emitting song: $title")
             emit(song)
         }
 
@@ -204,32 +213,50 @@ fun getRadioFlow(
 
             val title = renderer.title?.runs?.firstOrNull()?.text ?: "Unknown Title"
 
-            val artists = renderer.shortBylineText?.runs
-                ?.mapNotNull { it.text }
-                ?.takeIf { it.isNotEmpty() }
-                ?: listOf("Unknown Artist")
+            val artistRuns = renderer.shortBylineText?.runs.orEmpty()
+            var albumId = "Unknown AlbumId"
+            val artistsList = mutableListOf<SongArtist>()
+            var dotCount = 0
+            for (index in 0..<artistRuns.size) {
+                if (artistRuns[index].text != " • ") {
+                    when (dotCount) {
+                        0 -> {
+                            val run = artistRuns[index]
+                            val artistId = run.navigationEndpoint?.browseEndpoint?.browseId ?: continue
+                            val artistName = run.text ?: "Unknown Artist"
+                            artistsList.add(SongArtist(id = artistId, name = artistName))
+                            continue
+                        }
+                        1 -> {
+                            val run = artistRuns[index]
+                            albumId = run.navigationEndpoint?.browseEndpoint?.browseId ?: continue
+                        }
+                        else -> {
+                            val run = artistRuns[index]
+//                            duration = run.text ?: "Unknown Duration"
+                        }
+                    }
+
+                } else {
+                    dotCount++
+                }
+            }
 
             val duration = renderer.lengthText?.runs?.firstOrNull()?.text ?: ""
-
-//            val thumbnail = getHighestDefinitionThumbnailFromPlayer(
-//                InnerTube(CLIENTNAME.WEB_REMIX).player(id)
-//            )?: innerTubeClient.getYoutubeThumbnail(id)
 
             val fistPartOfThumbnailUrl = renderer.thumbnail?.thumbnails?.maxByOrNull {
                 it.width + it.height
             }?.url?.split("=")?.getOrNull(0)
-//                renderer.thumbnail?.thumbnails?.lastOrNull()?.url
-//                    ?: innerTubeClient.getYoutubeThumbnail(id)
 
             val song = Song(
                 id = id,
                 title = title,
-                artist = artists.joinToString(", "),
+                artists = artistsList,
                 thumbnail = fistPartOfThumbnailUrl ?: "",
                 duration = duration
             )
 
-            println("Parsed song: id=$id, title=$title, artists=${artists.joinToString()}, duration=$duration")
+            println("Parsed song: id=$id, title=$title, duration=$duration")
 
             emit(song)
         }
@@ -354,30 +381,76 @@ fun getAlbumAndSongs(browseId: String): Flow<AlbumWithSongsAndIndices> = flow {
                 ?.firstOrNull()
                 ?.text
 
-            val songArtist = item
-                .musicResponsiveListItemRenderer
-                .overlay
-                ?.musicItemThumbnailOverlayRenderer
-                ?.content
-                ?.musicPlayButtonRenderer
-                ?.accessibilityPlayData
-                ?.accessibilityData
-                ?.label?.split("- ")?.getOrNull(1)
+            val artistsList = mutableListOf<SongArtist>()
+            if (item
+                    .musicResponsiveListItemRenderer
+                    .flexColumns?.get(1)
+                    ?.musicResponsiveListItemFlexColumnRenderer
+                    ?.text
+                    ?.runs == null
+            ) {
+                val artistName = item.musicResponsiveListItemRenderer.overlay
+                    ?.musicItemThumbnailOverlayRenderer
+                    ?.content
+                    ?.musicPlayButtonRenderer
+                    ?.accessibilityPlayData
+                    ?.accessibilityData
+                    ?.label?.split("- ")?.getOrNull(1)
+                val artist = item.musicResponsiveListItemRenderer
+                    .menu
+                    ?.menuRenderer
+                    ?.items
+                    ?.filter { item ->
+                        item.menuNavigationItemRenderer?.text?.runs?.firstOrNull()?.text == "Go to artist"
+                    }
+                val artistId = artist?.firstOrNull()?.menuNavigationItemRenderer?.navigationEndpoint?.browseEndpoint?.browseId?: "S"
+
+                artistsList.add(SongArtist(
+                    id = artistId,
+                    name = artistName ?: "Unknown Artist"
+                ))
+            } else {
+                val artistRuns = item
+                    .musicResponsiveListItemRenderer
+                    .flexColumns
+                    .get(1)
+                    .musicResponsiveListItemFlexColumnRenderer
+                    ?.text
+                    ?.runs
+                for (index in 0..<artistRuns!!.size) {
+                    if (
+                        artistRuns[index].text != " • "
+                        && artistRuns[index].text != " & "
+                        && artistRuns[index].text != ", "
+                    ) {
+                        // It's an artist name
+                        val run = artistRuns[index]
+                        val artistId = run.navigationEndpoint?.browseEndpoint?.browseId ?: continue
+                        val artistName = run.text ?: "Unknown Artist"
+
+                        artistsList.add(SongArtist(
+                            id = artistId,
+                            name = artistName
+                        ))
+                    }
+                }
+            }
 
             songList = songList + Song(
                 id = songId,
                 title = songTitle?: "",
-                artist = songArtist?: "",
+                artists = artistsList,
+                albumId = browseId,
                 duration = songDuration?: "",
                 thumbnail = thumbnailURL?: ""
             )
 
-            println("Emitting Song with id: $songId at index: $songIndex")
-            println("Thumbnail: $thumbnailURL, artist: $songArtist, $songDuration, $songTitle")
+//            println("Emitting Song with id: $songId at index: $songIndex")
+//            println("Thumbnail: $thumbnailURL, artist: $songArtist, $songDuration, $songTitle")
 
         }
 
-        val artist = songList.firstOrNull()?.artist?: "NA"
+        val artist = songList.firstOrNull()?.artists?.firstOrNull()?.name ?: "Various Artists"
 
         val finalAlbum = Album(
             id = browseId,

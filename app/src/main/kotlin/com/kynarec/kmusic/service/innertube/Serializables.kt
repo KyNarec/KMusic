@@ -156,7 +156,8 @@ data class NavigationEndpoint(
 
 @Serializable
 data class BrowseEndpoint(
-    val browseEndpointContextSupportedConfigs: BrowseEndpointContextSupportedConfigs? = null
+    val browseEndpointContextSupportedConfigs: BrowseEndpointContextSupportedConfigs? = null,
+    val browseId: String?
 )
 
 @Serializable
@@ -316,9 +317,30 @@ data class MusicResponsiveListItemRendererAlbum(
     val index: AlbumIndex? = null,
     val overlay: AlbumAndSongsOverlay? = null,
     val flexColumns: List<AlbumAndSongsFlexColumns>? = null,
-    val fixedColumns: List<AlbumAndSongsFixedColumns>? = null
+    val fixedColumns: List<AlbumAndSongsFixedColumns>? = null,
+    val menu: Menu? = null
 )
 
+@Serializable
+data class Menu(
+    val menuRenderer: MenuRenderer? = null
+)
+
+@Serializable
+data class MenuRenderer(
+    val items: List<MenuItem>? = null
+)
+
+@Serializable
+data class MenuItem(
+    val menuNavigationItemRenderer: MenuNavigationItemRenderer? = null
+)
+
+@Serializable
+data class MenuNavigationItemRenderer(
+    val text: TextRuns? = null,
+    val navigationEndpoint: AlbumAndSongsNavigationEndpoint? = null
+)
 @Serializable
 data class AlbumAndSongsFlexColumns(
     val musicResponsiveListItemFlexColumnRenderer: FlexColumnRenderer? = null
@@ -326,7 +348,8 @@ data class AlbumAndSongsFlexColumns(
 
 @Serializable
 data class AlbumAndSongsNavigationEndpoint(
-    val watchEndpoint: AlbumAndSongsWatchEndpoint? = null
+    val watchEndpoint: AlbumAndSongsWatchEndpoint? = null,
+    val browseEndpoint: BrowseEndpoint? = null
 )
 
 @Serializable

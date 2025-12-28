@@ -244,7 +244,7 @@ class PlayerServiceModern : MediaLibraryService() {
                             sortedSongs.map { createPartialMediaItemFromSong(it, applicationContext) }
                         }
                         SORT_BY_ARTIST_ID -> {
-                            val sortedSongs = songDao.getAllSongs().sortedBy { it.artist }
+                            val sortedSongs = songDao.getAllSongs().sortedBy { it.artists.first().name }
                             sortedSongs.map { createPartialMediaItemFromSong(it, applicationContext) }
                         }
                         else -> {
