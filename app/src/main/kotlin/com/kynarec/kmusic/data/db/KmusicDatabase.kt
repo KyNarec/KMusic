@@ -8,6 +8,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.kynarec.kmusic.data.db.dao.AlbumDao
+import com.kynarec.kmusic.data.db.dao.ArtistDao
 import com.kynarec.kmusic.data.db.dao.PersistedQueueDao
 import com.kynarec.kmusic.data.db.dao.PlaylistDao
 import com.kynarec.kmusic.data.db.dao.SearchQueryDao
@@ -32,7 +33,7 @@ import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
         SongAlbumMap::class,
         Artist::class
                ],
-    version = 7
+    version = 9
 )
 @TypeConverters(Converters::class)
 abstract class KmusicDatabase : RoomDatabase() {
@@ -42,6 +43,8 @@ abstract class KmusicDatabase : RoomDatabase() {
     abstract fun searchQueryDao(): SearchQueryDao
     abstract fun playlistDao(): PlaylistDao
     abstract fun albumDao(): AlbumDao
+    abstract fun artistDao(): ArtistDao
+
 
 
 

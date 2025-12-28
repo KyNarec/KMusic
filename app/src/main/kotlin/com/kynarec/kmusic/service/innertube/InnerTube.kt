@@ -549,6 +549,7 @@ class InnerTube(
     @Serializable
     data class BrowseRequest(
         val browseId: String,
+        val params: String? = null,
         val context: BrowseContext
     )
 
@@ -565,11 +566,13 @@ class InnerTube(
 
     suspend fun browse(
         browseId: String,
+        params: String?
     ): String {
         val url = "https://youtubei.googleapis.com/youtubei/v1/browse"
 
         val requestBody = BrowseRequest(
             browseId = browseId,
+            params = params,
             context = BrowseContext(
                 client = BrowseClient(
                     clientName = ClientName.WebRemix.label,

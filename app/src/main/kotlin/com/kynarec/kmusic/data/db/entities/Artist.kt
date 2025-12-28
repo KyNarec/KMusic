@@ -16,4 +16,4 @@ data class Artist (
     val timestamp: Long? = null,
     val bookmarkedAt: Long? = null,
     val isYoutubeArtist: Boolean = false
-)  : Parcelable
+) : Parcelable
