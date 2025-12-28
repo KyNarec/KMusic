@@ -13,6 +13,7 @@ import com.kynarec.kmusic.data.db.dao.PlaylistDao
 import com.kynarec.kmusic.data.db.dao.SearchQueryDao
 import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.data.db.entities.Album
+import com.kynarec.kmusic.data.db.entities.Artist
 import com.kynarec.kmusic.data.db.entities.PersistedQueueItem
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.SearchQuery
@@ -28,7 +29,8 @@ import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
         Playlist::class,
         SongPlaylistMap::class,
         Album::class,
-        SongAlbumMap::class
+        SongAlbumMap::class,
+        Artist::class
                ],
     version = 7
 )
