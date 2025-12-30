@@ -16,4 +16,13 @@ data class Artist (
     val timestamp: Long? = null,
     val bookmarkedAt: Long? = null,
     val isYoutubeArtist: Boolean = false
-) : Parcelable
+) : Parcelable {
+    fun toggleBookmark(): Artist {
+        return copy(
+            bookmarkedAt = if (bookmarkedAt == null) System.currentTimeMillis() else null
+        )
+    }
+
+    val isLiked: Boolean
+        get() = bookmarkedAt != null
+}

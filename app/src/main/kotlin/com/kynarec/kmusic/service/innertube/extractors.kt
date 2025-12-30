@@ -8,6 +8,7 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.data.db.entities.SongArtist
 import com.kynarec.kmusic.service.innertube.responses.AlbumBrowseResponse
 import com.kynarec.kmusic.service.innertube.responses.ArtistResponse
+import com.kynarec.kmusic.service.innertube.responses.BrowseAlbumsResponse
 import com.kynarec.kmusic.service.innertube.responses.FullResponse
 import com.kynarec.kmusic.service.innertube.responses.NextResponse
 import com.kynarec.kmusic.service.innertube.responses.PlayerResponse
@@ -1191,6 +1192,88 @@ fun browseSongs(browseId: String, params: String): Flow<Song> = flow {
             emit(fetchedSong)
         }
 
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+
+fun browseAlbums(browseId: String, params: String): Flow<AlbumPreview> = flow {
+    val innerTubeClient = InnerTube(ClientName.WebRemix)
+
+    try {
+        val raw = innerTubeClient.browse(
+            browseId = browseId,
+            params = params,
+        )
+
+        val json = Json { ignoreUnknownKeys = true }
+
+        val parsed = json.decodeFromString<BrowseAlbumsResponse>(raw)
+
+        val items = parsed
+            .browseAlbumsContents
+            ?.browseAlbumsSingleColumnBrowseResultsRenderer
+            ?.browseAlbumsTabs
+            ?.firstOrNull()
+            ?.browseAlbumsTabRenderer
+            ?.browseAlbumsContent
+            ?.browseAlbumsSectionListRenderer
+            ?.browseAlbumsContents
+            ?.firstOrNull()
+            ?.browseAlbumsGridRenderer
+            ?.browseAlbumsItems
+
+        val artists = parsed
+            .browseAlbumsHeader
+            ?.browseAlbumsMusicHeaderRenderer
+            ?.browseAlbumsTitle
+            ?.browseAlbumsRuns
+            ?.firstOrNull()
+            ?.browseAlbumsText
+
+        for (album in items.orEmpty()) {
+            val thumbnail = album
+                .browseAlbumsMusicTwoRowItemRenderer
+                ?.browseAlbumsThumbnailRenderer
+                ?.browseAlbumsMusicThumbnailRenderer
+                ?.browseAlbumsThumbnail
+                ?.browseAlbumsThumbnails
+                ?.maxByOrNull {
+                    it.browseAlbumsWidth + it.browseAlbumsHeight
+                }?.browseAlbumsUrl?.split("=")?.getOrNull(0)
+
+            val title = album
+                .browseAlbumsMusicTwoRowItemRenderer
+                ?.browseAlbumsTitle
+                ?.browseAlbumsRuns
+                ?.firstOrNull()
+                ?.browseAlbumsText
+
+            val id = album
+                .browseAlbumsMusicTwoRowItemRenderer
+                ?.browseAlbumsTitle
+                ?.browseAlbumsRuns
+                ?.firstOrNull()
+                ?.browseAlbumsNavigationEndpoint
+                ?.browseAlbumsBrowseEndpoint
+                ?.browseAlbumsBrowseId
+
+            val year = album
+                .browseAlbumsMusicTwoRowItemRenderer
+                ?.browseAlbumsSubtitle
+                ?.browseAlbumsRuns
+                ?.lastOrNull()
+                ?.browseAlbumsText
+
+            emit(AlbumPreview(
+                id = id?: "",
+                title = title?: "",
+                artist = artists?:"",
+                year = year?: "",
+                thumbnail = thumbnail?: ""
+            ))
+        }
     } catch (e: Exception) {
         e.printStackTrace()
     }

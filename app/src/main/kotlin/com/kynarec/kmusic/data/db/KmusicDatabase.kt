@@ -33,7 +33,7 @@ import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
         SongAlbumMap::class,
         Artist::class
                ],
-    version = 9
+    version = 10
 )
 @TypeConverters(Converters::class)
 abstract class KmusicDatabase : RoomDatabase() {

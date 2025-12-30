@@ -34,6 +34,7 @@ import androidx.navigation.compose.rememberNavController
 import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.service.update.PlatformUpdateManager
 import com.kynarec.kmusic.ui.AlbumDetailScreen
+import com.kynarec.kmusic.ui.AlbumListScreen
 import com.kynarec.kmusic.ui.ArtistDetailScreen
 import com.kynarec.kmusic.ui.Navigation
 import com.kynarec.kmusic.ui.PlaylistScreen
@@ -68,6 +69,7 @@ fun MainScreen() {
             database.songDao(),
             database.playlistDao(),
             database.albumDao(),
+            database.artistDao(),
             LocalContext.current
         )
     )
@@ -113,8 +115,13 @@ fun MainScreen() {
         currentRoute?.startsWith(SongListScreen::class.qualifiedName!!) == true
     }
 
+    val isAlbumListScreen = remember(currentRoute) {
+        currentRoute?.startsWith(AlbumListScreen::class.qualifiedName!!) == true
+    }
 
-    val shouldHideNavElements = isSearchScreen || isSearchResultScreen || isSettingsScreen || isPlaylistScreen || isAlbumDetailScreen || isArtistDetailScreen || isSongListScreen
+
+    val shouldHideNavElements =
+        isSearchScreen || isSearchResultScreen || isSettingsScreen || isPlaylistScreen || isAlbumDetailScreen || isArtistDetailScreen || isSongListScreen || isAlbumListScreen
 
     val darkTheme by settingsViewModel.darkModeFLow.collectAsStateWithLifecycle(DEFAULT_DARK_MODE)
 

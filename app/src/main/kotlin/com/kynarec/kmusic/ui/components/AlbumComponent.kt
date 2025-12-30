@@ -37,7 +37,7 @@ fun AlbumComponent(
     onClick: () -> Unit,
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp)
             .background(Color.Transparent),

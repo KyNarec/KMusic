@@ -29,6 +29,7 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.service.update.UpdateManager
 import com.kynarec.kmusic.ui.screens.AlbumDetailScreen
+import com.kynarec.kmusic.ui.screens.AlbumListScreen
 import com.kynarec.kmusic.ui.screens.AlbumsScreen
 import com.kynarec.kmusic.ui.screens.ArtistDetailScreen
 import com.kynarec.kmusic.ui.screens.ArtistsScreen
@@ -162,7 +163,11 @@ fun Navigation(
             SongsScreen(viewModel = musicViewModel, database = database)
         }
         composable<ArtistsScreen> {
-            ArtistsScreen()
+            ArtistsScreen(
+                viewModel = musicViewModel,
+                database = database,
+                navController = navController
+            )
         }
         composable<PlaylistsScreen> {
             val playlists =
@@ -228,6 +233,18 @@ fun Navigation(
                 database = database
             )
         }
+
+        composable<AlbumListScreen> {
+            Log.i("Navigation", "AlbumListScreen")
+            val args = it.toRoute<AlbumListScreen>()
+            AlbumListScreen(
+                browseId = args.browseId,
+                browseParams = args.browseParams,
+                navController = navController,
+                viewModel = musicViewModel,
+                database = database
+            )
+        }
     }
 }
 
@@ -281,6 +298,12 @@ data class ArtistDetailScreen(
 
 @Serializable
 data class SongListScreen(
+    val browseId: String,
+    val browseParams: String
+)
+
+@Serializable
+data class AlbumListScreen(
     val browseId: String,
     val browseParams: String
 )
