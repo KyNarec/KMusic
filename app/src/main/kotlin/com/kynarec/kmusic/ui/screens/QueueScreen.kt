@@ -3,10 +3,12 @@ package com.kynarec.kmusic.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
@@ -36,12 +38,22 @@ fun QueueScreen(
 //    hazeState: HazeState
 ) {
 
-    rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
 
     val showInfoSheet = remember { mutableStateOf(false) }
     var longClickSong by remember { mutableStateOf<Song?>(null) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val songList = uiState.songsList
+
+    LaunchedEffect(uiState.currentSong) {
+        val playingIndex = songList.indexOfFirst { it.id == uiState.currentSong?.id }
+        if (playingIndex != -1) {
+            // animateScrollToItem is a suspend function
+            listState.animateScrollToItem(index = playingIndex)
+        }
+    }
 
     BackHandler {
         onClose()
@@ -58,7 +70,8 @@ fun QueueScreen(
 //        modifier = Modifier.hazeEffect(state = hazeState)
     ) {
             LazyColumn(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                state = listState
             ) {
                 val songList = uiState.songsList
                 items(songList.size) { index ->
