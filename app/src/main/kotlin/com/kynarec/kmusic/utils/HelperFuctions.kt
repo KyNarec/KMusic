@@ -118,6 +118,7 @@ fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
     // This is a browsable item, it only needs the MediaId and Metadata.
     return MediaItem.Builder()
         .setMediaId(song.id)
+        .setUri("")
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setTitle(song.title)

@@ -186,7 +186,7 @@ suspend fun playSongByIdWithBestBitrate(videoId: String): String {
 
         println("Best bitrate URL: ${best?.url}")
 
-        return best?.url ?: ""
+        return best?.url ?: "NA"
     } catch (e: Exception) {
         e.printStackTrace()
         return ""

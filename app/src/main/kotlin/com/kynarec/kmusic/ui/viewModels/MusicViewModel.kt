@@ -29,7 +29,9 @@ import com.kynarec.kmusic.ui.screens.SortOption
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
 import com.kynarec.kmusic.utils.parseDurationToMillis
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +40,9 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 // A single state class for the entire music screen
 data class MusicUiState(
@@ -71,6 +76,9 @@ class MusicViewModel
 
     private var mediaController: MediaController? = null
 
+    private var playlistLoadJob: Job? = null
+    private var currentLoadingPlaylistId: String? = null
+
     private val playerListener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             _uiState.update { it.copy(isPlaying = isPlaying) }
@@ -86,8 +94,9 @@ class MusicViewModel
             _uiState.update {
                 it.copy(
                     currentSong = currentSong,
-                    currentDurationLong = _uiState.value.currentSong?.duration?.parseDurationToMillis()?: 0L,
-                    currentDurationString = _uiState.value.currentSong?.duration?: "0:00"
+                    currentDurationLong = _uiState.value.currentSong?.duration?.parseDurationToMillis()
+                        ?: 0L,
+                    currentDurationString = _uiState.value.currentSong?.duration ?: "0:00"
                 )
             }
 
@@ -123,7 +132,8 @@ class MusicViewModel
     }
 
     private fun initializeController() {
-        val sessionToken = SessionToken(context, ComponentName(context, PlayerServiceModern::class.java))
+        val sessionToken =
+            SessionToken(context, ComponentName(context, PlayerServiceModern::class.java))
 
         // Store the future so we can release it later
         val future = MediaController.Builder(context, sessionToken).buildAsync()
@@ -154,7 +164,10 @@ class MusicViewModel
 
                 _uiState.update {
                     if (it.currentPosition != currentPosition || it.currentDurationLong != totalDuration) {
-                        it.copy(currentPosition = currentPosition, currentDurationLong = totalDuration)
+                        it.copy(
+                            currentPosition = currentPosition,
+                            currentDurationLong = totalDuration
+                        )
                     } else {
                         it
                     }
@@ -182,36 +195,14 @@ class MusicViewModel
         if (!songList.contains(song)) {
             _uiState.update { it.copy(songsList = songList + song) }
         }
-        val index = songList.indexOf(song)
 
-
-        viewModelScope.launch {
-            val songBefore = if (index - 1 != -2) {
-                withContext(Dispatchers.IO) {
-                    createMediaItemFromSong(songList[index - 1], context)
-                }
-            } else {
-                null
+        CoroutineScope(Dispatchers.IO).launch {
+            val mediaItem = createMediaItemFromSong(song, context)
+            withContext(Dispatchers.Main) {
+                controller.setMediaItem(mediaItem)
+                controller.prepare()
+                controller.play()
             }
-            val songAfter = if (index + 1 < songList.size) {
-                withContext(Dispatchers.IO) {
-                    createMediaItemFromSong(songList[index + 1], context)
-                }
-            } else {
-                null
-            }
-
-            val mediaItem = withContext(Dispatchers.IO) {
-                createMediaItemFromSong(song, context)
-            }
-            if (songBefore != null)
-                controller.replaceMediaItem(index - 1, songBefore)
-            controller.setMediaItem(mediaItem)
-            if (songAfter != null)
-                controller.replaceMediaItem(index + 1, songAfter)
-            controller.prepare()
-            controller.play()
-
         }
     }
 
@@ -221,10 +212,19 @@ class MusicViewModel
      * @param songs The list of songs in the playlist.
      * @param startSong The song to start playing from.
      */
-    fun playPlaylist(songs: List<Song>, startSong: Song) {
+    @kotlin.OptIn(ExperimentalUuidApi::class)
+    fun playPlaylist(
+        songs: List<Song>,
+        startSong: Song,
+        playlistId: String = Uuid.random().toString()
+    ) {
         Log.i(tag, "playPlaylist called with ${songs.size} songs, starting at ${startSong.title}")
 
+        playlistLoadJob?.cancel()
+        currentLoadingPlaylistId = playlistId
+
         val controller = mediaController ?: return
+        val startIndex = songs.indexOfFirst { it.id == startSong.id }.coerceAtLeast(0)
 
         // 1. Update UI State immediately
         _uiState.update {
@@ -235,7 +235,7 @@ class MusicViewModel
         }
 
         // 2. Prepare MediaItems and update Player asynchronously
-        viewModelScope.launch {
+        playlistLoadJob = viewModelScope.launch {
             val startIndex = songs.indexOfFirst { it.id == startSong.id }.takeIf { it != -1 } ?: 0
 
             // Define the window of songs to load immediately (e.g., 5 before and 5 after)
@@ -251,6 +251,8 @@ class MusicViewModel
                 initialSongs.map { createMediaItemFromSong(it, context) }
             }
 
+            if (currentLoadingPlaylistId != playlistId) return@launch
+
             // Update the player with the initial window
             controller.setMediaItems(initialMediaItems, startSongIndexInWindow, 0L)
             controller.prepare()
@@ -260,7 +262,7 @@ class MusicViewModel
             // Load "After" songs first (priority for playback continuity)
             if (windowEnd < songs.size - 1) {
                 val afterSongs = songs.subList(windowEnd + 1, songs.size)
-                loadChunks(afterSongs, append = true)
+                loadChunks(afterSongs, append = true, playlistId)
             }
 
             // Load "Before" songs (reverse order to maintain index 0 insertion)
@@ -273,32 +275,34 @@ class MusicViewModel
                 // Add [5] at 0 -> [5, 6...]
                 // Add [3, 4] at 0 -> [3, 4, 5, 6...]
                 // Add [1, 2] at 0 -> [1, 2, 3, 4, 5, 6...]
-                loadChunks(beforeSongs, append = false)
+                loadChunks(beforeSongs, append = false, playlistId)
             }
         }
     }
 
-    private suspend fun loadChunks(songs: List<Song>, append: Boolean) {
+    private suspend fun loadChunks(songs: List<Song>, append: Boolean, playlistId: String) {
         val chunkSize = 30
         val chunks = songs.chunked(chunkSize)
 
         val chunksToProcess = if (append) chunks else chunks.asReversed()
 
-        withContext(Dispatchers.IO) {
-            chunksToProcess.forEach { chunk ->
-                val mediaItems = chunk.map {
-                    createPartialMediaItemFromSong(
-                        it,
-                        context
-                    )
+        chunksToProcess.forEach { chunk ->
+            yield()
+            if (currentLoadingPlaylistId != playlistId) return@forEach
+            val mediaItems = withContext(Dispatchers.IO) {
+                chunk.map {
+                    createPartialMediaItemFromSong(it, context)
                 }
+            }
 
-                withContext(Dispatchers.Main) {
+            withContext(Dispatchers.Main) {
+                if (currentLoadingPlaylistId == playlistId) {
                     if (append) {
                         mediaController?.addMediaItems(mediaItems)
                     } else {
                         mediaController?.addMediaItems(0, mediaItems)
                     }
+                    Log.i(tag, "Loaded chunk of ${chunk.size} songs")
                 }
             }
         }
@@ -344,7 +348,8 @@ class MusicViewModel
                 e.printStackTrace()
                 Log.e(tag, "Failed to load radio songs for ${song.id}")
             } finally {
-                val nextMediaItem = createMediaItemFromSong(_uiState.value.songsList[1], context)
+                val nextMediaItem =
+                    createMediaItemFromSong(_uiState.value.songsList[1], context)
                 withContext(Dispatchers.Main) {
                     mediaController?.replaceMediaItem(1, nextMediaItem)
                 }
@@ -465,6 +470,14 @@ class MusicViewModel
         }
     }
 
+    fun skipToSong(song: Song) {
+        Log.i(tag, "skipToSong called with song ${song.title}")
+        val index = _uiState.value.songsList.indexOf(song)
+        Log.i(tag, "skipToSong index: $index")
+        Log.i(tag, "mediaControllerCount: ${mediaController?.mediaItemCount}")
+        mediaController?.seekTo(index, 0L)
+    }
+
     fun toggleFavoriteSong(song: Song) {
         viewModelScope.launch {
             val updated = song.toggleLike()
@@ -492,7 +505,7 @@ class MusicViewModel
         }
     }
 
-    fun setSearchParam(searchParam: SortOption){
+    fun setSearchParam(searchParam: SortOption) {
         viewModelScope.launch {
             _uiState.update { it.copy(searchParam = searchParam) }
         }

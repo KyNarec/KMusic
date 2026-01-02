@@ -64,7 +64,7 @@ fun QueueScreen(
                 items(songList.size) { index ->
                     SongComponent(
                         songList[index],
-                        onClick = { viewModel.playSong(songList[index]) },
+                        onClick = { viewModel.skipToSong(songList[index]) },
                         onLongClick = {
                             longClickSong = songList[index]
                             showInfoSheet.value = true

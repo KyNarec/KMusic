@@ -16,6 +16,7 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.upstream.DefaultAllocator
@@ -86,21 +87,33 @@ class PlayerServiceModern : MediaLibraryService() {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             super.onMediaItemTransition(mediaItem, reason)
             Log.i("PlayerService", "onMediaItemTransition called with reason: $reason")
-            // Save playback time for the previous song before transitioning
             saveCurrentPlaybackTime()
-            // Reset trackers for the new song
-            if (mediaItem?.localConfiguration?.uri == null) {
+
+            val indexAtBegging = player?.currentMediaItemIndex
+            if (mediaItem?.localConfiguration?.uri.toString().isEmpty()) {
+                Log.i("PlayerService", "mediaItem is empty")
                 var fullMediaItem = MediaItem.EMPTY
                 CoroutineScope(Dispatchers.IO).launch {
                     fullMediaItem = mediaItem?.createFullMediaItem()?: MediaItem.EMPTY
+                    if (fullMediaItem != MediaItem.EMPTY && indexAtBegging == withContext(Dispatchers.Main) {player?.currentMediaItemIndex}) withContext(Dispatchers.Main) {
+                        Log.i("PlayerService", "Replacing media item")
+                        player?.replaceMediaItem(player?.currentMediaItemIndex?: 0, fullMediaItem)
+                    } else {
+                        Log.i("PlayerService", "fullMediaItem is empty or song was skipped")
+                    }
                 }
-                player?.replaceMediaItem(player?.currentMediaItemIndex?: 0, fullMediaItem)
             }
-            accumulatedPlayTime = 0L
-            playbackStartTime = System.currentTimeMillis()
-            // Update the current song ID
-            currentSongId = mediaItem?.mediaId
-            Log.i("PlayerService", "Transitioned to new media item: ${mediaItem?.mediaId}")
+
+            if (mediaItem?.localConfiguration?.uri.toString() == "NA") {
+                Log.i("PlayerService", "mediaItem uri cannot be fetched")
+                SmartMessage("Fetching error", PopupType.Error, false, this@PlayerServiceModern)
+                player?.seekToNextMediaItem()
+            } else {
+                accumulatedPlayTime = 0L
+                playbackStartTime = System.currentTimeMillis()
+                Log.i("PlayerService", "Transitioned to new media item: ${mediaItem?.mediaId}")
+                currentSongId = mediaItem?.mediaId
+            }
         }
 
         // Called when play/pause state changes
@@ -120,8 +133,12 @@ class PlayerServiceModern : MediaLibraryService() {
         // Called when the player encounters an error
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
+            val exoPlaybackException = error as ExoPlaybackException
+            when (exoPlaybackException.message) {
+                "Source error" -> SmartMessage("Source Error", PopupType.Error, false, this@PlayerServiceModern)
+                else -> SmartMessage("Unknown playback error", PopupType.Error, false, this@PlayerServiceModern)
+            }
             Log.e("PlayerService", "Player Error: ", error)
-            SmartMessage("Unknow playback error", PopupType.Error, false, this@PlayerServiceModern)
             // Here you could stop the service, show a toast, or try to recover.
         }
     }
@@ -320,7 +337,7 @@ class PlayerServiceModern : MediaLibraryService() {
     override fun onCreate() {
         super.onCreate()
 
-        try {// Ensure the DAO is initialized here.
+        try {
             songDao = (application as KMusic).database.songDao()
             Log.i("PlayerService", "songDao has been initialized.")
 
