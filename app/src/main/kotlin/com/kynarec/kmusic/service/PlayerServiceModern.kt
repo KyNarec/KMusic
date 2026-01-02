@@ -108,6 +108,7 @@ class PlayerServiceModern : MediaLibraryService() {
                 Log.i("PlayerService", "mediaItem uri cannot be fetched")
                 SmartMessage("Fetching error", PopupType.Error, false, this@PlayerServiceModern)
                 player?.seekToNextMediaItem()
+                if (player?.isPlaying == false) player?.play()
             } else {
                 accumulatedPlayTime = 0L
                 playbackStartTime = System.currentTimeMillis()
