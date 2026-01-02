@@ -3,11 +3,13 @@ package com.kynarec.kmusic.ui.viewModels
 import android.content.ComponentName
 import android.content.Context
 import androidx.annotation.OptIn
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
@@ -36,7 +38,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.concurrent.Executors
 
 // A single state class for the entire music screen
 data class MusicUiState(
@@ -66,9 +67,9 @@ class MusicViewModel
     private val _uiState = MutableStateFlow(MusicUiState())
     val uiState: StateFlow<MusicUiState> = _uiState.asStateFlow()
 
-    private var mediaControllerFuture: ListenableFuture<MediaController>
-    private val mediaController: MediaController?
-        get() = if (mediaControllerFuture.isDone) mediaControllerFuture.get() else null
+    private var mediaControllerFuture: ListenableFuture<MediaController>? = null
+
+    private var mediaController: MediaController? = null
 
     private val playerListener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -76,76 +77,73 @@ class MusicViewModel
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            // When the song changes, find it in our list and update the state
-            val currentSong = _uiState.value.songsList.find { it.id == mediaItem?.mediaId }
-//            val newTotalDuration = mediaController?.duration ?: 0L
-            val newTotalDuration = _uiState.value.currentSong?.duration?: 0L
-            val index = _uiState.value.songsList.indexOf(currentSong)
-            val songList = _uiState.value.songsList
-            val controller = mediaController ?: return
-            viewModelScope.launch {
-                val songBefore = if (index - 1 != -2 && index -1 != -1) {
-                    withContext(Dispatchers.IO) {
-                        createMediaItemFromSong(songList[index - 1], context)
-                    }
-                } else {
-                    null
-                }
-                val songAfter = if (index + 1 < songList.size) {
-                    withContext(Dispatchers.IO) {
-                        createMediaItemFromSong(songList[index + 1], context)
-                    }
-                } else {
-                    null
-                }
-                if (songBefore != null)
-                    controller.replaceMediaItem(index - 1, songBefore)
-                if (songAfter != null)
-                    controller.replaceMediaItem(index + 1, songAfter)
-            }
+            Log.i(tag, "onMediaItemTransition called with reason: $reason")
 
-
-//            val newCurrentDuration = parseDurationToMillis(currentSong?.duration ?: "0")
+            // When the song changes, find it in list and update the state
+            val songsList = _uiState.value.songsList
+            val currentSong = songsList.find { it.id == mediaItem?.mediaId }
 
             _uiState.update {
                 it.copy(
                     currentSong = currentSong,
-//                    currentDurationLong = if (newTotalDuration > 0) newTotalDuration else 0L,
                     currentDurationLong = _uiState.value.currentSong?.duration?.parseDurationToMillis()?: 0L,
                     currentDurationString = _uiState.value.currentSong?.duration?: "0:00"
                 )
             }
+
+            val index = songsList.indexOf(currentSong)
+            val controller = mediaController ?: return
+
+            viewModelScope.launch {
+                // Handle Previous Song
+                if (index > 0) {
+                    val songBefore = withContext(Dispatchers.IO) {
+                        createMediaItemFromSong(songsList[index - 1], context)
+                    }
+                    controller.replaceMediaItem(index - 1, songBefore)
+                }
+
+                // Handle Next Song
+                if (index < songsList.size - 1) {
+                    val songAfter = withContext(Dispatchers.IO) {
+                        createMediaItemFromSong(songsList[index + 1], context)
+                    }
+                    controller.replaceMediaItem(index + 1, songAfter)
+                }
+            }
         }
 
-        override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
+        override fun onTimelineChanged(timeline: Timeline, reason: Int) {
             _uiState.update { it.copy(showControlBar = !timeline.isEmpty) }
         }
     }
 
     init {
-        // 1. Load the songs from the database
-//        loadSongs()
-
-        // 2. Initialize the connection to the MediaService
-        val sessionToken =
-            SessionToken(context, ComponentName(context, PlayerServiceModern::class.java))
-        mediaControllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
-        mediaControllerFuture.addListener({
-            // This runs on a background executor, so it's safe to call get()
-            val controller = mediaControllerFuture.get()
-            controller.addListener(playerListener)
-
-            // Start updating playback position on the main thread
-            viewModelScope.launch { updatePosition() }
-        }, Executors.newSingleThreadExecutor())
-
+        initializeController()
     }
 
-    private fun loadSongs() {
-        viewModelScope.launch {
-            val songs = songDao.getSongsWithPlaytime() // Assuming this fetches your songs
-            _uiState.update { it.copy(songsList = songs) }
-        }
+    private fun initializeController() {
+        val sessionToken = SessionToken(context, ComponentName(context, PlayerServiceModern::class.java))
+
+        // Store the future so we can release it later
+        val future = MediaController.Builder(context, sessionToken).buildAsync()
+        mediaControllerFuture = future
+
+        future.addListener({
+            try {
+                val controller = future.get()
+                this.mediaController = controller
+
+                controller.addListener(playerListener)
+
+                // Sync initial state
+                _uiState.update { it.copy(isPlaying = controller.isPlaying) }
+                updatePosition()
+
+            } catch (e: Exception) {
+                Log.e(tag, "Failed to connect to MediaController", e)
+            }
+        }, ContextCompat.getMainExecutor(context)) // Runs on Main Thread safely
     }
 
     private fun updatePosition() {
@@ -508,8 +506,11 @@ class MusicViewModel
 
     override fun onCleared() {
         super.onCleared()
+        // Critical: Release the controller to prevent memory leaks
         mediaController?.removeListener(playerListener)
-        MediaController.releaseFuture(mediaControllerFuture)
+        mediaControllerFuture?.let {
+            MediaController.releaseFuture(it)
+        }
     }
 
     /**

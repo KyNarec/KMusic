@@ -7,6 +7,7 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
@@ -32,6 +33,9 @@ import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.dao.SongDao
+import com.kynarec.kmusic.enums.PopupType
+import com.kynarec.kmusic.utils.SmartMessage
+import com.kynarec.kmusic.utils.createFullMediaItem
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
 import kotlinx.coroutines.CoroutineScope
@@ -81,9 +85,17 @@ class PlayerServiceModern : MediaLibraryService() {
         // Called when the player transitions to a new song or the playlist ends
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             super.onMediaItemTransition(mediaItem, reason)
+            Log.i("PlayerService", "onMediaItemTransition called with reason: $reason")
             // Save playback time for the previous song before transitioning
             saveCurrentPlaybackTime()
             // Reset trackers for the new song
+            if (mediaItem?.localConfiguration?.uri == null) {
+                var fullMediaItem = MediaItem.EMPTY
+                CoroutineScope(Dispatchers.IO).launch {
+                    fullMediaItem = mediaItem?.createFullMediaItem()?: MediaItem.EMPTY
+                }
+                player?.replaceMediaItem(player?.currentMediaItemIndex?: 0, fullMediaItem)
+            }
             accumulatedPlayTime = 0L
             playbackStartTime = System.currentTimeMillis()
             // Update the current song ID
@@ -106,9 +118,10 @@ class PlayerServiceModern : MediaLibraryService() {
         }
 
         // Called when the player encounters an error
-        override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+        override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
             Log.e("PlayerService", "Player Error: ", error)
+            SmartMessage("Unknow playback error", PopupType.Error, false, this@PlayerServiceModern)
             // Here you could stop the service, show a toast, or try to recover.
         }
     }
@@ -136,46 +149,8 @@ class PlayerServiceModern : MediaLibraryService() {
             return Futures.immediateFuture(updatedItems)
         }
 
-//        override fun onAddMediaItems(
-//            mediaSession: MediaSession,
-//            controller: MediaSession.ControllerInfo,
-//            mediaItems: MutableList<MediaItem>
-//        ): ListenableFuture<MutableList<MediaItem>> {
-//            Log.d(tag, "onAddMediaItems called with ${mediaItems.size} items")
-//            val future = SettableFuture.create<MutableList<MediaItem>>()
-//
-//            if (mediaItems.isEmpty()) {
-//                future.set(mutableListOf())
-//                return future
-//            }
-//
-//            serviceScope.launch(Dispatchers.IO) {
-//                val resolvedItems = mutableListOf<MediaItem>()
-//                try {
-//                    for (item in mediaItems) {
-//                        val mediaId = item.mediaId
-//                        if (mediaId == MediaItem.DEFAULT_MEDIA_ID) continue
-//
-//                        val song = songDao.getSongById(mediaId)
-//                        if (song != null) {
-//                            // Log.i(tag, "Found song in database: ${song.title}")
-//                            val fullMediaItem = createMediaItemFromSong(context = applicationContext, song = song)
-//                            resolvedItems.add(fullMediaItem)
-//                        } else {
-//                            Log.e(tag, "Song not found for mediaId: $mediaId")
-//                        }
-//                    }
-//                    future.set(resolvedItems)
-//                } catch (e: Exception) {
-//                    Log.e(tag, "Error retrieving songs from database.", e)
-//                    future.setException(e)
-//                }
-//            }
-//            return future
-//        }
 
-
-        // MODIFIED: This is where Android Auto requests the root of your media library.
+        // This is where Android Auto requests the root of your media library.
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,

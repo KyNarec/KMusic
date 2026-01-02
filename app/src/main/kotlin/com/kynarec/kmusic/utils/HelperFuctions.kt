@@ -130,6 +130,13 @@ fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
         .build()
 }
 
+suspend fun MediaItem.createFullMediaItem(): MediaItem {
+    val uri = playSongByIdWithBestBitrate(this.mediaId)
+    return this.buildUpon()
+        .setUri(uri)
+        .build()
+}
+
 @Composable
 fun ConditionalMarqueeText(
     text: String,
