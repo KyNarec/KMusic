@@ -16,11 +16,11 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -29,7 +29,9 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.service.update.UpdateManager
 import com.kynarec.kmusic.ui.screens.AlbumDetailScreen
+import com.kynarec.kmusic.ui.screens.AlbumListScreen
 import com.kynarec.kmusic.ui.screens.AlbumsScreen
+import com.kynarec.kmusic.ui.screens.ArtistDetailScreen
 import com.kynarec.kmusic.ui.screens.ArtistsScreen
 import com.kynarec.kmusic.ui.screens.HomeScreen
 import com.kynarec.kmusic.ui.screens.PlaylistDetailScreen
@@ -37,6 +39,7 @@ import com.kynarec.kmusic.ui.screens.PlaylistsScreen
 import com.kynarec.kmusic.ui.screens.SearchResultScreen
 import com.kynarec.kmusic.ui.screens.SearchScreen
 import com.kynarec.kmusic.ui.screens.SettingsScreen
+import com.kynarec.kmusic.ui.screens.SongListScreen
 import com.kynarec.kmusic.ui.screens.SongsScreen
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
@@ -160,7 +163,11 @@ fun Navigation(
             SongsScreen(viewModel = musicViewModel, database = database)
         }
         composable<ArtistsScreen> {
-            ArtistsScreen()
+            ArtistsScreen(
+                viewModel = musicViewModel,
+                database = database,
+                navController = navController
+            )
         }
         composable<PlaylistsScreen> {
             val playlists =
@@ -203,6 +210,39 @@ fun Navigation(
                 viewModel = musicViewModel,
                 database = database,
                 navController = navController
+            )
+        }
+        composable<ArtistDetailScreen> {
+            Log.i("Navigation", "ArtistDetailScreen")
+            val args = it.toRoute<ArtistDetailScreen>()
+            ArtistDetailScreen(
+                artistId = args.artistId,
+                viewModel = musicViewModel,
+                database = database,
+                navController = navController
+            )
+        }
+
+        composable<SongListScreen> {
+            Log.i("Navigation", "SongListScreen")
+            val args = it.toRoute<SongListScreen>()
+            SongListScreen(
+                browseId = args.browseId,
+                browseParams = args.browseParams,
+                viewModel = musicViewModel,
+                database = database
+            )
+        }
+
+        composable<AlbumListScreen> {
+            Log.i("Navigation", "AlbumListScreen")
+            val args = it.toRoute<AlbumListScreen>()
+            AlbumListScreen(
+                browseId = args.browseId,
+                browseParams = args.browseParams,
+                navController = navController,
+                viewModel = musicViewModel,
+                database = database
             )
         }
     }
@@ -249,4 +289,21 @@ object SettingsScreen
 @Serializable
 data class AlbumDetailScreen(
     val albumId: String
+)
+
+@Serializable
+data class ArtistDetailScreen(
+    val artistId: String
+)
+
+@Serializable
+data class SongListScreen(
+    val browseId: String,
+    val browseParams: String
+)
+
+@Serializable
+data class AlbumListScreen(
+    val browseId: String,
+    val browseParams: String
 )

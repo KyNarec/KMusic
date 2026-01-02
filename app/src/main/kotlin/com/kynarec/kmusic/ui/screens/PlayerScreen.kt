@@ -1,5 +1,6 @@
 package com.kynarec.kmusic.ui.screens
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -16,8 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.SliderDefaults
 import androidx.compose.material.icons.Icons
@@ -52,8 +51,14 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,6 +69,7 @@ import coil.imageLoader
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.ui.AlbumDetailScreen
+import com.kynarec.kmusic.ui.ArtistDetailScreen
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import ir.mahozad.multiplatform.wavyslider.WaveDirection
 import ir.mahozad.multiplatform.wavyslider.material.WavySlider
@@ -172,24 +178,61 @@ fun PlayerScreen(
             )
         }
 
-        // Song artist
-        LazyRow( ){
-            items(uiState.currentSong?.artists?: emptyList()) {
-                Button(
-                    onClick = { /* TODO: Navigate to artist details */ },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0f, 0f, 0f, 0f))
-                ) {
-                    Text(
-                        text = it.name,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.basicMarquee()
+        val artists = uiState.currentSong?.artists ?: emptyList()
+
+        val annotatedString = buildAnnotatedString {
+            artists.forEachIndexed { index, artist ->
+                withLink(
+                    LinkAnnotation.Clickable(
+                        tag = "artistId",
+                        linkInteractionListener = {
+                            Log.i("PlayerScreen", "Clicked Artist ID: ${artist.id}")
+                            onClose()
+                            navController.navigate(ArtistDetailScreen(artist.id))
+                        }
                     )
+                ) {
+                    withStyle(style = SpanStyle(
+                        color = MaterialTheme.colorScheme.onBackground,
+                        textDecoration = TextDecoration.None // Explicitly remove underline
+                    )) {
+                        append(artist.name)
+                    }
+                }
+
+                if (index < artists.lastIndex) {
+                    append(", ")
                 }
             }
         }
+
+        Text(
+            text = annotatedString,
+            fontSize = 16.sp,
+            maxLines = 1,
+            modifier = Modifier.basicMarquee()
+        )
+//        // Song artist
+//        LazyRow() {
+//            items(uiState.currentSong?.artists ?: emptyList()) {
+//                Button(
+//                    onClick = {
+//                        onClose()
+//                        navController.navigate(ArtistDetailScreen(it.id))
+//                    },
+//                    colors = ButtonDefaults.buttonColors(containerColor = Color(0f, 0f, 0f, 0f))
+//                ) {
+//                    Text(
+//                        text = it.name,
+//                        fontSize = 16.sp,
+//                        color = MaterialTheme.colorScheme.onBackground,
+//                        maxLines = 1,
+//                        overflow = TextOverflow.Ellipsis,
+//                        modifier = Modifier.basicMarquee()
+//                    )
+//                }
+//            }
+//        }
 
         Spacer(modifier = Modifier.height(24.dp))
 

@@ -14,9 +14,11 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.kynarec.kmusic.data.db.dao.AlbumDao
+import com.kynarec.kmusic.data.db.dao.ArtistDao
 import com.kynarec.kmusic.data.db.dao.PlaylistDao
 import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.data.db.entities.Album
+import com.kynarec.kmusic.data.db.entities.Artist
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerServiceModern
@@ -56,6 +58,7 @@ class MusicViewModel
     private val songDao: SongDao,
     private val playlistDao: PlaylistDao,
     private val albumDao: AlbumDao,
+    private val artistDao: ArtistDao,
     private val context: Context
 ) : ViewModel() {
     private val tag = "MusicViewModel"
@@ -478,6 +481,13 @@ class MusicViewModel
         }
     }
 
+    fun toggleFavoriteArtist(artist: Artist) {
+        viewModelScope.launch {
+            val updated = artist.toggleBookmark()
+            artistDao.updateArtist(updated)
+        }
+    }
+
     fun setSortOption(sortOption: SortOption) {
         viewModelScope.launch {
             _uiState.update { it.copy(songsSortOption = sortOption) }
@@ -509,12 +519,13 @@ class MusicViewModel
         private val songDao: SongDao,
         private val playlistDao: PlaylistDao,
         private val albumDao: AlbumDao,
+        private val artistDao: ArtistDao,
         private val context: Context
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(MusicViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return MusicViewModel(songDao, playlistDao, albumDao, context) as T
+                return MusicViewModel(songDao, playlistDao, albumDao, artistDao, context) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

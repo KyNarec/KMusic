@@ -23,7 +23,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,16 +31,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.AlbumPreview
+import com.kynarec.kmusic.data.db.entities.ArtistPreview
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.innertube.searchAlbums
+import com.kynarec.kmusic.service.innertube.searchArtists
 import com.kynarec.kmusic.service.innertube.searchSongsFlow
 import com.kynarec.kmusic.ui.AlbumDetailScreen
+import com.kynarec.kmusic.ui.ArtistDetailScreen
 import com.kynarec.kmusic.ui.components.AlbumComponent
+import com.kynarec.kmusic.ui.components.ArtistComponent
 import com.kynarec.kmusic.ui.components.SongComponent
 import com.kynarec.kmusic.ui.components.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
@@ -63,6 +67,7 @@ fun SearchResultScreen(
     var initialLoading by remember { mutableStateOf(true) }
     var songs by remember { mutableStateOf(emptyList<Song>()) }
     var albums by remember { mutableStateOf(emptyList<AlbumPreview>()) }
+    var artists by remember { mutableStateOf(emptyList<ArtistPreview>()) }
 
     var isLoading by remember { mutableStateOf(true) }
 
@@ -76,6 +81,7 @@ fun SearchResultScreen(
     val searchParams = listOf(
         SortOption("Song"),
         SortOption("Album"),
+        SortOption("Artist"),
         SortOption("Playlist"),
     )
 
@@ -118,6 +124,22 @@ fun SearchResultScreen(
                     if (albums.isEmpty()) {
                         Log.w("SearchResultScreen", "No results found for Album '$query'.")
                     }
+                }
+            }
+
+            "Artist" -> {
+                if (artists.isEmpty()) {
+                    isLoading = true
+                    Log.i("SearchResultScreen", "isLoading is now true")
+                    artists = emptyList()
+
+                    searchArtists(query)
+                        .flowOn(Dispatchers.IO)
+                        .collect {
+                            artists = artists + it
+                            initialLoading = false
+                            isLoading = false
+                        }
                 }
             }
 
@@ -243,6 +265,40 @@ fun SearchResultScreen(
                                             navController = navController,
                                             onClick = {
                                                 navController.navigate(AlbumDetailScreen(album.id))
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    "Artist" -> {
+                        Column {
+                            if (isLoading) {
+                                Box(
+                                    contentAlignment = Alignment.TopCenter,
+                                    modifier = Modifier.fillMaxSize()
+                                        .padding(vertical = 8.dp)
+                                ) {
+                                    CircularWavyProgressIndicator()
+                                }
+                            } else {
+                                LazyVerticalGrid(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 8.dp),
+                                    contentPadding = PaddingValues(
+                                        top = 8.dp,
+                                        bottom = bottomPadding
+                                    ),
+                                    columns = GridCells.Adaptive(minSize = 100.dp)
+                                ) {
+                                    items(artists, key = { it.id }) { artist ->
+                                        ArtistComponent(
+                                            artistPreview = artist,
+                                            onClick = {
+                                                navController.navigate(ArtistDetailScreen(artist.id))
                                             }
                                         )
                                     }

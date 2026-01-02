@@ -23,21 +23,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.imageLoader
-import com.kynarec.kmusic.data.db.entities.AlbumPreview
+import com.kynarec.kmusic.data.db.entities.ArtistPreview
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
 
 @Composable
-fun AlbumComponent(
+fun ArtistComponent(
     modifier: Modifier = Modifier,
-    albumPreview: AlbumPreview,
-    navController: NavHostController,
-    onClick: () -> Unit,
+    artistPreview: ArtistPreview,
+    onClick: () -> Unit
 ) {
     Card(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp)
             .background(Color.Transparent),
@@ -60,7 +58,7 @@ fun AlbumComponent(
             )
             {
                 AsyncImage(
-                    model = albumPreview.thumbnail,
+                    model = artistPreview.thumbnailUrl,
                     contentDescription = "Album art",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -70,7 +68,7 @@ fun AlbumComponent(
                 )
             }
             Text(
-                text = albumPreview.title,
+                text = artistPreview.name,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
@@ -78,27 +76,10 @@ fun AlbumComponent(
                     .align(Alignment.CenterHorizontally),
                 maxLines = 1
             )
-//            ConditionalMarqueeText(
-//                text = albumPreview.title,
-//                style = MaterialTheme.typography.titleMedium,
-//                color = MaterialTheme.colorScheme.onSurfaceVariant,
-//                modifier = Modifier
-//                    .align(Alignment.CenterHorizontally)
-//            )
             ConditionalMarqueeText(
-                text = albumPreview.artist,
-//                style = MaterialTheme.typography.titleMedium,
-//                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = artistPreview.monthlyListeners,
                 modifier = Modifier
                     .basicMarquee(initialDelayMillis = 2000)
-                    .align(Alignment.CenterHorizontally)
-            )
-            ConditionalMarqueeText(
-                text = albumPreview.year,
-//                style = MaterialTheme.typography.titleMedium,
-//                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .basicMarquee(initialDelayMillis = 1000)
                     .align(Alignment.CenterHorizontally)
             )
         }

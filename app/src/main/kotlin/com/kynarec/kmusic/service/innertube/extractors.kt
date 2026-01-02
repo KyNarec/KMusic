@@ -2,8 +2,21 @@ package com.kynarec.kmusic.service.innertube
 
 import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.AlbumPreview
+import com.kynarec.kmusic.data.db.entities.Artist
+import com.kynarec.kmusic.data.db.entities.ArtistPreview
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.data.db.entities.SongArtist
+import com.kynarec.kmusic.service.innertube.responses.AlbumBrowseResponse
+import com.kynarec.kmusic.service.innertube.responses.ArtistResponse
+import com.kynarec.kmusic.service.innertube.responses.BrowseAlbumsResponse
+import com.kynarec.kmusic.service.innertube.responses.FullResponse
+import com.kynarec.kmusic.service.innertube.responses.NextResponse
+import com.kynarec.kmusic.service.innertube.responses.PlayerResponse
+import com.kynarec.kmusic.service.innertube.responses.SearchAlbumsResponse
+import com.kynarec.kmusic.service.innertube.responses.SearchArtistsResponse
+import com.kynarec.kmusic.service.innertube.responses.SearchResponse
+import com.kynarec.kmusic.service.innertube.responses.SearchSuggestionsResponse
+import innertube.responses.BrowseSongsResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
@@ -162,17 +175,22 @@ suspend fun playSongByIdWithBestBitrate(videoId: String): String {
     val json = Json { ignoreUnknownKeys = true }
 
     val raw = InnerTube(ClientName.Android).player(videoId)
-    val response = json.decodeFromString<PlayerResponse>(raw)
+    try {
+        val response = json.decodeFromString<PlayerResponse>(raw)
 
-    val best = response.streamingData
-        ?.adaptiveFormats
-        ?.filter { it.audioQuality in listOf("AUDIO_QUALITY_HIGH", "AUDIO_QUALITY_MEDIUM") }
-        ?.filter { it.url != null }
-        ?.maxByOrNull { it.averageBitrate ?: 0 }
+        val best = response.streamingData
+            ?.adaptiveFormats
+            ?.filter { it.audioQuality in listOf("AUDIO_QUALITY_HIGH", "AUDIO_QUALITY_MEDIUM") }
+            ?.filter { it.url != null }
+            ?.maxByOrNull { it.averageBitrate ?: 0 }
 
-    println("Best bitrate URL: ${best?.url}")
+        println("Best bitrate URL: ${best?.url}")
 
-    return best?.url ?: ""
+        return best?.url ?: ""
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return ""
+    }
 }
 
 fun getRadioFlow(
@@ -275,7 +293,7 @@ fun getAlbumAndSongs(browseId: String): Flow<AlbumWithSongsAndIndices> = flow {
     val innerTubeClient = InnerTube(ClientName.WebRemix)
     var songList = emptyList<Song>()
     try {
-        val raw = innerTubeClient.browse(browseId)
+        val raw = innerTubeClient.browse(browseId, null)
 
         val json = Json { ignoreUnknownKeys = true }
 
@@ -561,6 +579,701 @@ fun searchAlbums(searchQuery: String): Flow<AlbumPreview> = flow {
             )
         }
 
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+
+fun searchArtists(searchQuery: String): Flow<ArtistPreview> = flow {
+    val innerTubeClient = InnerTube(ClientName.WebRemix)
+    try {
+        val raw = innerTubeClient
+            .search(
+                query = searchQuery,
+                params = InnerTube.SearchFilter.Artist.value
+            )
+
+        println(raw)
+
+        val json = Json { ignoreUnknownKeys = true }
+
+        val parsed = json.decodeFromString<SearchArtistsResponse>(raw)
+
+        val contents = parsed
+            .contents
+            ?.tabbedSearchResultsRenderer
+            ?.tabs
+            ?.firstOrNull()
+            ?.tabRenderer
+            ?.content
+            ?.sectionListRenderer
+            ?.contents
+            ?.get(1)
+            ?.musicShelfRenderer
+            ?.contents
+
+        for (content in contents.orEmpty()) {
+            val thumbnail = content
+                .musicResponsiveListItemRenderer
+                ?.thumbnail
+                ?.musicThumbnailRenderer
+                ?.thumbnail
+                ?.thumbnails
+                ?.maxByOrNull {
+                    it.width + it.height
+                }?.url?.split("=")?.getOrNull(0)
+
+            val id = content
+                .musicResponsiveListItemRenderer
+                ?.navigationEndpoint
+                ?.browseEndpoint
+                ?.browseId
+
+            val name = content
+                .musicResponsiveListItemRenderer
+                ?.flexColumns
+                ?.firstOrNull()
+                ?.musicResponsiveListItemFlexColumnRenderer
+                ?.text
+                ?.runs
+                ?.firstOrNull()
+                ?.text
+
+            val monthlyListeners = content
+                .musicResponsiveListItemRenderer
+                ?.flexColumns
+                ?.get(1)
+                ?.musicResponsiveListItemFlexColumnRenderer
+                ?.text
+                ?.runs
+                ?.lastOrNull()
+                ?.text
+
+            emit(
+                ArtistPreview(
+                    id = id ?: "",
+                    name = name ?: "",
+                    thumbnailUrl = thumbnail ?: "",
+                    monthlyListeners = monthlyListeners ?: ""
+                )
+            )
+        }
+
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+data class ArtistPage(
+    val artist: Artist,
+    val topSongs: List<Song>,
+    val topSongsBrowseId: String = "",
+    val topSongsParams: String = "",
+    val albums: List<AlbumPreview>,
+    val albumsBrowseId: String = "",
+    val albumsParams: String = "",
+    val singlesAndEps: List<AlbumPreview>,
+    val singlesAndEpsBrowseId: String = "",
+    val singlesAndEpsParams: String = ""
+)
+
+fun getArtist(browseId: String): Flow<ArtistPage> = flow {
+    val innerTubeClient = InnerTube(ClientName.WebRemix)
+    val topSongs = mutableListOf<Song>()
+    val albums = mutableListOf<AlbumPreview>()
+    val singleAndEps = mutableListOf<AlbumPreview>()
+
+    try {
+        val raw = innerTubeClient.browse(browseId, null)
+//        val file = File("output.json")
+//        file.writeText(raw)
+//        println("File saved to: ${file.absolutePath}")
+
+        val json = Json { ignoreUnknownKeys = true }
+
+        val parsed = json.decodeFromString<ArtistResponse>(raw)
+
+        val artistName = parsed
+            .artistHeader
+            ?.artistMusicImmersiveHeaderRenderer
+            ?.artistTitle
+            ?.artistRuns
+            ?.firstOrNull()
+            ?.artistText
+
+        val artistSubscribers = parsed
+            .artistHeader
+            ?.artistMusicImmersiveHeaderRenderer
+            ?.artistSubscriptionButton
+            ?.artistSubscribeButtonRenderer
+            ?.artistSubscriberCountText
+            ?.artistRuns
+            ?.firstOrNull()
+            ?.artistText
+
+        val description = parsed
+            .artistMicroformat
+            ?.artistMicroformatDataRenderer
+            ?.artistDescription
+
+        val thumbnail = parsed
+            .artistHeader
+            ?.artistMusicImmersiveHeaderRenderer
+            ?.artistThumbnail
+            ?.artistMusicThumbnailRenderer
+            ?.artistThumbnail
+            ?.artistThumbnails
+            ?.maxByOrNull {
+                it.artistWidth + it.artistHeight
+            }?.artistUrl?.split("=")?.getOrNull(0)?: ""
+
+        println("Artist Thumbnail Url: $thumbnail")
+
+        val artist = Artist(
+            id = browseId,
+            name = artistName?: "",
+            thumbnailUrl = thumbnail,
+            subscriber = artistSubscribers,
+            description = description,
+            timestamp = System.currentTimeMillis(),
+            bookmarkedAt = null,
+            isYoutubeArtist = true
+        )
+
+        val artistInfo = parsed
+            .artistContents
+            ?.artistSingleColumnBrowseResultsRenderer
+            ?.artistTabs
+            ?.firstOrNull()
+            ?.artistTabRenderer
+
+        val topSongsBrowseId = artistInfo
+            ?.artistContent
+            ?.artistSectionListRenderer
+            ?.artistContents
+            ?.firstOrNull()
+            ?.artistMusicShelfRenderer
+            ?.artistBottomEndpoint
+            ?.artistBrowseEndpoint
+            ?.artistBrowseId?: ""
+
+        val topSongsParams = artistInfo
+            ?.artistContent
+            ?.artistSectionListRenderer
+            ?.artistContents
+            ?.firstOrNull()
+            ?.artistMusicShelfRenderer
+            ?.artistBottomEndpoint
+            ?.artistBrowseEndpoint
+            ?.artistParams?: ""
+
+        var singleAndEPsBrowseId: String? = null
+        var singleAndEPsParams: String? = null
+        var albumsBrowseId: String? = null
+        var albumsParams: String? = null
+
+        for (song in artistInfo
+            ?.artistContent
+            ?.artistSectionListRenderer
+            ?.artistContents
+            ?.firstOrNull()
+            ?.artistMusicShelfRenderer
+            ?.artistContents.orEmpty()) {
+
+            val thumbnail = song
+                .artistMusicResponsiveListItemRenderer
+                ?.artistThumbnail
+                ?.artistMusicThumbnailRenderer
+                ?.artistThumbnail
+                ?.artistThumbnails
+                ?.maxByOrNull {
+                    it.artistWidth + it.artistHeight
+                }?.artistUrl?.split("=")?.getOrNull(0)
+
+            val id = song
+                .artistMusicResponsiveListItemRenderer
+                ?.artistOverlay
+                ?.artistMusicItemThumbnailOverlayRenderer
+                ?.artistContent
+                ?.artistMusicPlayButtonRenderer
+                ?.artistPlayNavigationEndpoint
+                ?.artistWatchEndpoint
+                ?.artistVideoId?: ""
+
+            val title = song
+                .artistMusicResponsiveListItemRenderer
+                ?.artistFlexColumns
+                ?.firstOrNull()
+                ?.artistMusicResponsiveListItemFlexColumnRenderer
+                ?.artistText
+                ?.artistRuns
+                ?.firstOrNull()
+                ?.artistText?: "Unknown Title"
+
+            val artistsList = mutableListOf<SongArtist>()
+            var albumBrowseId: String? = null
+            val flexColumns = song
+                .artistMusicResponsiveListItemRenderer
+                ?.artistFlexColumns
+
+            for (flexColumn in flexColumns.orEmpty()) {
+                val runs = flexColumn
+                    .artistMusicResponsiveListItemFlexColumnRenderer
+                    ?.artistText
+                    ?.artistRuns
+                for (index in 0..<runs!!.size) {
+                    if (runs[index].artistText != " & "
+                        && runs[index].artistText != ", "
+                        && runs[index].artistNavigationEndpoint
+                            ?.artistBrowseEndpoint
+                            ?.artistBrowseEndpointContextSupportedConfigs
+                            ?.artistBrowseEndpointContextMusicConfig
+                            ?.artistPageType == "MUSIC_PAGE_TYPE_ARTIST"
+                    ) {
+                        val run = runs[index]
+                        val artistId = run
+                            .artistNavigationEndpoint
+                            ?.artistBrowseEndpoint
+                            ?.artistBrowseId ?: continue
+                        val artistName = run.artistText ?: "Unknown Artist"
+                        artistsList.add(SongArtist(id = artistId, name = artistName))
+                    } else if (runs[index].artistNavigationEndpoint
+                            ?.artistBrowseEndpoint
+                            ?.artistBrowseEndpointContextSupportedConfigs
+                            ?.artistBrowseEndpointContextMusicConfig
+                            ?.artistPageType == "MUSIC_PAGE_TYPE_ALBUM")
+                    {
+                        albumBrowseId = runs[index]
+                            .artistNavigationEndpoint
+                            ?.artistBrowseEndpoint
+                            ?.artistBrowseId
+                    }
+                }
+            }
+
+            val s = Song(
+                id = id,
+                title = title,
+                artists = artistsList,
+                albumId = albumBrowseId,
+                duration = "",
+                thumbnail = thumbnail?: ""
+            )
+            topSongs.add(s)
+
+            println("Extracted top song: $title, $id")
+            val artistNames = s.artists.joinToString(separator = ", ") { artist -> artist.name }
+            println("Artist: $artistNames")
+            val artistIds = s.artists.joinToString(separator = ", ") { artist -> artist.id }
+            println("Artist Ids: $artistIds")
+            println("Album Id: $albumBrowseId")
+            println("Thumbnail: $thumbnail")
+        }
+
+        for (carousel in artistInfo
+            ?.artistContent
+            ?.artistSectionListRenderer
+            ?.artistContents.orEmpty()) {
+            if (carousel
+                    .artistMusicCarouselShelfRenderer
+                    ?.artistHeader
+                    ?.artistMusicCarouselShelfBasicHeaderRenderer
+                    ?.artistTitle
+                    ?.artistRuns
+                    ?.firstOrNull()
+                    ?.artistText == "Albums") {
+                for (album in carousel
+                    .artistMusicCarouselShelfRenderer
+                    .artistContents.orEmpty()) {
+
+                    val thumbnail = album
+                        .artistMusicTwoRowItemRenderer
+                        ?.artistThumbnailRenderer
+                        ?.artistMusicThumbnailRenderer
+                        ?.artistThumbnail
+                        ?.artistThumbnails
+                        ?.maxByOrNull {
+                            it.artistWidth + it.artistHeight
+                        }?.artistUrl?.split("=")?.getOrNull(0)
+
+                    val title = album
+                        .artistMusicTwoRowItemRenderer
+                        ?.artistTitle
+                        ?.artistRuns
+                        ?.firstOrNull()
+                        ?.artistText
+
+                    val id = album
+                        .artistMusicTwoRowItemRenderer
+                        ?.artistTitle
+                        ?.artistRuns
+                        ?.firstOrNull()
+                        ?.artistNavigationEndpoint
+                        ?.artistBrowseEndpoint
+                        ?.artistBrowseId
+
+                    val year = album
+                        .artistMusicTwoRowItemRenderer
+                        ?.artistSubtitle
+                        ?.artistRuns
+                        ?.lastOrNull()
+                        ?.artistText
+
+
+                    val a = AlbumPreview(
+                        id = id?: "",
+                        title = title?: "",
+                        artist = artistName?: "",
+                        year = year?: "",
+                        thumbnail = thumbnail?: ""
+                    )
+
+                    albums.add(a)
+                    println("Extracted album: $title, $id, $year, $artistName,  $thumbnail")
+                }
+                albumsBrowseId = carousel
+                    .artistMusicCarouselShelfRenderer
+                    .artistHeader
+                    .artistMusicCarouselShelfBasicHeaderRenderer
+                    .artistMoreContentButton
+                    ?.artistButtonRenderer
+                    ?.artistNavigationEndpoint
+                    ?.artistBrowseEndpoint
+                    ?.artistBrowseId
+
+                albumsParams = carousel
+                    .artistMusicCarouselShelfRenderer
+                    .artistHeader
+                    .artistMusicCarouselShelfBasicHeaderRenderer
+                    .artistMoreContentButton
+                    ?.artistButtonRenderer
+                    ?.artistNavigationEndpoint
+                    ?.artistBrowseEndpoint
+                    ?.artistParams
+
+            } else if (
+                carousel
+                    .artistMusicCarouselShelfRenderer
+                    ?.artistHeader
+                    ?.artistMusicCarouselShelfBasicHeaderRenderer
+                    ?.artistTitle
+                    ?.artistRuns
+                    ?.firstOrNull()
+                    ?.artistText == "Singles & EPs"
+            ) {
+                singleAndEPsBrowseId = carousel
+                    .artistMusicCarouselShelfRenderer
+                    .artistHeader
+                    .artistMusicCarouselShelfBasicHeaderRenderer
+                    .artistMoreContentButton
+                    ?.artistButtonRenderer
+                    ?.artistNavigationEndpoint
+                    ?.artistBrowseEndpoint
+                    ?.artistBrowseId
+
+                singleAndEPsParams = carousel
+                    .artistMusicCarouselShelfRenderer
+                    .artistHeader
+                    .artistMusicCarouselShelfBasicHeaderRenderer
+                    .artistMoreContentButton
+                    ?.artistButtonRenderer
+                    ?.artistNavigationEndpoint
+                    ?.artistBrowseEndpoint
+                    ?.artistParams
+
+                for (singleAndEP in carousel
+                    .artistMusicCarouselShelfRenderer
+                    .artistContents.orEmpty())
+                {
+                    val thumbnail = singleAndEP
+                        .artistMusicTwoRowItemRenderer
+                        ?.artistThumbnailRenderer
+                        ?.artistMusicThumbnailRenderer
+                        ?.artistThumbnail
+                        ?.artistThumbnails
+                        ?.maxByOrNull {
+                            it.artistWidth + it.artistHeight
+                        }?.artistUrl?.split("=")?.getOrNull(0)
+
+                    val title = singleAndEP
+                        .artistMusicTwoRowItemRenderer
+                        ?.artistTitle
+                        ?.artistRuns
+                        ?.firstOrNull()
+                        ?.artistText
+
+                    val id = singleAndEP
+                        .artistMusicTwoRowItemRenderer
+                        ?.artistTitle
+                        ?.artistRuns
+                        ?.firstOrNull()
+                        ?.artistNavigationEndpoint
+                        ?.artistBrowseEndpoint
+                        ?.artistBrowseId
+
+                    val year = singleAndEP
+                        .artistMusicTwoRowItemRenderer
+                        ?.artistSubtitle
+                        ?.artistRuns
+                        ?.lastOrNull()
+                        ?.artistText
+
+                    val singleAndEP = AlbumPreview(
+                        id = id?: "",
+                        title = title?: "",
+                        artist = artistName?: "",
+                        year = year?: "",
+                        thumbnail = thumbnail?: ""
+                    )
+
+                    singleAndEps.add(singleAndEP)
+                }
+            }
+        }
+
+        println("Top Songs BrowseId: $topSongsBrowseId")
+        println("Top Songs Params: $topSongsParams")
+
+        println("Artist description: $description")
+
+        emit(
+            ArtistPage(
+                artist = artist,
+                topSongs = topSongs,
+                topSongsBrowseId = topSongsBrowseId,
+                topSongsParams = topSongsParams,
+                albums = albums,
+                albumsBrowseId = albumsBrowseId?: "",
+                albumsParams = albumsParams?: "",
+                singlesAndEps = singleAndEps,
+                singlesAndEpsBrowseId = singleAndEPsBrowseId?: "",
+                singlesAndEpsParams = singleAndEPsParams?: ""
+            )
+        )
+
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+
+fun browseSongs(browseId: String, params: String): Flow<Song> = flow {
+    val innerTubeClient = InnerTube(ClientName.WebRemix)
+
+    try {
+        val raw = innerTubeClient.browse(
+            browseId = browseId,
+            params = params,
+        )
+
+        val json = Json { ignoreUnknownKeys = true }
+
+//        val file = File("browseSongsOutput.json")
+//        file.writeText(raw)
+//        println("File saved to: ${file.absolutePath}")
+
+        val parsed = json.decodeFromString<BrowseSongsResponse>(raw)
+
+        val contents = parsed
+            .browseSongsContents
+            ?.browseSongsSingleColumnBrowseResultsRenderer
+            ?.browseSongsTabs
+            ?.firstOrNull()
+            ?.browseSongsTabRenderer
+            ?.browseSongsContent
+            ?.browseSongsSectionListRenderer
+            ?.browseSongsContents
+            ?.firstOrNull()
+            ?.browseSongsMusicPlaylistShelfRenderer
+            ?.browseSongsContents
+
+        for (item in contents.orEmpty()) {
+            val renderer = item
+                .browseSongsMusicResponsiveListItemRenderer
+                ?: continue
+
+            val id = renderer
+                .browseSongsFlexColumns
+                ?.firstOrNull()
+                ?.browseSongsMusicResponsiveListItemFlexColumnRenderer
+                ?.browseSongsText
+                ?.browseSongsRuns
+                ?.firstOrNull()
+                ?.browseSongsNavigationEndpoint
+                ?.browseSongsWatchEndpoint
+                ?.browseSongsVideoId
+
+            val title = renderer
+                .browseSongsFlexColumns
+                ?.firstOrNull()
+                ?.browseSongsMusicResponsiveListItemFlexColumnRenderer
+                ?.browseSongsText
+                ?.browseSongsRuns
+                ?.firstOrNull()
+                ?.browseSongsText
+
+            val thumbnail = renderer
+                .browseSongsThumbnail
+                ?.browseSongsMusicThumbnailRenderer
+                ?.browseSongsThumbnail
+                ?.browseSongsThumbnails
+                ?.maxByOrNull {
+                    it.browseSongsWidth + it.browseSongsHeight
+                }?.browseSongsUrl?.split("=")?.getOrNull(0)
+
+            val artistList = mutableListOf<SongArtist>()
+            var albumBrowseId = ""
+
+            for (flexColumn in renderer.browseSongsFlexColumns.orEmpty()) {
+                val artistRuns = flexColumn
+                    .browseSongsMusicResponsiveListItemFlexColumnRenderer
+                    ?.browseSongsText
+                    ?.browseSongsRuns
+
+                for (index in 0..<artistRuns!!.size) {
+                    if (artistRuns[index].browseSongsText != " & "
+                        && artistRuns[index].browseSongsText != ", "
+                        && artistRuns[index].browseSongsNavigationEndpoint
+                            ?.browseSongsBrowseEndpoint
+                            ?.browseSongsBrowseEndpointContextSupportedConfigs
+                            ?.browseSongsBrowseEndpointContextMusicConfig
+                            ?.browseSongsPageType == "MUSIC_PAGE_TYPE_ARTIST"
+                    ) {
+                        val run = artistRuns[index]
+                        val artistId = run
+                            .browseSongsNavigationEndpoint
+                            ?.browseSongsBrowseEndpoint
+                            ?.browseSongsBrowseId ?: continue
+                        val artistName = run.browseSongsText
+                        artistList.add(SongArtist(id = artistId, name = artistName))
+                    }
+                }
+
+                if (flexColumn.
+                    browseSongsMusicResponsiveListItemFlexColumnRenderer
+                        .browseSongsText
+                        .browseSongsRuns
+                        .firstOrNull()
+                        ?.browseSongsNavigationEndpoint
+                        ?.browseSongsBrowseEndpoint
+                        ?.browseSongsBrowseEndpointContextSupportedConfigs
+                        ?.browseSongsBrowseEndpointContextMusicConfig
+                        ?.browseSongsPageType == "MUSIC_PAGE_TYPE_ALBUM"
+                ) {
+                    albumBrowseId = flexColumn
+                        .browseSongsMusicResponsiveListItemFlexColumnRenderer
+                        .browseSongsText
+                        .browseSongsRuns
+                        .firstOrNull()
+                        ?.browseSongsNavigationEndpoint
+                        ?.browseSongsBrowseEndpoint
+                        ?.browseSongsBrowseId?: ""
+                }
+            }
+
+            val duration = renderer
+                .browseSongsFixedColumns
+                ?.firstOrNull()
+                ?.browseSongsMusicResponsiveListItemFixedColumnRenderer
+                ?.browseSongsText
+                ?.browseSongsRuns
+                ?.firstOrNull()
+                ?.browseSongsText ?: ""
+
+            val fetchedSong = Song(
+                id = id?: "",
+                title = title?: "",
+                artists = artistList,
+                albumId = albumBrowseId,
+                duration = duration,
+                thumbnail = thumbnail?: ""
+            )
+            emit(fetchedSong)
+        }
+
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+
+fun browseAlbums(browseId: String, params: String): Flow<AlbumPreview> = flow {
+    val innerTubeClient = InnerTube(ClientName.WebRemix)
+
+    try {
+        val raw = innerTubeClient.browse(
+            browseId = browseId,
+            params = params,
+        )
+
+        val json = Json { ignoreUnknownKeys = true }
+
+        val parsed = json.decodeFromString<BrowseAlbumsResponse>(raw)
+
+        val items = parsed
+            .browseAlbumsContents
+            ?.browseAlbumsSingleColumnBrowseResultsRenderer
+            ?.browseAlbumsTabs
+            ?.firstOrNull()
+            ?.browseAlbumsTabRenderer
+            ?.browseAlbumsContent
+            ?.browseAlbumsSectionListRenderer
+            ?.browseAlbumsContents
+            ?.firstOrNull()
+            ?.browseAlbumsGridRenderer
+            ?.browseAlbumsItems
+
+        val artists = parsed
+            .browseAlbumsHeader
+            ?.browseAlbumsMusicHeaderRenderer
+            ?.browseAlbumsTitle
+            ?.browseAlbumsRuns
+            ?.firstOrNull()
+            ?.browseAlbumsText
+
+        for (album in items.orEmpty()) {
+            val thumbnail = album
+                .browseAlbumsMusicTwoRowItemRenderer
+                ?.browseAlbumsThumbnailRenderer
+                ?.browseAlbumsMusicThumbnailRenderer
+                ?.browseAlbumsThumbnail
+                ?.browseAlbumsThumbnails
+                ?.maxByOrNull {
+                    it.browseAlbumsWidth + it.browseAlbumsHeight
+                }?.browseAlbumsUrl?.split("=")?.getOrNull(0)
+
+            val title = album
+                .browseAlbumsMusicTwoRowItemRenderer
+                ?.browseAlbumsTitle
+                ?.browseAlbumsRuns
+                ?.firstOrNull()
+                ?.browseAlbumsText
+
+            val id = album
+                .browseAlbumsMusicTwoRowItemRenderer
+                ?.browseAlbumsTitle
+                ?.browseAlbumsRuns
+                ?.firstOrNull()
+                ?.browseAlbumsNavigationEndpoint
+                ?.browseAlbumsBrowseEndpoint
+                ?.browseAlbumsBrowseId
+
+            val year = album
+                .browseAlbumsMusicTwoRowItemRenderer
+                ?.browseAlbumsSubtitle
+                ?.browseAlbumsRuns
+                ?.lastOrNull()
+                ?.browseAlbumsText
+
+            emit(AlbumPreview(
+                id = id?: "",
+                title = title?: "",
+                artist = artists?:"",
+                year = year?: "",
+                thumbnail = thumbnail?: ""
+            ))
+        }
     } catch (e: Exception) {
         e.printStackTrace()
     }

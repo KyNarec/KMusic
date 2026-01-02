@@ -1,4 +1,4 @@
-package com.kynarec.kmusic.service.innertube
+package com.kynarec.kmusic.service.innertube.responses
 
 import kotlinx.serialization.Serializable
 
@@ -124,7 +124,8 @@ data class MusicItem(
 @Serializable
 data class MusicResponsiveListItemRenderer(
     val flexColumns: List<FlexColumn>? = null,
-    val thumbnail: ThumbnailContainer? = null
+    val thumbnail: ThumbnailContainer? = null,
+    val navigationEndpoint: NavigationEndpoint? = null
 )
 
 @Serializable
@@ -557,4 +558,59 @@ data class SearchAlbumsContinuations(
 @Serializable
 data class SearchAlbumsNextContinuationData(
     val continuation: String? = null
+)
+
+// ========================================== searchArtists
+@Serializable
+data class SearchArtistsResponse(
+    val contents: SearchArtistsContents? = null
+)
+@Serializable
+data class SearchArtistsContents(
+    val tabbedSearchResultsRenderer: TabbedArtistsSearchResultsRenderer? = null
+)
+
+@Serializable
+data class TabbedArtistsSearchResultsRenderer(
+    val tabs: List<SearchArtistsTabs>? = null
+)
+
+@Serializable
+data class SearchArtistsTabs(
+    val tabRenderer: SearchArtistsTabRenderer? = null
+)
+
+@Serializable
+data class SearchArtistsTabRenderer(
+    val content: SearchArtistsContent? = null
+)
+
+@Serializable
+data class SearchArtistsContent(
+    val sectionListRenderer: SearchArtistsSectionListRenderer? = null
+)
+
+@Serializable
+data class SearchArtistsSectionListRenderer(
+    val contents: List<SearchArtistsContents2>? = null
+)
+
+@Serializable
+data class SearchArtistsContents2(
+    val musicShelfRenderer: SearchArtistsMusicShelfRenderer? = null
+)
+
+@Serializable
+data class SearchArtistsMusicShelfRenderer(
+    val contents: List<SearchArtistsContents3>? = null,
+)
+
+@Serializable
+data class SearchArtistsContents3(
+    val musicResponsiveListItemRenderer: MusicResponsiveListItemRenderer ? = null,
+)
+
+@Serializable
+data class SearchArtistsFlexColumns(
+    val musicResponsiveListItemFlexColumnRenderer: FlexColumnRenderer? = null
 )
