@@ -7,6 +7,7 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
@@ -15,6 +16,7 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.upstream.DefaultAllocator
@@ -32,6 +34,9 @@ import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.dao.SongDao
+import com.kynarec.kmusic.enums.PopupType
+import com.kynarec.kmusic.utils.SmartMessage
+import com.kynarec.kmusic.utils.createFullMediaItem
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
 import kotlinx.coroutines.CoroutineScope
@@ -81,14 +86,34 @@ class PlayerServiceModern : MediaLibraryService() {
         // Called when the player transitions to a new song or the playlist ends
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             super.onMediaItemTransition(mediaItem, reason)
-            // Save playback time for the previous song before transitioning
+            Log.i("PlayerService", "onMediaItemTransition called with reason: $reason")
             saveCurrentPlaybackTime()
-            // Reset trackers for the new song
-            accumulatedPlayTime = 0L
-            playbackStartTime = System.currentTimeMillis()
-            // Update the current song ID
-            currentSongId = mediaItem?.mediaId
-            Log.i("PlayerService", "Transitioned to new media item: ${mediaItem?.mediaId}")
+
+            val indexAtBegging = player?.currentMediaItemIndex
+            if (mediaItem?.localConfiguration?.uri.toString().isEmpty()) {
+                Log.i("PlayerService", "mediaItem is empty")
+                var fullMediaItem = MediaItem.EMPTY
+                CoroutineScope(Dispatchers.IO).launch {
+                    fullMediaItem = mediaItem?.createFullMediaItem()?: MediaItem.EMPTY
+                    if (fullMediaItem != MediaItem.EMPTY && indexAtBegging == withContext(Dispatchers.Main) {player?.currentMediaItemIndex}) withContext(Dispatchers.Main) {
+                        Log.i("PlayerService", "Replacing media item")
+                        player?.replaceMediaItem(player?.currentMediaItemIndex?: 0, fullMediaItem)
+                    } else {
+                        Log.i("PlayerService", "fullMediaItem is empty or song was skipped")
+                    }
+                }
+            }
+
+            if (mediaItem?.localConfiguration?.uri.toString() == "NA") {
+                Log.i("PlayerService", "mediaItem uri cannot be fetched")
+                SmartMessage("Fetching error", PopupType.Error, false, this@PlayerServiceModern)
+                player?.seekToNextMediaItem()
+            } else {
+                accumulatedPlayTime = 0L
+                playbackStartTime = System.currentTimeMillis()
+                Log.i("PlayerService", "Transitioned to new media item: ${mediaItem?.mediaId}")
+                currentSongId = mediaItem?.mediaId
+            }
         }
 
         // Called when play/pause state changes
@@ -106,8 +131,13 @@ class PlayerServiceModern : MediaLibraryService() {
         }
 
         // Called when the player encounters an error
-        override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+        override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
+            val exoPlaybackException = error as ExoPlaybackException
+            when (exoPlaybackException.message) {
+                "Source error" -> SmartMessage("Source Error", PopupType.Error, false, this@PlayerServiceModern)
+                else -> SmartMessage("Unknown playback error", PopupType.Error, false, this@PlayerServiceModern)
+            }
             Log.e("PlayerService", "Player Error: ", error)
             // Here you could stop the service, show a toast, or try to recover.
         }
@@ -136,46 +166,8 @@ class PlayerServiceModern : MediaLibraryService() {
             return Futures.immediateFuture(updatedItems)
         }
 
-//        override fun onAddMediaItems(
-//            mediaSession: MediaSession,
-//            controller: MediaSession.ControllerInfo,
-//            mediaItems: MutableList<MediaItem>
-//        ): ListenableFuture<MutableList<MediaItem>> {
-//            Log.d(tag, "onAddMediaItems called with ${mediaItems.size} items")
-//            val future = SettableFuture.create<MutableList<MediaItem>>()
-//
-//            if (mediaItems.isEmpty()) {
-//                future.set(mutableListOf())
-//                return future
-//            }
-//
-//            serviceScope.launch(Dispatchers.IO) {
-//                val resolvedItems = mutableListOf<MediaItem>()
-//                try {
-//                    for (item in mediaItems) {
-//                        val mediaId = item.mediaId
-//                        if (mediaId == MediaItem.DEFAULT_MEDIA_ID) continue
-//
-//                        val song = songDao.getSongById(mediaId)
-//                        if (song != null) {
-//                            // Log.i(tag, "Found song in database: ${song.title}")
-//                            val fullMediaItem = createMediaItemFromSong(context = applicationContext, song = song)
-//                            resolvedItems.add(fullMediaItem)
-//                        } else {
-//                            Log.e(tag, "Song not found for mediaId: $mediaId")
-//                        }
-//                    }
-//                    future.set(resolvedItems)
-//                } catch (e: Exception) {
-//                    Log.e(tag, "Error retrieving songs from database.", e)
-//                    future.setException(e)
-//                }
-//            }
-//            return future
-//        }
 
-
-        // MODIFIED: This is where Android Auto requests the root of your media library.
+        // This is where Android Auto requests the root of your media library.
         override fun onGetLibraryRoot(
             session: MediaLibrarySession,
             browser: MediaSession.ControllerInfo,
@@ -345,7 +337,7 @@ class PlayerServiceModern : MediaLibraryService() {
     override fun onCreate() {
         super.onCreate()
 
-        try {// Ensure the DAO is initialized here.
+        try {
             songDao = (application as KMusic).database.songDao()
             Log.i("PlayerService", "songDao has been initialized.")
 

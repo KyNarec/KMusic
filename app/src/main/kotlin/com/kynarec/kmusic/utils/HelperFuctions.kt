@@ -118,6 +118,7 @@ fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
     // This is a browsable item, it only needs the MediaId and Metadata.
     return MediaItem.Builder()
         .setMediaId(song.id)
+        .setUri("")
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setTitle(song.title)
@@ -127,6 +128,13 @@ fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
                 .setIsPlayable(true)   // Songs are playable.
                 .build()
         )
+        .build()
+}
+
+suspend fun MediaItem.createFullMediaItem(): MediaItem {
+    val uri = playSongByIdWithBestBitrate(this.mediaId)
+    return this.buildUpon()
+        .setUri(uri)
         .build()
 }
 
