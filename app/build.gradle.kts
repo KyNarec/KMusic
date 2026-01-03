@@ -75,26 +75,26 @@ android {
             enable = true
         }
     }
-//    applicationVariants.all {
-//        outputs.all {
-//            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-//            output.outputFileName = "KMusic_v${appVersion}.apk"
-//        }
-//    }
+    applicationVariants.all {
+        outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            output.outputFileName = "KMusic_v${appVersion}.apk"
+        }
+    }
 }
 
-tasks.register<Copy>("renameReleaseApk") {
-    dependsOn("assembleRelease")
-
-    from(layout.buildDirectory.dir("outputs/apk/release"))
-    include("app-release.apk")
-
-    rename { "KMusic_v${appVersion}.apk" }
-
-    into(layout.buildDirectory.dir("outputs/apk/release"))
-
-    mustRunAfter("assembleRelease")
-}
+//tasks.register<Copy>("renameReleaseApk") {
+//    dependsOn("assembleRelease")
+//
+//    from(layout.buildDirectory.dir("outputs/apk/release"))
+//    include("app-release.apk")
+//
+//    rename { "KMusic_v${appVersion}.apk" }
+//
+//    into(layout.buildDirectory.dir("outputs/apk/release"))
+//
+//    mustRunAfter("assembleRelease")
+//}
 
 
 dependencies {

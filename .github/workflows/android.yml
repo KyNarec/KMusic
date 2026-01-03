@@ -29,14 +29,13 @@ jobs:
         run: |
           echo "${{ secrets.RELEASE_KEYSTORE_B64 }}" | base64 --decode > release.keystore
 
-      # IMPORTANT: use the task you defined
       - name: Build signed release APK
         run: |
           ./gradlew \
             --no-daemon \
             --no-build-cache \
             clean \
-            :app:renameReleaseApk
+            assembleRelease
 
       - name: Verify APK output
         run: |
