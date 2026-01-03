@@ -92,6 +92,8 @@ tasks.register<Copy>("renameReleaseApk") {
     rename { "KMusic_v${appVersion}.apk" }
 
     into(layout.buildDirectory.dir("outputs/apk/release"))
+
+    mustRunAfter("assembleRelease")
 }
 
 
