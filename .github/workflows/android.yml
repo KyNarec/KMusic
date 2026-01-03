@@ -1,4 +1,4 @@
-name: CI
+name: Android CI Release
 
 on:
   workflow_dispatch
@@ -7,20 +7,43 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+    env:
+      CI: "true"
+      KEYSTORE_FILE: ${{ github.workspace }}/release.keystore
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Set up JDK 17
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Android supported)
         uses: actions/setup-java@v4
         with:
-          distribution: "temurin"
+          distribution: temurin
           java-version: "17"
           cache: gradle
 
-      - name: Build release APK
-        run: ./gradlew clean :app:assembleRelease
+      - name: Decode release keystore
+        run: |
+          echo "${{ secrets.RELEASE_KEYSTORE_B64 }}" | base64 --decode > release.keystore
 
-      - name: Upload APK artifact
+      # IMPORTANT: use the task you defined
+      - name: Build signed release APK
+        run: |
+          ./gradlew \
+            --no-daemon \
+            --no-build-cache \
+            clean \
+            :app:renameReleaseApk
+
+      - name: Verify APK output
+        run: |
+          ls -lh app/build/outputs/apk/release
+
+      - name: Upload release APK
         uses: actions/upload-artifact@v4
         with:
-          path: app/build/outputs/apk/release/*.apk
+          name: KMusic-${{ github.run_number }}
+          path: app/build/outputs/apk/release/KMusic_v*.apk

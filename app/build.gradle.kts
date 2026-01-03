@@ -23,13 +23,30 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getenv("KEYSTORE_FILE")
+            if (keystorePath != null) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         // build with ./gradlew assembleRelease
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             manifestPlaceholders["appName"] = "KyNarec"
-            signingConfig = signingConfigs.getByName("debug")
+            if (System.getenv("CI") == "true" && System.getenv("KEYSTORE_FILE") == null) {
+                error("Release keystore not configured")
+            }
+            if (System.getenv("KEYSTORE_FILE") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -58,13 +75,25 @@ android {
             enable = true
         }
     }
-    applicationVariants.all {
-        outputs.all {
-            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-            output.outputFileName = "KMusic_v${appVersion}.apk"
-        }
-    }
+//    applicationVariants.all {
+//        outputs.all {
+//            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+//            output.outputFileName = "KMusic_v${appVersion}.apk"
+//        }
+//    }
 }
+
+tasks.register<Copy>("renameReleaseApk") {
+    dependsOn("assembleRelease")
+
+    from(layout.buildDirectory.dir("outputs/apk/release"))
+    include("app-release.apk")
+
+    rename { "KMusic_v${appVersion}.apk" }
+
+    into(layout.buildDirectory.dir("outputs/apk/release"))
+}
+
 
 dependencies {
     implementation(libs.androidx.core.ktx)
