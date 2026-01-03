@@ -1,11 +1,18 @@
 name: Android CI Release
 
 on:
-  workflow_dispatch
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v0.1.8)'
+        required: true
+        default: 'v0.1.8'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to create a release
 
     env:
       CI: "true"
@@ -46,3 +53,13 @@ jobs:
         with:
           name: KMusic-${{ github.run_number }}
           path: app/build/outputs/apk/release/KMusic_v*.apk
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+            tag_name: ${{ github.event.inputs.version }}
+            name: Release ${{ github.event.inputs.version }}
+            draft: true
+            prerelease: false
+            files: app/build/outputs/apk/release/KMusic_v*.apk
+            token: ${{ github.token }}
