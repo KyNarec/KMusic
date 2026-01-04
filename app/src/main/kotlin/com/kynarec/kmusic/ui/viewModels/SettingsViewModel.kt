@@ -1,13 +1,10 @@
 package com.kynarec.kmusic.ui.viewModels
 
-import android.app.Application
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.utils.Constants.DARK_MODE_KEY
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DARK_MODE
@@ -16,13 +13,10 @@ import com.kynarec.kmusic.utils.Constants.DEFAULT_TRANSITION_EFFECT
 import com.kynarec.kmusic.utils.Constants.DYNAMIC_COLORS_KEY
 import com.kynarec.kmusic.utils.Constants.TRANSITION_EFFECT_KEY
 import eu.anifantakis.lib.ksafe.KSafe
-import eu.anifantakis.lib.ksafe.invoke
-import eu.eu.anifantakis.lib.ksafe.compose.mutableStateOf
-import kotlinx.coroutines.flow.MutableStateFlow
+import eu.anifantakis.lib.ksafe.compose.mutableStateOf
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     val ksafe: KSafe,

@@ -53,21 +53,25 @@ android {
             )
         }
     }
+    
     dependenciesInfo {
         // Disables dependency metadata when building APKs.
         includeInApk = false
         // Disables dependency metadata when building Android App Bundles.
         includeInBundle = false
     }
+    
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
         }
     }
+    
     buildFeatures{
         compose = true
         buildConfig = true
@@ -82,19 +86,6 @@ android {
         }
     }
 }
-
-//tasks.register<Copy>("renameReleaseApk") {
-//    dependsOn("assembleRelease")
-//
-//    from(layout.buildDirectory.dir("outputs/apk/release"))
-//    include("app-release.apk")
-//
-//    rename { "KMusic_v${appVersion}.apk" }
-//
-//    into(layout.buildDirectory.dir("outputs/apk/release"))
-//
-//    mustRunAfter("assembleRelease")
-//}
 
 
 dependencies {
@@ -156,12 +147,12 @@ dependencies {
     // wavy seekbar
     implementation(libs.wavy.slider)
 
-    implementation("com.squareup.okhttp3:okhttp:5.3.0")
-    implementation("org.json:json:20250517")
+    implementation(libs.okhttp)
+    implementation(libs.json)
 
-    implementation("eu.anifantakis:ksafe:1.1.1")
-    implementation("eu.anifantakis:ksafe-compose:1.1.1")
-    implementation("com.mikepenz:multiplatform-markdown-renderer-m3:0.38.1")
+    implementation(libs.ksafe)
+    implementation(libs.ksafe.compose)
+    implementation(libs.multiplatform.markdown.renderer.m3)
 
-    implementation("io.github.vinceglb:filekit-dialogs:0.12.0")
+    implementation(libs.filekit.dialogs)
 }
