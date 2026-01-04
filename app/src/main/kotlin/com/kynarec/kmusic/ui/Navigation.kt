@@ -170,10 +170,10 @@ fun Navigation(
             )
         }
         composable<PlaylistsScreen> {
-            val playlists =
             PlaylistsScreen(
                 navController = navController,
-                database = database
+                database = database,
+                viewModel = musicViewModel
             )
         }
         composable<PlaylistScreen> {
