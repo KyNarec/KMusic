@@ -209,7 +209,7 @@ fun PlaylistsScreen(
                     .padding(horizontal = 8.dp),
                 contentPadding = PaddingValues(
                     top = 8.dp,
-                    bottom = if (showControlBar) 86.dp else 16.dp // 70.dp (bar) + 16.dp (margin)
+                    bottom = if (showControlBar) 70.dp else 0.dp // 70.dp (bar) + 16.dp (margin)
                 ),
                 columns = GridCells.Adaptive(minSize = 100.dp)
             ) {
