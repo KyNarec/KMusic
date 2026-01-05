@@ -194,6 +194,17 @@ fun PlaylistsScreen(
         },
         modifier = modifier.fillMaxSize()
     ) { paddingValues ->
+        if (showCreateDialog) {
+            PlaylistCreateNewDialog(
+                onDismissRequest = { showCreateDialog = false },
+                onConfirmation = { text ->
+                    showCreateDialog = false
+                    scope.launch {
+                        database.playlistDao().insertPlaylist(Playlist(name = text))
+                    }
+                }
+            )
+        }
         if (!isImportingPlaylist.value && isLoading) {
             Box(
                 modifier = Modifier
@@ -204,17 +215,6 @@ fun PlaylistsScreen(
                 CircularWavyProgressIndicator()
             }
         } else {
-            if (showCreateDialog) {
-                PlaylistCreateNewDialog(
-                    onDismissRequest = { showCreateDialog = false },
-                    onConfirmation = { text ->
-                        showCreateDialog = false
-                        scope.launch {
-                            database.playlistDao().insertPlaylist(Playlist(name = text))
-                        }
-                    }
-                )
-            }
 
             LazyVerticalGrid(
                 modifier = Modifier

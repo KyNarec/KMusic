@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.kynarec.kmusic"
-        minSdk = 31
+        minSdk = 30
         targetSdk = 36
         versionCode = 1
         versionName = appVersion
