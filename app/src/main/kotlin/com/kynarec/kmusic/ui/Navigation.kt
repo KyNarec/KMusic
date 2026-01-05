@@ -161,7 +161,7 @@ fun Navigation(
         composable<SongsScreen> {
 //            val songs = viewModel.songsList.collectAsStateWithLifecycle()
 //            val songs = musicViewModel.uiState.collectAsStateWithLifecycle().value.songsList
-            SongsScreen(viewModel = musicViewModel, database = database)
+            SongsScreen(viewModel = musicViewModel, database = database, navController = navController)
         }
         composable<ArtistsScreen> {
             ArtistsScreen(
@@ -231,7 +231,8 @@ fun Navigation(
                 browseId = args.browseId,
                 browseParams = args.browseParams,
                 viewModel = musicViewModel,
-                database = database
+                database = database,
+                navController = navController
             )
         }
 

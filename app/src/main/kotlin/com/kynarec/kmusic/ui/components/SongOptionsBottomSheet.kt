@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Info
@@ -30,8 +31,12 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,33 +46,45 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.shareUrl
+import kotlinx.coroutines.launch
 
 @OptIn(
     ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class
 )
 @Composable
 fun SongOptionsBottomSheet(
-    songId: String,
+    song: Song,
     onDismiss: () -> Unit,
     onInformation: () -> Unit = {},
     onAddToPlaylist: () -> Unit = {},
     viewModel: MusicViewModel,
-    database: KmusicDatabase
+    database: KmusicDatabase,
+    navController: NavHostController,
+    isInPlaylistDetailScreen: Boolean = false,
+    playlistId: Long? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val song by database.songDao()
-        .getSongFlowById(songId)
+    val dbSong by database.songDao()
+        .getSongFlowById(song.id)
         .collectAsStateWithLifecycle(null)
+
+    var showAddToPlaylistDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.maybeAddSongToDB(song)
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -75,7 +92,7 @@ fun SongOptionsBottomSheet(
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
     ) {
-        if (song == null) {
+        if (dbSong == null) {
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -85,7 +102,7 @@ fun SongOptionsBottomSheet(
             }
             return@ModalBottomSheet
         } else {
-            val isLiked = song!!.isLiked
+            val isLiked = dbSong!!.isLiked
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -100,7 +117,7 @@ fun SongOptionsBottomSheet(
                 ) {
                     // Album Art
                     AsyncImage(
-                        model = song!!.thumbnail,
+                        model = dbSong!!.thumbnail,
                         contentDescription = "Album art",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -117,14 +134,14 @@ fun SongOptionsBottomSheet(
                         modifier = Modifier.weight(1f)
                     ) {
                         ConditionalMarqueeText(
-                            text = song!!.title,
+                            text = dbSong!!.title,
                             fontSize = 18.sp,
                             maxLines = 1,
                             //overflow = TextOverflow.Ellipsis,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         ConditionalMarqueeText(
-                            text = song!!.artists.joinToString(", ") { it.name },
+                            text = dbSong!!.artists.joinToString(", ") { it.name },
                             fontSize = 14.sp,
                             maxLines = 1,
                             //overflow = TextOverflow.Ellipsis,
@@ -137,7 +154,7 @@ fun SongOptionsBottomSheet(
                         horizontalAlignment = Alignment.End
                     ) {
                         Text(
-                            text = song!!.duration,
+                            text = dbSong!!.duration,
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -149,7 +166,7 @@ fun SongOptionsBottomSheet(
                                 .clickable {
                                     shareUrl(
                                         context,
-                                        url = "https://music.youtube.com/watch?v=${song!!.id}"
+                                        url = "https://music.youtube.com/watch?v=${dbSong!!.id}"
                                     )
                                 },
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -173,7 +190,7 @@ fun SongOptionsBottomSheet(
                     icon = Icons.Default.Radio,
                     text = "Start radio",
                     onClick = {
-                        viewModel.playSongByIdWithRadio(song!!)
+                        viewModel.playSongByIdWithRadio(dbSong!!)
                         onDismiss()
                     }
                 )
@@ -182,8 +199,8 @@ fun SongOptionsBottomSheet(
                     icon = Icons.Default.SkipNext,
                     text = "Play next",
                     onClick = {
-                        viewModel.playNext(song!!)
-                        SmartMessage("Playing ${song!!.title} next", context = context)
+                        viewModel.playNext(dbSong!!)
+                        SmartMessage("Playing ${dbSong!!.title} next", context = context)
                         onDismiss()
                     }
                 )
@@ -192,8 +209,8 @@ fun SongOptionsBottomSheet(
                     icon = Icons.Default.Queue,
                     text = "Enqueue",
                     onClick = {
-                        viewModel.enqueueSong(song!!)
-                        SmartMessage("Added ${song!!.title} to queue", context = context)
+                        viewModel.enqueueSong(dbSong!!)
+                        SmartMessage("Added ${dbSong!!.title} to queue", context = context)
                         onDismiss()
                     }
                 )
@@ -202,7 +219,7 @@ fun SongOptionsBottomSheet(
                     icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     text = if (isLiked) "Remove from favorites" else "Add to favorites",
                     onClick = {
-                        viewModel.toggleFavoriteSong(song!!)
+                        viewModel.toggleFavoriteSong(dbSong!!)
                     }
                 )
 
@@ -210,12 +227,34 @@ fun SongOptionsBottomSheet(
                     icon = Icons.AutoMirrored.Filled.PlaylistAdd,
                     text = "Add to playlist",
                     onClick = {
-                        onAddToPlaylist()
-                        onDismiss()
+                        showAddToPlaylistDialog = true
+//                        onDismiss()
                     }
                 )
+
+                if (isInPlaylistDetailScreen && playlistId != null) {
+                    BottomSheetItem(
+                        icon = Icons.Default.Delete,
+                        text = "Delete from playlist",
+                        onClick = {
+                            scope.launch {
+                                database.playlistDao().removeSongFromPlaylist(playlistId, dbSong!!.id)
+                            }
+                            onDismiss()
+                        }
+                    )
+                }
             }
         }
+    }
+
+    if (showAddToPlaylistDialog) {
+        AddToPlaylistDialog(
+            song = dbSong!!,
+            database = database,
+            onDismissRequest = { showAddToPlaylistDialog = false },
+            navController = navController
+        )
     }
 }
 

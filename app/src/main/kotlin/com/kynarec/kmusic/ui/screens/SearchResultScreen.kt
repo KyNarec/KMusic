@@ -324,10 +324,11 @@ fun SearchResultScreen(
                 Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
                 viewModel.maybeAddSongToDB(longClickSong!!)
                 SongOptionsBottomSheet(
-                    songId = longClickSong!!.id,
+                    song = longClickSong!!,
                     onDismiss = { showBottomSheet.value = false },
                     viewModel = viewModel,
-                    database = database
+                    database = database,
+                    navController = navController
                 )
             }
         }

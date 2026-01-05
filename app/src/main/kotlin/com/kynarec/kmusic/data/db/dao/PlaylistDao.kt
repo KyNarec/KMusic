@@ -36,6 +36,20 @@ interface PlaylistDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSongToPlaylist(crossRef: SongPlaylistMap)
 
+    @Query("SELECT COALESCE(MAX(position), -1) + 1 FROM SongPlaylistMap WHERE playlistId = :playlistId")
+    suspend fun getNextPositionForPlaylist(playlistId: Long): Int
+
+    @Transaction
+    suspend fun insertSongAtEndOfPlaylist(songId: String, playlistId: Long) {
+        val nextPosition = getNextPositionForPlaylist(playlistId)
+        val newEntry = SongPlaylistMap(
+            songId = songId,
+            playlistId = playlistId,
+            position = nextPosition
+        )
+        insertSongToPlaylist(newEntry)
+    }
+
     @Query("DELETE FROM SongPlaylistMap WHERE playlistId = :playlistId AND songId = :songId")
     suspend fun removeSongFromPlaylist(playlistId: Long, songId: String)
 

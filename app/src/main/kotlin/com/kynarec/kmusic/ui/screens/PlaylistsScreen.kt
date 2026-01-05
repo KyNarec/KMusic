@@ -60,6 +60,7 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.ui.PlaylistScreen
+import com.kynarec.kmusic.ui.components.PlaylistCreateNewDialog
 import com.kynarec.kmusic.ui.components.TwoByTwoImageGrid
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
@@ -98,6 +99,7 @@ fun PlaylistsScreen(
     // Used for dimming the screen, not yet implemented
     var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
+    var showCreateDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -144,7 +146,7 @@ fun PlaylistsScreen(
                 FloatingActionButtonMenuItem(
                     onClick = {
                         fabMenuExpanded = false
-                        // TODO: Implement create new logic
+                        showCreateDialog = true // Trigger the dialog state
                     },
                     icon = { Icon(Icons.Default.CreateNewFolder, contentDescription = null) },
                     text = { Text(text = "Create new") },
@@ -202,6 +204,18 @@ fun PlaylistsScreen(
                 CircularWavyProgressIndicator()
             }
         } else {
+            if (showCreateDialog) {
+                PlaylistCreateNewDialog(
+                    onDismissRequest = { showCreateDialog = false },
+                    onConfirmation = { text ->
+                        showCreateDialog = false
+                        scope.launch {
+                            database.playlistDao().insertPlaylist(Playlist(name = text))
+                        }
+                    }
+                )
+            }
+
             LazyVerticalGrid(
                 modifier = Modifier
                     .fillMaxSize()
@@ -220,7 +234,8 @@ fun PlaylistsScreen(
                                 database.playlistDao().deletePlaylist(it)
                             }
                         },
-                        database = database
+                        database = database,
+                        onClick = { navController.navigate(PlaylistScreen(playlist.id)) }
                     )
                 }
                 if (isImportingPlaylist.value && totalLines.intValue > 0) {
@@ -250,7 +265,8 @@ fun PlaylistListItem(
     playlist: Playlist,
     navController: NavHostController,
     onRemove: (Playlist) -> Unit,
-    database: KmusicDatabase
+    database: KmusicDatabase,
+    onClick: () -> Unit
 ) {
     val context = LocalContext.current
     val songsThumbnailList = remember { mutableStateListOf<String>() }
@@ -273,9 +289,7 @@ fun PlaylistListItem(
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp)
             .background(Color.Transparent),
-        onClick = {
-            navController.navigate(PlaylistScreen(playlist.id))
-        },
+        onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
 
     ) {
