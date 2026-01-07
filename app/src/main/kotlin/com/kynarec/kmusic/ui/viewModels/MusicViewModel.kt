@@ -25,7 +25,7 @@ import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.service.innertube.getRadioFlow
-import com.kynarec.kmusic.ui.screens.SortOption
+import com.kynarec.kmusic.ui.screens.song.SortOption
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
 import com.kynarec.kmusic.utils.parseDurationToMillis

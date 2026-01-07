@@ -43,8 +43,9 @@ import com.kynarec.kmusic.ui.SearchScreen
 import com.kynarec.kmusic.ui.SettingsScreen
 import com.kynarec.kmusic.ui.SongListScreen
 import com.kynarec.kmusic.ui.components.MyNavigationRailComponent
-import com.kynarec.kmusic.ui.components.PlayerControlBar
 import com.kynarec.kmusic.ui.components.TopBarComponent
+import com.kynarec.kmusic.ui.components.player.PlayerControlBar
+import com.kynarec.kmusic.ui.screens.player.PlayerScreen
 import com.kynarec.kmusic.ui.theme.AppTheme
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
