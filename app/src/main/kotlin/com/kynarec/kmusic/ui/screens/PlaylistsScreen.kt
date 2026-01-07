@@ -1,5 +1,6 @@
 package com.kynarec.kmusic.ui.screens
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -50,17 +51,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.room.withTransaction
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.enums.PopupType
+import com.kynarec.kmusic.service.innertube.getPlaylistAndSongs
 import com.kynarec.kmusic.ui.PlaylistScreen
 import com.kynarec.kmusic.ui.components.PlaylistCreateNewDialog
+import com.kynarec.kmusic.ui.components.PlaylistImportFromOnlineDialog
 import com.kynarec.kmusic.ui.components.TwoByTwoImageGrid
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
@@ -71,7 +78,9 @@ import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.readString
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @ExperimentalMaterial3ExpressiveApi
 @Composable
@@ -100,6 +109,10 @@ fun PlaylistsScreen(
     var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
     var showCreateDialog by remember { mutableStateOf(false) }
+    var showImportFromOnlineDialog by remember { mutableStateOf(false) }
+
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Scaffold(
         topBar = {
@@ -142,21 +155,19 @@ fun PlaylistsScreen(
                     }
                 }
             ) {
-                // 1. Create New
                 FloatingActionButtonMenuItem(
                     onClick = {
                         fabMenuExpanded = false
-                        showCreateDialog = true // Trigger the dialog state
+                        showCreateDialog = true
                     },
                     icon = { Icon(Icons.Default.CreateNewFolder, contentDescription = null) },
                     text = { Text(text = "Create new") },
                 )
 
-                // 2. Import from Online
                 FloatingActionButtonMenuItem(
                     onClick = {
                         fabMenuExpanded = false
-                        // TODO: Implement online import logic
+                        showImportFromOnlineDialog = true
                     },
                     icon = { Icon(Icons.Default.CloudDownload, contentDescription = null) },
                     text = { Text(text = "Import from online") },
@@ -196,11 +207,66 @@ fun PlaylistsScreen(
     ) { paddingValues ->
         if (showCreateDialog) {
             PlaylistCreateNewDialog(
-                onDismissRequest = { showCreateDialog = false },
+                onDismissRequest = {
+                    showCreateDialog = false
+                },
                 onConfirmation = { text ->
                     showCreateDialog = false
                     scope.launch {
                         database.playlistDao().insertPlaylist(Playlist(name = text))
+                    }
+                }
+            )
+        }
+        if (showImportFromOnlineDialog) {
+            PlaylistImportFromOnlineDialog(
+                onDismissRequest = {
+                    showImportFromOnlineDialog = false
+                },
+                onConfirmation = { url ->
+                    focusManager.clearFocus(true)
+                    keyboardController?.hide()
+
+                    showImportFromOnlineDialog = false
+                    val uri = url.toUri()
+                    val listParam = uri.getQueryParameter("list") ?: ""
+
+                    val playlistId = if (listParam.length == 34) {
+                        "VL$listParam"
+                    } else {
+                        listParam
+                    }
+
+                    Log.i("PlaylistScreen", "playlistId = $playlistId")
+
+                    scope.launch {
+                        val playlistAndSongs = getPlaylistAndSongs(playlistId)
+                        if (playlistAndSongs != null) {
+                            withContext(Dispatchers.Main) {
+                                isImportingPlaylist.value = true
+                                totalLines.intValue = playlistAndSongs.songs.size
+                            }
+                            database.withTransaction {
+                                val databasePlaylistId =
+                                    database.playlistDao().insertPlaylist(playlistAndSongs.playlist)
+                                Log.i("PlaylistScreen", "databasePlaylistId = $databasePlaylistId")
+
+                                playlistAndSongs.songs.forEachIndexed { index, song ->
+
+                                    Log.i("PlaylistScreen", "adding song to db ${song.title}")
+                                    database.songDao().upsertSong(song)
+                                    database.playlistDao()
+                                        .insertSongAtEndOfPlaylist(song.id, databasePlaylistId)
+
+                                    withContext(Dispatchers.Main) {
+                                        currentLine.intValue = index + 1
+                                    }
+                                }
+                            }
+                            withContext(Dispatchers.Main) {
+                                isImportingPlaylist.value = false
+                            }
+                        }
                     }
                 }
             )

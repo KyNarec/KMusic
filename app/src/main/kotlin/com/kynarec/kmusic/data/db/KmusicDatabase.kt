@@ -33,7 +33,7 @@ import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
         SongAlbumMap::class,
         Artist::class
                ],
-    version = 11
+    version = 12
 )
 @TypeConverters(Converters::class)
 abstract class KmusicDatabase : RoomDatabase() {
@@ -57,6 +57,7 @@ abstract class KmusicDatabase : RoomDatabase() {
                 )
                     //                    .addMigrations(MIGRATION_1_2)
                     .addMigrations(MIGRATION_10_11)
+                    .addMigrations(MIGRATION_11_12)
                     .fallbackToDestructiveMigration(false)
                     .build().also { INSTANCE = it }
             }
@@ -91,6 +92,17 @@ abstract class KmusicDatabase : RoomDatabase() {
                 // 5. Re-create indices (Room identifies indices by specific names)
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_SongPlaylistMap_songId` ON `SongPlaylistMap` (`songId`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_SongPlaylistMap_playlistId` ON `SongPlaylistMap` (`playlistId`)")
+            }
+        }
+
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE Playlist ADD COLUMN isEditable INTEGER NOT NULL DEFAULT 1"
+                )
+                database.execSQL(
+                    "ALTER TABLE Playlist ADD COLUMN isYoutubePlaylist INTEGER NOT NULL DEFAULT 0"
+                )
             }
         }
     }
