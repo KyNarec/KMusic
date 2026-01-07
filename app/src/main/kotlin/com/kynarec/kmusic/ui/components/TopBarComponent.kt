@@ -23,17 +23,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.R
-import com.kynarec.kmusic.ui.HomeScreen
 import com.kynarec.kmusic.ui.SearchScreen
 import com.kynarec.kmusic.ui.SettingsScreen
-import com.kynarec.kmusic.ui.screens.SettingsScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,7 +48,10 @@ fun TopBarComponent(
             modifier = Modifier
                 .align(Alignment.CenterVertically)
                 .clickable(true, onClick = {
-                    navController.navigate(HomeScreen)
+                    val startRoute = navController.graph.startDestinationRoute
+                    if (startRoute != null) {
+                        navController.navigate(startRoute)
+                    }
                 })
         ){
             Row {

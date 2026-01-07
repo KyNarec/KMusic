@@ -1,22 +1,20 @@
 package com.kynarec.kmusic.ui.viewModels
 
 import android.content.Context
-import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
+import com.kynarec.kmusic.enums.StartDestination
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.utils.Constants.DARK_MODE_KEY
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DARK_MODE
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DYNAMIC_COLORS
+import com.kynarec.kmusic.utils.Constants.DEFAULT_START_DESTINATION
 import com.kynarec.kmusic.utils.Constants.DEFAULT_TRANSITION_EFFECT
 import com.kynarec.kmusic.utils.Constants.DYNAMIC_COLORS_KEY
+import com.kynarec.kmusic.utils.Constants.START_DESTINATION_KEY
 import com.kynarec.kmusic.utils.Constants.TRANSITION_EFFECT_KEY
 import eu.anifantakis.lib.ksafe.KSafe
 import eu.anifantakis.lib.ksafe.compose.mutableStateOf
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
 
 class SettingsViewModel(
     val ksafe: KSafe,
@@ -24,8 +22,14 @@ class SettingsViewModel(
 ): ViewModel() {
 
     var transitionEffect by ksafe.mutableStateOf(DEFAULT_TRANSITION_EFFECT, TRANSITION_EFFECT_KEY)
-    val transitionEffectFlow: StateFlow<TransitionEffect> = snapshotFlow { transitionEffect }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, transitionEffect)
+//    val transitionEffectFlow: StateFlow<TransitionEffect> = snapshotFlow { transitionEffect }
+//        .stateIn(viewModelScope, SharingStarted.Eagerly, transitionEffect)
+    val transitionEffectFlow = ksafe.getFlow(TRANSITION_EFFECT_KEY, DEFAULT_TRANSITION_EFFECT)
+
+
+    var startDestination by ksafe.mutableStateOf(DEFAULT_START_DESTINATION, START_DESTINATION_KEY)
+    val startDestinationFlow = ksafe.getFlow(START_DESTINATION_KEY, DEFAULT_START_DESTINATION)
+
 
 //    val darkMode by ksafe.mutableStateOf(DEFAULT_DARK_MODE, DARK_MODE_KEY)
     val darkModeFLow = ksafe.getFlow(DARK_MODE_KEY, DEFAULT_DARK_MODE)
@@ -33,19 +37,18 @@ class SettingsViewModel(
 
 
 
-
-    suspend inline fun <reified T : Enum<T>> getEnum(key: String, default: T): T {
-        return ksafe.get(key, default)
+    suspend fun putTransitionEffect(value: TransitionEffect) {
+        ksafe.put(TRANSITION_EFFECT_KEY, value)
+    }
+    suspend fun getTransitionEffect(): TransitionEffect {
+        return ksafe.get(TRANSITION_EFFECT_KEY, DEFAULT_TRANSITION_EFFECT)
     }
 
-    suspend inline fun <reified T : Enum<T>> putEnum(key: String, value: T) {
-        when (key) {
-            TRANSITION_EFFECT_KEY -> {
-                transitionEffect = value as TransitionEffect
-            }
-        }
-
-        ksafe.put(key, value)
+    suspend fun putStartDestination(value: StartDestination) {
+        ksafe.put(START_DESTINATION_KEY, value)
+    }
+    suspend fun getStartDestination(): StartDestination {
+        return ksafe.get(START_DESTINATION_KEY, DEFAULT_START_DESTINATION)
     }
 
     suspend fun getBoolean(key: String, default: Boolean): Boolean {

@@ -27,6 +27,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.enums.StartDestination
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.service.update.UpdateManager
 import com.kynarec.kmusic.ui.screens.AlbumDetailScreen
@@ -64,11 +65,18 @@ fun Navigation(
     // Use a custom ViewModel factory to inject the database DAO.
     val songDao = remember { database.songDao() }
 
-    val transitionEffect by settingsViewModel.transitionEffectFlow.collectAsStateWithLifecycle()
+    val transitionEffect by settingsViewModel.transitionEffectFlow.collectAsStateWithLifecycle(settingsViewModel.transitionEffect)
+    val startDestination by settingsViewModel.startDestinationFlow.collectAsStateWithLifecycle(settingsViewModel.startDestination)
 
     NavHost(
         navController = navController,
-        startDestination = HomeScreen,
+        startDestination = when (startDestination) {
+            StartDestination.HomeScreen -> HomeScreen
+            StartDestination.SongsScreen -> SongsScreen
+            StartDestination.ArtistsScreen -> ArtistsScreen
+            StartDestination.AlbumsScreen -> AlbumsScreen
+            StartDestination.PlaylistsScreen -> PlaylistsScreen
+        },
         enterTransition = {
             when (transitionEffect) {
                 TransitionEffect.None -> EnterTransition.None
