@@ -10,7 +10,6 @@ import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,10 +18,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
-import com.kynarec.kmusic.ui.components.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.components.SongComponent
+import com.kynarec.kmusic.ui.components.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 
 
@@ -34,7 +35,8 @@ fun QueueScreen(
     viewModel: MusicViewModel,
     sheetState: SheetState,
     showBottomSheet: MutableState<Boolean>,
-    database: KmusicDatabase
+    database: KmusicDatabase,
+    navController: NavHostController
 //    hazeState: HazeState
 ) {
 
@@ -89,10 +91,11 @@ fun QueueScreen(
 //            Log.i("SongsScreen", "Showing bottom sheet")
 //            Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
             SongOptionsBottomSheet(
-                songId = longClickSong!!.id,
+                song = longClickSong!!,
                 onDismiss = { showInfoSheet.value = false },
                 viewModel = viewModel,
-                database =  database
+                database =  database,
+                navController = navController
             )
         }
     }

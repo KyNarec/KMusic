@@ -15,6 +15,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -46,7 +47,7 @@ import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
 import kotlinx.serialization.Serializable
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun Navigation(
     navController: NavHostController,
@@ -160,7 +161,7 @@ fun Navigation(
         composable<SongsScreen> {
 //            val songs = viewModel.songsList.collectAsStateWithLifecycle()
 //            val songs = musicViewModel.uiState.collectAsStateWithLifecycle().value.songsList
-            SongsScreen(viewModel = musicViewModel, database = database)
+            SongsScreen(viewModel = musicViewModel, database = database, navController = navController)
         }
         composable<ArtistsScreen> {
             ArtistsScreen(
@@ -170,10 +171,10 @@ fun Navigation(
             )
         }
         composable<PlaylistsScreen> {
-            val playlists =
             PlaylistsScreen(
                 navController = navController,
-                database = database
+                database = database,
+                viewModel = musicViewModel
             )
         }
         composable<PlaylistScreen> {
@@ -230,7 +231,8 @@ fun Navigation(
                 browseId = args.browseId,
                 browseParams = args.browseParams,
                 viewModel = musicViewModel,
-                database = database
+                database = database,
+                navController = navController
             )
         }
 

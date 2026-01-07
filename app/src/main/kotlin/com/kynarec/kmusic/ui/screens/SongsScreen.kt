@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
+import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.SongComponent
@@ -43,7 +44,8 @@ data class SortOption(
 fun SongsScreen(
     modifier: Modifier = Modifier,
     viewModel: MusicViewModel,
-    database: KmusicDatabase
+    database: KmusicDatabase,
+    navController: NavHostController
 ) {
     val context = LocalContext.current
 
@@ -116,10 +118,11 @@ fun SongsScreen(
             Log.i("SongsScreen", "Showing bottom sheet")
             Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
             SongOptionsBottomSheet(
-                songId = longClickSong!!.id,
+                song = longClickSong!!,
                 onDismiss = { showBottomSheet.value = false },
                 viewModel = viewModel,
-                database = database
+                database = database,
+                navController = navController
             )
         }
     }

@@ -33,7 +33,7 @@ import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
         SongAlbumMap::class,
         Artist::class
                ],
-    version = 10
+    version = 12
 )
 @TypeConverters(Converters::class)
 abstract class KmusicDatabase : RoomDatabase() {
@@ -44,10 +44,6 @@ abstract class KmusicDatabase : RoomDatabase() {
     abstract fun playlistDao(): PlaylistDao
     abstract fun albumDao(): AlbumDao
     abstract fun artistDao(): ArtistDao
-
-
-
-
 
     companion object {
         @Volatile private var INSTANCE: KmusicDatabase? = null
@@ -60,19 +56,55 @@ abstract class KmusicDatabase : RoomDatabase() {
                     "kmusic.db"
                 )
                     //                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_10_11)
+                    .addMigrations(MIGRATION_11_12)
                     .fallbackToDestructiveMigration(false)
                     .build().also { INSTANCE = it }
             }
         }
-    }
 
-    val MIGRATION_1_2 = object : Migration(1, 2) {
-        override fun migrate(db: SupportSQLiteDatabase) {
-            // Example: Adding a new column 'last_played_timestamp' to an 'songs' table
-            //db.execSQL("ALTER TABLE songs ADD COLUMN last_played_timestamp INTEGER")
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // 1. Create the new table with 'DEFAULT 0' for position
+                db.execSQL("""
+            CREATE TABLE IF NOT EXISTS `SongPlaylistMap_new` (
+                `songId` TEXT NOT NULL, 
+                `playlistId` INTEGER NOT NULL, 
+                `position` INTEGER NOT NULL DEFAULT 0, 
+                PRIMARY KEY(`songId`, `playlistId`), 
+                FOREIGN KEY(`songId`) REFERENCES `Song`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , 
+                FOREIGN KEY(`playlistId`) REFERENCES `Playlist`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE 
+            )
+        """.trimIndent())
 
-            // Example: Creating a new table 'playlists'
-            // db.execSQL("CREATE TABLE IF NOT EXISTS `playlists` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL)")
+                // 2. Copy the data
+                db.execSQL("""
+            INSERT INTO `SongPlaylistMap_new` (songId, playlistId, position)
+            SELECT songId, playlistId, position FROM `SongPlaylistMap`
+        """.trimIndent())
+
+                // 3. Drop the old table
+                db.execSQL("DROP TABLE `SongPlaylistMap`")
+
+                // 4. Rename the new table
+                db.execSQL("ALTER TABLE `SongPlaylistMap_new` RENAME TO `SongPlaylistMap`")
+
+                // 5. Re-create indices (Room identifies indices by specific names)
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_SongPlaylistMap_songId` ON `SongPlaylistMap` (`songId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_SongPlaylistMap_playlistId` ON `SongPlaylistMap` (`playlistId`)")
+            }
+        }
+
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE Playlist ADD COLUMN isEditable INTEGER NOT NULL DEFAULT 1"
+                )
+                database.execSQL(
+                    "ALTER TABLE Playlist ADD COLUMN isYoutubePlaylist INTEGER NOT NULL DEFAULT 0"
+                )
+            }
         }
     }
+
 }

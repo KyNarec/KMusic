@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.innertube.browseSongs
@@ -46,7 +47,8 @@ fun SongListScreen(
     browseId: String,
     browseParams: String,
     viewModel: MusicViewModel,
-    database: KmusicDatabase
+    database: KmusicDatabase,
+    navController: NavHostController
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -146,10 +148,11 @@ fun SongListScreen(
         Log.i("SongsScreen", "Showing bottom sheet")
         Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
         SongOptionsBottomSheet(
-            songId = longClickSong!!.id,
+            song = longClickSong!!,
             onDismiss = { showSongDetailBottomSheet.value = false },
             viewModel = viewModel,
-            database = database
+            database = database,
+            navController = navController
         )
     }
 }

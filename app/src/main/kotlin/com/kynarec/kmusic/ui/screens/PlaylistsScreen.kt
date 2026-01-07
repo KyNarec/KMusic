@@ -1,6 +1,7 @@
 package com.kynarec.kmusic.ui.screens
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
@@ -18,35 +19,57 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.CreateNewFolder
+import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingActionButtonMenu
+import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleFloatingActionButton
+import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.room.withTransaction
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.enums.PopupType
+import com.kynarec.kmusic.service.innertube.getPlaylistAndSongs
 import com.kynarec.kmusic.ui.PlaylistScreen
+import com.kynarec.kmusic.ui.components.PlaylistCreateNewDialog
+import com.kynarec.kmusic.ui.components.PlaylistImportFromOnlineDialog
 import com.kynarec.kmusic.ui.components.TwoByTwoImageGrid
+import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.importPlaylistFromCsv
@@ -55,14 +78,17 @@ import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.extension
 import io.github.vinceglb.filekit.readString
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@ExperimentalMaterial3ExpressiveApi
 @Composable
 fun PlaylistsScreen(
     modifier: Modifier = Modifier,
     navController: NavHostController,
-    database: KmusicDatabase
+    database: KmusicDatabase,
+    viewModel: MusicViewModel
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -77,6 +103,16 @@ fun PlaylistsScreen(
     val currentLine = remember { mutableIntStateOf(0) }
     val isImportingPlaylist = remember { mutableStateOf(false) }
 
+    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+
+    // Used for dimming the screen, not yet implemented
+    var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
+    var showCreateDialog by remember { mutableStateOf(false) }
+    var showImportFromOnlineDialog by remember { mutableStateOf(false) }
+
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Scaffold(
         topBar = {
@@ -91,11 +127,58 @@ fun PlaylistsScreen(
                     "Playlists",
                     style = MaterialTheme.typography.headlineMedium
                 )
-                IconButton(
+            }
+        },
+        floatingActionButton = {
+            FloatingActionButtonMenu(
+                modifier = Modifier.padding(bottom = if (showControlBar) 70.dp else 0.dp),
+                expanded = fabMenuExpanded,
+                button = {
+                    ToggleFloatingActionButton(
+                        modifier = Modifier.semantics {
+                            stateDescription = if (fabMenuExpanded) "Expanded" else "Collapsed"
+                            contentDescription = "Toggle menu"
+                        },
+                        checked = fabMenuExpanded,
+                        onCheckedChange = { fabMenuExpanded = !fabMenuExpanded },
+                    ) {
+                        val imageVector by remember {
+                            derivedStateOf {
+                                if (checkedProgress > 0.5f) Icons.Filled.Close else Icons.Filled.Add
+                            }
+                        }
+                        Icon(
+                            painter = rememberVectorPainter(imageVector),
+                            contentDescription = null,
+                            modifier = Modifier.animateIcon({ checkedProgress }),
+                        )
+                    }
+                }
+            ) {
+                FloatingActionButtonMenuItem(
                     onClick = {
+                        fabMenuExpanded = false
+                        showCreateDialog = true
+                    },
+                    icon = { Icon(Icons.Default.CreateNewFolder, contentDescription = null) },
+                    text = { Text(text = "Create new") },
+                )
+
+                FloatingActionButtonMenuItem(
+                    onClick = {
+                        fabMenuExpanded = false
+                        showImportFromOnlineDialog = true
+                    },
+                    icon = { Icon(Icons.Default.CloudDownload, contentDescription = null) },
+                    text = { Text(text = "Import from online") },
+                )
+
+                // 3. Import from File (Your existing logic)
+                FloatingActionButtonMenuItem(
+                    onClick = {
+                        fabMenuExpanded = false
                         scope.launch {
                             val file = FileKit.openFilePicker(mode = FileKitMode.Single)
-                            // Call the extracted import function
                             if (file?.extension == "csv") {
                                 SmartMessage("Importing...", context = context, durationLong = true)
                                 val csvContent = file.readString()
@@ -103,44 +186,91 @@ fun PlaylistsScreen(
                                 currentLine.intValue = 0
                                 isImportingPlaylist.value = true
                                 try {
-                                    // 3. Start the import and collect progress
-                                    importPlaylistFromCsv(csvContent, context, database) // Use stored content
+                                    importPlaylistFromCsv(csvContent, context, database)
                                         .collect { currentIndex ->
-                                            currentLine.intValue =
-                                                currentIndex + 1 // Increment to show songs processed (1-based)
-                                            Log.d("Import", "Progress: ${currentIndex + 1} / ${totalLines.intValue}")
+                                            currentLine.intValue = currentIndex + 1
                                         }
                                 } catch (e: Exception) {
-                                    Log.e("Import", "Import failed", e)
-                                    SmartMessage(
-                                        "Import failed: ${e.message}",
-                                        context = context,
-                                        type = PopupType.Error
-                                    )
+                                    SmartMessage("Import failed: ${e.message}", context = context, type = PopupType.Error)
                                 } finally {
-                                    // 4. Hide indicator regardless of success or failure
-                                    Log.i("Import", "setting isImportinPlaylist to false")
                                     isImportingPlaylist.value = false
                                 }
-                            } else {
-                                SmartMessage(
-                                    "Seems like you didn't select a compatible CSV file",
-                                    context = context,
-                                    type = PopupType.Error
-                                )
                             }
                         }
-                    }
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "Add new playlist (Import CSV)",
-                    )
-                }
+                    },
+                    icon = { Icon(Icons.Default.FileOpen, contentDescription = null) },
+                    text = { Text(text = "Import from file") },
+                )
             }
         },
         modifier = modifier.fillMaxSize()
     ) { paddingValues ->
+        if (showCreateDialog) {
+            PlaylistCreateNewDialog(
+                onDismissRequest = {
+                    showCreateDialog = false
+                },
+                onConfirmation = { text ->
+                    showCreateDialog = false
+                    scope.launch {
+                        database.playlistDao().insertPlaylist(Playlist(name = text))
+                    }
+                }
+            )
+        }
+        if (showImportFromOnlineDialog) {
+            PlaylistImportFromOnlineDialog(
+                onDismissRequest = {
+                    showImportFromOnlineDialog = false
+                },
+                onConfirmation = { url ->
+                    focusManager.clearFocus(true)
+                    keyboardController?.hide()
+
+                    showImportFromOnlineDialog = false
+                    val uri = url.toUri()
+                    val listParam = uri.getQueryParameter("list") ?: ""
+
+                    val playlistId = if (listParam.length == 34) {
+                        "VL$listParam"
+                    } else {
+                        listParam
+                    }
+
+                    Log.i("PlaylistScreen", "playlistId = $playlistId")
+
+                    scope.launch {
+                        val playlistAndSongs = getPlaylistAndSongs(playlistId)
+                        if (playlistAndSongs != null) {
+                            withContext(Dispatchers.Main) {
+                                isImportingPlaylist.value = true
+                                totalLines.intValue = playlistAndSongs.songs.size
+                            }
+                            database.withTransaction {
+                                val databasePlaylistId =
+                                    database.playlistDao().insertPlaylist(playlistAndSongs.playlist)
+                                Log.i("PlaylistScreen", "databasePlaylistId = $databasePlaylistId")
+
+                                playlistAndSongs.songs.forEachIndexed { index, song ->
+
+                                    Log.i("PlaylistScreen", "adding song to db ${song.title}")
+                                    database.songDao().upsertSong(song)
+                                    database.playlistDao()
+                                        .insertSongAtEndOfPlaylist(song.id, databasePlaylistId)
+
+                                    withContext(Dispatchers.Main) {
+                                        currentLine.intValue = index + 1
+                                    }
+                                }
+                            }
+                            withContext(Dispatchers.Main) {
+                                isImportingPlaylist.value = false
+                            }
+                        }
+                    }
+                }
+            )
+        }
         if (!isImportingPlaylist.value && isLoading) {
             Box(
                 modifier = Modifier
@@ -151,12 +281,16 @@ fun PlaylistsScreen(
                 CircularWavyProgressIndicator()
             }
         } else {
+
             LazyVerticalGrid(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
                     .padding(horizontal = 8.dp),
-                contentPadding = PaddingValues(top = 8.dp),
+                contentPadding = PaddingValues(
+                    top = 8.dp,
+                    bottom = if (showControlBar) 70.dp else 0.dp // 70.dp (bar) + 16.dp (margin)
+                ),
                 columns = GridCells.Adaptive(minSize = 100.dp)
             ) {
                 items(playlists, key = { it.id }) { playlist ->
@@ -166,7 +300,8 @@ fun PlaylistsScreen(
                                 database.playlistDao().deletePlaylist(it)
                             }
                         },
-                        database = database
+                        database = database,
+                        onClick = { navController.navigate(PlaylistScreen(playlist.id)) }
                     )
                 }
                 if (isImportingPlaylist.value && totalLines.intValue > 0) {
@@ -196,7 +331,8 @@ fun PlaylistListItem(
     playlist: Playlist,
     navController: NavHostController,
     onRemove: (Playlist) -> Unit,
-    database: KmusicDatabase
+    database: KmusicDatabase,
+    onClick: () -> Unit
 ) {
     val context = LocalContext.current
     val songsThumbnailList = remember { mutableStateListOf<String>() }
@@ -219,9 +355,7 @@ fun PlaylistListItem(
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp)
             .background(Color.Transparent),
-        onClick = {
-            navController.navigate(PlaylistScreen(playlist.id))
-        },
+        onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
 
     ) {

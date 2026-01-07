@@ -137,10 +137,13 @@ fun PlaylistDetailScreen(
         Log.i("SongsScreen", "Showing bottom sheet")
         Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
         SongOptionsBottomSheet(
-            songId = longClickSong!!.id,
+            song = longClickSong!!,
             onDismiss = { showSongDetailBottomSheet.value = false },
             viewModel = viewModel,
-            database = database
+            database = database,
+            navController = navController,
+            isInPlaylistDetailScreen = true,
+            playlistId = playlistId
         )
     }
 

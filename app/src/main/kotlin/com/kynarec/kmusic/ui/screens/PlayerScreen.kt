@@ -414,7 +414,8 @@ fun PlayerScreen(
                 onClose = { showBottomSheet.value = false },
                 sheetState = sheetState,
                 showBottomSheet = showBottomSheet,
-                database = database
+                database = database,
+                navController = navController
             )
         }
     }
