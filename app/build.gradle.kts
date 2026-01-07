@@ -3,11 +3,11 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
     kotlin("kapt")
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.2.21"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.0"
     id("kotlin-parcelize")
 }
 
-val appVersion = "0.1.7"
+val appVersion = "0.1.8"
 
 android {
     namespace = "com.kynarec.kmusic"
