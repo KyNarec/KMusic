@@ -29,6 +29,7 @@ import com.kynarec.kmusic.ui.screens.SortOption
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
 import com.kynarec.kmusic.utils.parseDurationToMillis
+import com.kynarec.kmusic.utils.toSong
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -51,7 +52,6 @@ data class MusicUiState(
     val isPlaying: Boolean = false,
     val currentPosition: Long = 0,
     val currentDurationLong: Long = 0,
-    val currentDurationString: String = "0:00",
     val showControlBar: Boolean = false,
     val songsSortOption: SortOption = SortOption("All"),
     val searchParam: SortOption = SortOption("Song")
@@ -96,7 +96,6 @@ class MusicViewModel
                     currentSong = currentSong,
                     currentDurationLong = _uiState.value.currentSong?.duration?.parseDurationToMillis()
                         ?: 0L,
-                    currentDurationString = _uiState.value.currentSong?.duration ?: "0:00"
                 )
             }
 
@@ -144,14 +143,27 @@ class MusicViewModel
                 val controller = future.get()
                 this.mediaController = controller
 
+                // Reconstruct the Playlist from the Player's current queue
+                val itemsInQueue = mutableListOf<Song>()
+                for (i in 0 until controller.mediaItemCount) {
+                    itemsInQueue.add(controller.getMediaItemAt(i).toSong())
+                }
+
+                val currentSong = controller.currentMediaItem?.toSong()
+
+                _uiState.update { it.copy(
+                    songsList = itemsInQueue,
+                    currentSong = currentSong,
+//                    currentDurationLong = currentSong?.duration?.parseDurationToMillis()
+//                        ?: 0L,
+                    isPlaying = controller.isPlaying,
+                    showControlBar = itemsInQueue.isNotEmpty()
+                ) }
+
                 controller.addListener(playerListener)
-
-                // Sync initial state
-                _uiState.update { it.copy(isPlaying = controller.isPlaying) }
                 updatePosition()
-
             } catch (e: Exception) {
-                Log.e(tag, "Failed to connect to MediaController", e)
+                Log.e(tag, "Failed to connect", e)
             }
         }, ContextCompat.getMainExecutor(context)) // Runs on Main Thread safely
     }

@@ -2,6 +2,8 @@ package com.kynarec.kmusic.utils
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.os.Bundle
 import android.util.Log
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.basicMarquee
@@ -95,11 +97,20 @@ fun Long.parseMillisToDuration(): String {
 suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = withContext(Dispatchers.IO) {
     val uri = playSongByIdWithBestBitrate(song.id) ?: return@withContext MediaItem.Builder().build()
 
+    val extras = Bundle().apply {
+        putString("ALBUM_ID", song.albumId)
+        putString("DURATION", song.duration)
+        putString("THUMBNAIL", song.thumbnail)
+        // Store artists as a ParcelableArrayList
+        putParcelableArrayList("ARTISTS", ArrayList(song.artists))
+    }
+
     val mediaMetadataBuilder = MediaMetadata.Builder()
         .setTitle(song.title)
         .setArtist(song.artists.joinToString(", ") { it.name })
         .setIsBrowsable(false)
         .setIsPlayable(true)
+        .setExtras(extras)
         .setArtworkUri(song.thumbnail.toUri())
 
     // Database insertion should also be offloaded
@@ -116,6 +127,14 @@ suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = w
 // This function is for creating browsable items. It should not contain the playback URI.
 fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
     // This is a browsable item, it only needs the MediaId and Metadata.
+    val extras = Bundle().apply {
+        putString("ALBUM_ID", song.albumId)
+        putString("DURATION", song.duration)
+        putString("THUMBNAIL", song.thumbnail)
+        // Store artists as a ParcelableArrayList
+        putParcelableArrayList("ARTISTS", ArrayList(song.artists))
+    }
+
     return MediaItem.Builder()
         .setMediaId(song.id)
         .setUri("")
@@ -124,6 +143,7 @@ fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
                 .setTitle(song.title)
                 .setArtist(song.artists.joinToString(", ") { it.name })
                 .setArtworkUri(song.thumbnail.toUri())
+                .setExtras(extras)
                 .setIsBrowsable(false) // Songs are not folders.
                 .setIsPlayable(true)   // Songs are playable.
                 .build()
@@ -136,6 +156,27 @@ suspend fun MediaItem.createFullMediaItem(): MediaItem {
     return this.buildUpon()
         .setUri(uri)
         .build()
+}
+
+fun MediaItem.toSong(): Song {
+    val metadata = this.mediaMetadata
+    val extras = metadata.extras ?: Bundle.EMPTY
+
+    val artistsList = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        extras.getParcelableArrayList("ARTISTS", SongArtist::class.java)
+    } else {
+        @Suppress("DEPRECATION")
+        extras.getParcelableArrayList("ARTISTS")
+    } ?: emptyList<SongArtist>()
+
+    return Song(
+        id = this.mediaId,
+        title = metadata.title?.toString() ?: "Unknown",
+        artists = artistsList,
+        albumId = extras.getString("ALBUM_ID"),
+        duration = extras.getString("DURATION") ?: "0:00",
+        thumbnail = extras.getString("THUMBNAIL") ?: ""
+    )
 }
 
 @Composable
