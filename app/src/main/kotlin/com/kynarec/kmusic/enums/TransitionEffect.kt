@@ -6,10 +6,5 @@ enum class TransitionEffect(val label: String) {
     Scale("Scale"),
     Fade("Fade"),
     Expand("Expand"),
-    None("None");
-
-    companion object {
-        val all get() = values().toList()
-        fun fromName(name: String) = values().firstOrNull { it.name == name } ?: None
-    }
+    None("None")
 }

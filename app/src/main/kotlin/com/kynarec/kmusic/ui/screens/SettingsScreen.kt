@@ -2,6 +2,7 @@ package com.kynarec.kmusic.ui.screens
 
 import android.util.Log
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,19 +17,24 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Animation
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FormatColorFill
+import androidx.compose.material.icons.filled.PinDrop
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.kynarec.kmusic.enums.StartDestination
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.service.update.UpdateManager
+import com.kynarec.kmusic.service.update.getCurrentVersion
 import com.kynarec.kmusic.ui.components.UpdateDialog
 import com.kynarec.kmusic.ui.components.settings.SettingComponentEnumChoice
 import com.kynarec.kmusic.ui.components.settings.SettingComponentSwitch
@@ -38,7 +44,6 @@ import com.kynarec.kmusic.utils.Constants.DARK_MODE_KEY
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DARK_MODE
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DYNAMIC_COLORS
 import com.kynarec.kmusic.utils.Constants.DYNAMIC_COLORS_KEY
-import com.kynarec.kmusic.utils.Constants.TRANSITION_EFFECT_KEY
 import com.kynarec.kmusic.utils.SmartMessage
 import kotlinx.coroutines.launch
 
@@ -56,6 +61,11 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
+    val transitionEffectFlow by prefs.transitionEffectFlow.collectAsStateWithLifecycle(prefs.transitionEffect)
+    val startDestinationFlow by prefs.startDestinationFlow.collectAsStateWithLifecycle(prefs.startDestination)
+
+
+
     if (updateViewModel.showDialog && updateViewModel.updateInfo != null) {
         Log.i("UpdateChecker", "Now showing update dialog")
         UpdateDialog(
@@ -64,25 +74,12 @@ fun SettingsScreen(
             supportsInAppInstallation = updateManager.supportsInAppInstallation(),
             onDismiss = { updateViewModel.dismissDialog() },
             onUpdate = { updateViewModel.startDownload() },
-            onOpenStore = { updateViewModel.openStore() }
-        )
+            onOpenStore = { updateViewModel.openStore() })
     }
 
     Box(Modifier.fillMaxSize()) {
         Column {
             LazyColumn{
-                item {
-                    SettingComponentEnumChoice(
-                        icon = Icons.Default.Animation,
-                        title = "Screen Transition Effect",
-                        description = "Choose how screens transition in the app",
-                        prefs = prefs,
-                        key = TRANSITION_EFFECT_KEY,
-                        enumValues = TransitionEffect.all,
-                        default = TransitionEffect.Fade,
-                        labelMapper = { it.name }
-                    )
-                }
                 item {
                     SettingComponentSwitch(
                         icon = Icons.Default.DarkMode,
@@ -101,6 +98,34 @@ fun SettingsScreen(
                         prefs = prefs,
                         switchId = DYNAMIC_COLORS_KEY,
                         defaultValue = DEFAULT_DYNAMIC_COLORS
+                    )
+                }
+                item {
+                    // Force this call to use TransitionEffect
+                    SettingComponentEnumChoice(
+                        icon = Icons.Default.Animation,
+                        title = "Screen Transition Effect",
+                        description = "Choose how screens transition in the app",
+                        enumValues = TransitionEffect.entries, // Now correctly seen as List<TransitionEffect>
+                        selected = transitionEffectFlow,
+                        onValueSelected = {
+                            scope.launch { prefs.putTransitionEffect(it) }
+                        },
+                        labelMapper = { it.label }
+                    )
+                }
+
+                item {
+                    SettingComponentEnumChoice(
+                        icon = Icons.Default.PinDrop,
+                        title = "Start Destination",
+                        description = "Choose on which screen the app starts",
+                        enumValues = StartDestination.entries,
+                        selected = startDestinationFlow,
+                        onValueSelected = {
+                            scope.launch { prefs.putStartDestination(it) }
+                        },
+                        labelMapper = { it.label }
                     )
                 }
                 item {
@@ -125,6 +150,19 @@ fun SettingsScreen(
                         }
                     }
                 }
+            }
+            Spacer(Modifier.weight(1f))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val version = getCurrentVersion()
+                Text("v$version",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
             }
         }
     }
