@@ -2,6 +2,7 @@ package com.kynarec.kmusic.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Equalizer
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,14 +32,14 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.data.db.entities.Song
-import com.kynarec.kmusic.utils.ConditionalMarqueeText
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SongComponent(
     song: Song,
     onClick: () -> Unit,
-    onLongClick: () ->  Unit = {}
+    onLongClick: () ->  Unit = {},
+    isPlaying: Boolean = false
 ) {
     // The main Row acts as the container, mimicking the XML's fixed height and clickable behavior.
     val title = song.title
@@ -79,26 +83,49 @@ fun SongComponent(
             verticalArrangement = Arrangement.Center
         ) {
             // Smart marquee for title - only scrolls if text is too long
-            ConditionalMarqueeText(
+            Text(
                 text = title,
                 fontSize = 24.sp,
-                maxLines = 1
+                maxLines = 1,
+                modifier = Modifier
+                    .basicMarquee(
+                        initialDelayMillis = 1000, iterations = Int.MAX_VALUE
+                    )
             )
 
             // Smart marquee for artist - only scrolls if text is too long
-            ConditionalMarqueeText(
+            Text(
                 text = artist,
                 fontSize = 14.sp,
-                maxLines = 1
+                maxLines = 1,
+                modifier = Modifier
+                    .basicMarquee(
+                        initialDelayMillis = 1000, iterations = Int.MAX_VALUE
+                    )
             )
         }
 
-        Text(
-            text = duration,
-            fontSize = 11.sp,
+        Column(
             modifier = Modifier
-                .padding(end = 16.dp, bottom = 4.dp)
-                .align(Alignment.Bottom)
-        )
+                .fillMaxHeight()
+                .padding(end = 16.dp, start = 8.dp),
+            verticalArrangement = Arrangement.Bottom,
+            horizontalAlignment = Alignment.End
+        ) {
+            if (isPlaying) {
+                Icon(
+                    Icons.Default.Equalizer,
+                    contentDescription = "Equalizer",
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f))
+
+            Text(
+                text = duration,
+                fontSize = 14.sp,
+                modifier = Modifier
+                    .padding(bottom = 4.dp)
+            )
+        }
     }
 }
