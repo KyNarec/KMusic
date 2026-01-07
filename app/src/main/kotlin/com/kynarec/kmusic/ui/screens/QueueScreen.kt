@@ -83,7 +83,8 @@ fun QueueScreen(
                         onLongClick = {
                             longClickSong = songList[index]
                             showInfoSheet.value = true
-                        }
+                        },
+                        isPlaying = songList[index] == uiState.currentSong
                     )
                 }
             }

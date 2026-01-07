@@ -92,16 +92,28 @@ class PlayerServiceModern : MediaLibraryService() {
             val indexAtBegging = player?.currentMediaItemIndex
             if (mediaItem?.localConfiguration?.uri.toString().isEmpty()) {
                 Log.i("PlayerService", "mediaItem is empty")
-                var fullMediaItem = MediaItem.EMPTY
+
+                player?.stop()
+
                 CoroutineScope(Dispatchers.IO).launch {
-                    fullMediaItem = mediaItem?.createFullMediaItem()?: MediaItem.EMPTY
-                    if (fullMediaItem != MediaItem.EMPTY && indexAtBegging == withContext(Dispatchers.Main) {player?.currentMediaItemIndex}) withContext(Dispatchers.Main) {
-                        Log.i("PlayerService", "Replacing media item")
-                        player?.replaceMediaItem(player?.currentMediaItemIndex?: 0, fullMediaItem)
-                    } else {
+                    var fullMediaItem = mediaItem?.createFullMediaItem() ?: MediaItem.EMPTY
+                    if (fullMediaItem != MediaItem.EMPTY && indexAtBegging == withContext(
+                            Dispatchers.Main
+                        ) { player?.currentMediaItemIndex }
+                    )
+                        withContext(Dispatchers.Main) {
+                            Log.i("PlayerService", "Replacing media item")
+                            player?.replaceMediaItem(
+                                player?.currentMediaItemIndex ?: 0,
+                                fullMediaItem
+                            )
+                            player?.prepare()
+                            player?.play()
+                        } else {
                         Log.i("PlayerService", "fullMediaItem is empty or song was skipped")
                     }
                 }
+                return
             }
 
             if (mediaItem?.localConfiguration?.uri.toString() == "NA") {

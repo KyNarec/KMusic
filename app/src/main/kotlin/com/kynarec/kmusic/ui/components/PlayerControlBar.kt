@@ -93,6 +93,7 @@ fun PlayerControlBar(
                 modifier = Modifier.basicMarquee(
                     repeatDelayMillis = 1000,
                     initialDelayMillis = 1000,
+                    iterations = Int.MAX_VALUE
                 )
             )
             Text(
@@ -104,6 +105,7 @@ fun PlayerControlBar(
                 modifier = Modifier.basicMarquee(
                     repeatDelayMillis = 1000,
                     initialDelayMillis = 1000,
+                    iterations = Int.MAX_VALUE
                 )
             )
         }

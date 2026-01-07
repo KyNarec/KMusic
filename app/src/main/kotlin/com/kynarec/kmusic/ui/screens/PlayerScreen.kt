@@ -326,7 +326,7 @@ fun PlayerScreen(
                 Text(
 //                    text = "${uiState.currentDuration / 1000 / 60}:${(uiState.totalDuration / 1000 % 60).toString().padStart(2, '0')}",
 //                    text = parseMillisToDuration(uiState.currentDurationLong),
-                    text = uiState.currentDurationString,
+                    text = uiState.currentSong?.duration?: "NA",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
