@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -51,6 +52,7 @@ import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.ui.components.player.SleepTimerDialog
 import com.kynarec.kmusic.ui.components.playlist.AddToPlaylistDialog
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
@@ -76,6 +78,10 @@ fun SongOptionsBottomSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val sleepTimerTimeLeft = uiState.timeLeftMillis
+    var showSleepTimerDialog by remember { mutableStateOf(false) }
 
     val dbSong by database.songDao()
         .getSongFlowById(song.id)
@@ -188,6 +194,14 @@ fun SongOptionsBottomSheet(
                 )
 
                 BottomSheetItem(
+                    icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    text = if (isLiked) "Remove from favorites" else "Add to favorites",
+                    onClick = {
+                        viewModel.toggleFavoriteSong(dbSong!!)
+                    }
+                )
+
+                BottomSheetItem(
                     icon = Icons.Default.Radio,
                     text = "Start radio",
                     onClick = {
@@ -216,13 +230,6 @@ fun SongOptionsBottomSheet(
                     }
                 )
 
-                BottomSheetItem(
-                    icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    text = if (isLiked) "Remove from favorites" else "Add to favorites",
-                    onClick = {
-                        viewModel.toggleFavoriteSong(dbSong!!)
-                    }
-                )
 
                 BottomSheetItem(
                     icon = Icons.AutoMirrored.Filled.PlaylistAdd,
@@ -245,6 +252,14 @@ fun SongOptionsBottomSheet(
                         }
                     )
                 }
+
+                if ((uiState.currentSong?.id ?: "") == dbSong!!.id) {
+                    BottomSheetItem(
+                        icon = Icons.Default.Bedtime,
+                        text = if (sleepTimerTimeLeft > 0) "Timer: ${sleepTimerTimeLeft / 1000 / 60}m remaining" else "Sleep Timer",
+                        onClick = { showSleepTimerDialog = true }
+                    )
+                }
             }
         }
     }
@@ -255,6 +270,17 @@ fun SongOptionsBottomSheet(
             database = database,
             onDismissRequest = { showAddToPlaylistDialog = false },
             navController = navController
+        )
+    }
+
+    if (showSleepTimerDialog) {
+        SleepTimerDialog(
+            onDismiss = { showSleepTimerDialog = false },
+            onTimerSelected = { minutes ->
+                viewModel.startSleepTimer(minutes)
+                showSleepTimerDialog = false
+                onDismiss() // Close bottom sheet
+            }
         )
     }
 }

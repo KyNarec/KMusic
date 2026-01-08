@@ -54,7 +54,8 @@ data class MusicUiState(
     val currentDurationLong: Long = 0,
     val showControlBar: Boolean = false,
     val songsSortOption: SortOption = SortOption("All"),
-    val searchParam: SortOption = SortOption("Song")
+    val searchParam: SortOption = SortOption("Song"),
+    val timeLeftMillis: Long = 0
 )
 
 // The new, combined ViewModel
@@ -78,6 +79,8 @@ class MusicViewModel
 
     private var playlistLoadJob: Job? = null
     private var currentLoadingPlaylistId: String? = null
+
+    private var sleepTimerJob: Job? = null
 
     private val playerListener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -573,6 +576,38 @@ class MusicViewModel
             playlistDao.deletePlaylist(playlist)
         }
     }
+
+    fun startSleepTimer(minutes: Long) {
+        sleepTimerJob?.cancel() // Reset existing timer
+        val endTime = System.currentTimeMillis() + (minutes * 60 * 1000)
+
+        sleepTimerJob = viewModelScope.launch {
+            while (System.currentTimeMillis() < endTime) {
+                _uiState.update {
+                    it.copy(
+                        timeLeftMillis = endTime - System.currentTimeMillis()
+                    )
+                }
+                delay(1000) // Update every second
+            }
+            _uiState.update {
+                it.copy(
+                    timeLeftMillis = 0L
+                )
+            }
+            pause()
+        }
+    }
+
+    fun stopSleepTimer() {
+        sleepTimerJob?.cancel()
+        _uiState.update {
+            it.copy(
+                timeLeftMillis = 0L
+            )
+        }
+    }
+
 
     override fun onCleared() {
         super.onCleared()
