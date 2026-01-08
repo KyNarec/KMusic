@@ -101,7 +101,6 @@ fun SettingsScreen(
                     )
                 }
                 item {
-                    // Force this call to use TransitionEffect
                     SettingComponentEnumChoice(
                         icon = Icons.Default.Animation,
                         title = "Screen Transition Effect",
