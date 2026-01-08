@@ -110,6 +110,7 @@ fun PlaylistsScreen(
     BackHandler(fabMenuExpanded) { fabMenuExpanded = false }
     var showCreateDialog by remember { mutableStateOf(false) }
     var showImportFromOnlineDialog by remember { mutableStateOf(false) }
+    var showFAB by remember { mutableStateOf(true) }
 
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -130,77 +131,88 @@ fun PlaylistsScreen(
             }
         },
         floatingActionButton = {
-            FloatingActionButtonMenu(
-                modifier = Modifier.padding(bottom = if (showControlBar) 70.dp else 0.dp),
-                expanded = fabMenuExpanded,
-                button = {
-                    ToggleFloatingActionButton(
-                        modifier = Modifier.semantics {
-                            stateDescription = if (fabMenuExpanded) "Expanded" else "Collapsed"
-                            contentDescription = "Toggle menu"
-                        },
-                        checked = fabMenuExpanded,
-                        onCheckedChange = { fabMenuExpanded = !fabMenuExpanded },
-                    ) {
-                        val imageVector by remember {
-                            derivedStateOf {
-                                if (checkedProgress > 0.5f) Icons.Filled.Close else Icons.Filled.Add
-                            }
-                        }
-                        Icon(
-                            painter = rememberVectorPainter(imageVector),
-                            contentDescription = null,
-                            modifier = Modifier.animateIcon({ checkedProgress }),
-                        )
-                    }
-                }
-            ) {
-                FloatingActionButtonMenuItem(
-                    onClick = {
-                        fabMenuExpanded = false
-                        showCreateDialog = true
-                    },
-                    icon = { Icon(Icons.Default.CreateNewFolder, contentDescription = null) },
-                    text = { Text(text = "Create new") },
-                )
-
-                FloatingActionButtonMenuItem(
-                    onClick = {
-                        fabMenuExpanded = false
-                        showImportFromOnlineDialog = true
-                    },
-                    icon = { Icon(Icons.Default.CloudDownload, contentDescription = null) },
-                    text = { Text(text = "Import from online") },
-                )
-
-                // 3. Import from File (Your existing logic)
-                FloatingActionButtonMenuItem(
-                    onClick = {
-                        fabMenuExpanded = false
-                        scope.launch {
-                            val file = FileKit.openFilePicker(mode = FileKitMode.Single)
-                            if (file?.extension == "csv") {
-                                SmartMessage("Importing...", context = context, durationLong = true)
-                                val csvContent = file.readString()
-                                totalLines.intValue = csvContent.lines().drop(1).filter { it.isNotBlank() }.size
-                                currentLine.intValue = 0
-                                isImportingPlaylist.value = true
-                                try {
-                                    importPlaylistFromCsv(csvContent, context, database)
-                                        .collect { currentIndex ->
-                                            currentLine.intValue = currentIndex + 1
-                                        }
-                                } catch (e: Exception) {
-                                    SmartMessage("Import failed: ${e.message}", context = context, type = PopupType.Error)
-                                } finally {
-                                    isImportingPlaylist.value = false
+            if (showFAB) {
+                FloatingActionButtonMenu(
+                    modifier = Modifier.padding(bottom = if (showControlBar) 70.dp else 0.dp),
+                    expanded = fabMenuExpanded,
+                    button = {
+                        ToggleFloatingActionButton(
+                            modifier = Modifier.semantics {
+                                stateDescription = if (fabMenuExpanded) "Expanded" else "Collapsed"
+                                contentDescription = "Toggle menu"
+                            },
+                            checked = fabMenuExpanded,
+                            onCheckedChange = { fabMenuExpanded = !fabMenuExpanded },
+                        ) {
+                            val imageVector by remember {
+                                derivedStateOf {
+                                    if (checkedProgress > 0.5f) Icons.Filled.Close else Icons.Filled.Add
                                 }
                             }
+                            Icon(
+                                painter = rememberVectorPainter(imageVector),
+                                contentDescription = null,
+                                modifier = Modifier.animateIcon({ checkedProgress }),
+                            )
                         }
-                    },
-                    icon = { Icon(Icons.Default.FileOpen, contentDescription = null) },
-                    text = { Text(text = "Import from file") },
-                )
+                    }
+                ) {
+                    FloatingActionButtonMenuItem(
+                        onClick = {
+                            fabMenuExpanded = false
+                            showCreateDialog = true
+                        },
+                        icon = { Icon(Icons.Default.CreateNewFolder, contentDescription = null) },
+                        text = { Text(text = "Create new") },
+                    )
+
+                    FloatingActionButtonMenuItem(
+                        onClick = {
+                            fabMenuExpanded = false
+                            showImportFromOnlineDialog = true
+                        },
+                        icon = { Icon(Icons.Default.CloudDownload, contentDescription = null) },
+                        text = { Text(text = "Import from online") },
+                    )
+
+                    // 3. Import from File (Your existing logic)
+                    FloatingActionButtonMenuItem(
+                        onClick = {
+                            fabMenuExpanded = false
+                            scope.launch {
+                                val file = FileKit.openFilePicker(mode = FileKitMode.Single)
+                                if (file?.extension == "csv") {
+                                    SmartMessage(
+                                        "Importing...",
+                                        context = context,
+                                        durationLong = true
+                                    )
+                                    val csvContent = file.readString()
+                                    totalLines.intValue =
+                                        csvContent.lines().drop(1).filter { it.isNotBlank() }.size
+                                    currentLine.intValue = 0
+                                    isImportingPlaylist.value = true
+                                    try {
+                                        importPlaylistFromCsv(csvContent, context, database)
+                                            .collect { currentIndex ->
+                                                currentLine.intValue = currentIndex + 1
+                                            }
+                                    } catch (e: Exception) {
+                                        SmartMessage(
+                                            "Import failed: ${e.message}",
+                                            context = context,
+                                            type = PopupType.Error
+                                        )
+                                    } finally {
+                                        isImportingPlaylist.value = false
+                                    }
+                                }
+                            }
+                        },
+                        icon = { Icon(Icons.Default.FileOpen, contentDescription = null) },
+                        text = { Text(text = "Import from file") },
+                    )
+                }
             }
         },
         modifier = modifier.fillMaxSize()
@@ -240,10 +252,13 @@ fun PlaylistsScreen(
                     Log.i("PlaylistScreen", "playlistId = $playlistId")
 
                     scope.launch {
+                        isImportingPlaylist.value = true
+                        totalLines.intValue = 1
+                        showFAB = false
                         val playlistAndSongs = getPlaylistAndSongs(playlistId)
                         if (playlistAndSongs != null) {
                             withContext(Dispatchers.Main) {
-                                isImportingPlaylist.value = true
+//                                isImportingPlaylist.value = true
                                 totalLines.intValue = playlistAndSongs.songs.size
                             }
                             database.withTransaction {
@@ -263,9 +278,12 @@ fun PlaylistsScreen(
                                     }
                                 }
                             }
-                            withContext(Dispatchers.Main) {
-                                isImportingPlaylist.value = false
-                            }
+                        }
+                        withContext(Dispatchers.Main) {
+                            isImportingPlaylist.value = false
+                            totalLines.intValue = 0
+                            currentLine.intValue = 0
+                            showFAB = true
                         }
                     }
                 }

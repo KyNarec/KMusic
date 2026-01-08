@@ -11,6 +11,7 @@ import com.kynarec.kmusic.data.db.entities.SongArtist
 import com.kynarec.kmusic.service.innertube.responses.AlbumBrowseResponse
 import com.kynarec.kmusic.service.innertube.responses.ArtistResponse
 import com.kynarec.kmusic.service.innertube.responses.BrowseAlbumsResponse
+import com.kynarec.kmusic.service.innertube.responses.BrowsePlaylistSongsContinuationResponse
 import com.kynarec.kmusic.service.innertube.responses.FullResponse
 import com.kynarec.kmusic.service.innertube.responses.GetPlaylistAndSongsResponse
 import com.kynarec.kmusic.service.innertube.responses.NextResponse
@@ -1485,7 +1486,7 @@ suspend fun getPlaylistAndSongs(browseId: String): PlaylistWithSongsAndIndices? 
                 ?.firstOrNull()
                 ?.getPlaylistAndSongsText
 
-            var albumId : String? = null
+            var albumId = ""
             val artistList = mutableListOf<SongArtist>()
             for (flexColumn in song?.getPlaylistAndSongsFlexColumns.orEmpty()) {
                 val artistRuns = flexColumn
@@ -1527,7 +1528,7 @@ suspend fun getPlaylistAndSongs(browseId: String): PlaylistWithSongsAndIndices? 
                         albumId = run
                             .getPlaylistAndSongsNavigationEndpoint
                             ?.getPlaylistAndSongsBrowseEndpoint
-                            ?.getPlaylistAndSongsBrowseId
+                            ?.getPlaylistAndSongsBrowseId?: ""
                     }
                 }
             }
@@ -1553,8 +1554,15 @@ suspend fun getPlaylistAndSongs(browseId: String): PlaylistWithSongsAndIndices? 
                     )
                 )
 
-        }
+            val continuationToken = item.getPlaylistAndSongsContinuationItemRenderer?.getPlaylistAndSongsContinuationEndpoint?.getPlaylistAndSongsContinuationCommand?.getPlaylistAndSongsToken
 
+            if (continuationToken != null) {
+                println("continuationToken found: $continuationToken")
+                browsePlaylistSongsContinuation(browseId, continuationToken, innerTubeClient).forEach {
+                    songsList.add(it)
+                }
+            }
+        }
 
         return PlaylistWithSongsAndIndices(
             playlist = Playlist(
@@ -1572,4 +1580,116 @@ suspend fun getPlaylistAndSongs(browseId: String): PlaylistWithSongsAndIndices? 
         e.printStackTrace()
     }
     return null
+}
+
+suspend fun browsePlaylistSongsContinuation(
+    browseId: String,
+    initialToken: String,
+    innerTubeClient: InnerTube? = null
+): List<Song> {
+    val allSongsList = mutableListOf<Song>()
+    val client = innerTubeClient ?: InnerTube(ClientName.WebRemix)
+    val json = Json { ignoreUnknownKeys = true }
+
+    var currentToken: String? = initialToken
+
+    while (currentToken != null) {
+        try {
+            val raw = client.browse(browseId, params = null, continuation = currentToken)
+            val parsed = json.decodeFromString<BrowsePlaylistSongsContinuationResponse>(raw)
+
+            val items = parsed
+                .browsePlaylistSongsContinuationOnResponseReceivedActions
+                ?.firstOrNull()
+                ?.browsePlaylistSongsContinuationAppendContinuationItemsAction
+                ?.browsePlaylistSongsContinuationContinuationItems
+                .orEmpty()
+
+
+            for (item in items) {
+
+                val songRenderer = item.browsePlaylistSongsContinuationMusicResponsiveListItemRenderer
+
+                val id = songRenderer?.browsePlaylistSongsContinuationOverlay
+                    ?.browsePlaylistSongsContinuationMusicItemThumbnailOverlayRenderer
+                    ?.browsePlaylistSongsContinuationContent
+                    ?.browsePlaylistSongsContinuationMusicPlayButtonRenderer
+                    ?.browsePlaylistSongsContinuationPlayNavigationEndpoint
+                    ?.browsePlaylistSongsContinuationWatchEndpoint
+                    ?.browsePlaylistSongsContinuationVideoId ?: continue
+
+                val thumbnail = songRenderer.browsePlaylistSongsContinuationThumbnail
+                    ?.browsePlaylistSongsContinuationMusicThumbnailRenderer
+                    ?.browsePlaylistSongsContinuationThumbnail
+                    ?.browsePlaylistSongsContinuationThumbnails
+                    ?.maxByOrNull { it.browsePlaylistSongsContinuationWidth + it.browsePlaylistSongsContinuationHeight }
+                    ?.browsePlaylistSongsContinuationUrl?.split("=")?.getOrNull(0) ?: ""
+
+                val duration = songRenderer.browsePlaylistSongsContinuationFixedColumns
+                    ?.firstOrNull()
+                    ?.browsePlaylistSongsContinuationMusicResponsiveListItemFixedColumnRenderer
+                    ?.browsePlaylistSongsContinuationText
+                    ?.browsePlaylistSongsContinuationRuns
+                    ?.firstOrNull()
+                    ?.browsePlaylistSongsContinuationText ?: ""
+
+                var title = ""
+                var albumId = ""
+                val artistList = mutableListOf<SongArtist>()
+
+                songRenderer.browsePlaylistSongsContinuationFlexColumns?.forEachIndexed { index, flexColumn ->
+                    val runs = flexColumn.browsePlaylistSongsContinuationMusicResponsiveListItemFlexColumnRenderer
+                        ?.browsePlaylistSongsContinuationText
+                        ?.browsePlaylistSongsContinuationRuns.orEmpty()
+
+                    if (index == 0) {
+                        title = runs.firstOrNull()?.browsePlaylistSongsContinuationText ?: ""
+                    } else {
+                        runs.forEach { run ->
+                            val nav = run.browsePlaylistSongsContinuationNavigationEndpoint
+                                ?.browsePlaylistSongsContinuationBrowseEndpoint
+                            val pageType = nav?.browsePlaylistSongsContinuationBrowseEndpointContextSupportedConfigs
+                                ?.browsePlaylistSongsContinuationBrowseEndpointContextMusicConfig
+                                ?.browsePlaylistSongsContinuationPageType
+
+                            when (pageType) {
+                                "MUSIC_PAGE_TYPE_ARTIST", "MUSIC_PAGE_TYPE_USER_CHANNEL" -> {
+                                    val aId = nav.browsePlaylistSongsContinuationBrowseId
+                                    if (aId != null) artistList.add(SongArtist(id = aId, name = run.browsePlaylistSongsContinuationText ?: ""))
+                                }
+                                "MUSIC_PAGE_TYPE_ALBUM" -> {
+                                    albumId = nav.browsePlaylistSongsContinuationBrowseId?: ""
+                                }
+                            }
+                        }
+                    }
+                }
+
+                allSongsList.add(
+                    Song(
+                        id = id,
+                        title = title,
+                        artists = artistList,
+                        albumId = albumId,
+                        duration = duration,
+                        thumbnail = thumbnail
+                    )
+                )
+            }
+
+            val continuationToken = items.last().browsePlaylistSongsContinuationContinuationItemRenderer
+                ?.browsePlaylistSongsContinuationContinuationEndpoint
+                ?.browsePlaylistSongsContinuationContinuationCommand
+                ?.browsePlaylistSongsContinuationToken
+
+            currentToken = continuationToken
+
+            println("Fetched page. Current total songs: ${allSongsList.size}")
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            currentToken = null
+        }
+    }
+    return allSongsList
 }
