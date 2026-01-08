@@ -374,7 +374,7 @@ class MusicViewModel
         Log.i(tag, "playNext called with song ${song.title}")
         viewModelScope.launch {
             try {
-                val mediaItem = createMediaItemFromSong(song, context)
+                val mediaItem = createPartialMediaItemFromSong(song, context)
                 val currentMediaIndex = mediaController?.currentMediaItemIndex ?: 0
                 val nextIndex = currentMediaIndex + 1
                 Log.i(
@@ -384,18 +384,14 @@ class MusicViewModel
 
                 mediaController?.addMediaItem(nextIndex, mediaItem)
                 _uiState.update { currentState ->
-                    // Create a mutable copy of the current list
                     val updatedList = currentState.songsList.toMutableList()
 
-                    // Insert the new song at the determined index
                     if (nextIndex <= updatedList.size) {
                         updatedList.add(nextIndex, song)
                     } else {
-                        // Handle case where index is out of bounds (should append)
                         updatedList.add(song)
                     }
 
-                    // Return the updated state
                     currentState.copy(songsList = updatedList)
                 }
             } catch (e: Exception) {
@@ -418,6 +414,55 @@ class MusicViewModel
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.e(tag, "Failed to play next song ${song.title}")
+            }
+        }
+    }
+
+    fun playNextList(songs: List<Song>) {
+        viewModelScope.launch {
+            try {
+                val mediaItems = songs.map { song ->
+                    createPartialMediaItemFromSong(song, context)
+                }
+                val currentMediaIndex = mediaController?.currentMediaItemIndex ?: 0
+                val nextIndex = currentMediaIndex + 1
+                Log.i(
+                    tag,
+                    "Current index: $currentMediaIndex, Insertion index: $nextIndex"
+                )
+
+                mediaController?.addMediaItems(nextIndex, mediaItems)
+                _uiState.update { currentState ->
+                    val currentList = currentState.songsList.toMutableList()
+
+                    if (nextIndex <= currentList.size) {
+                        currentList.addAll(nextIndex, songs)
+                    } else {
+                        currentList.addAll(nextIndex, songs)
+                    }
+
+                    currentState.copy(songsList = currentList)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e(tag, "Failed to play next song list")
+            }
+        }
+    }
+
+    fun enqueueSongList(songs: List<Song>) {
+        viewModelScope.launch {
+            try {
+                val mediaItems = songs.map { song ->
+                    createPartialMediaItemFromSong(song, context)
+                }
+                mediaController?.addMediaItems(mediaItems)
+
+                _uiState.update { currentState ->
+                    currentState.copy(songsList = currentState.songsList + songs)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }

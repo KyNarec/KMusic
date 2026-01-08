@@ -25,6 +25,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -66,11 +68,11 @@ fun PlaylistDetailScreen(
 
     val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
 
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
-//    Log.i(
-//        "PlaylistScreen",
-//        "State: Playlist: ${playlist?.name ?: "N/A"}, Songs: ${songs.size}"
-//    )
+
+
     Column(
         Modifier.fillMaxSize()
     ) {
@@ -79,10 +81,6 @@ fun PlaylistDetailScreen(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-//            item {
-//                            Spacer(Modifier.weight(1f))
-//
-//            }
             item {
                 IconButton(
                     onClick = {
@@ -152,6 +150,8 @@ fun PlaylistDetailScreen(
             playlistId = playlistId,
             onDismiss = {
                 showPlaylistOptionsBottomSheet.value = false
+                focusManager.clearFocus()
+                keyboardController?.hide()
             },
             viewModel = viewModel,
             database = database,
