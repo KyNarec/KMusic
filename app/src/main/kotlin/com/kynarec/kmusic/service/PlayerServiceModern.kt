@@ -88,6 +88,7 @@ class PlayerServiceModern : MediaLibraryService() {
             super.onMediaItemTransition(mediaItem, reason)
             Log.i("PlayerService", "onMediaItemTransition called with reason: $reason")
             saveCurrentPlaybackTime()
+            val mediaItem = mediaItem
 
             val indexAtBegging = player?.currentMediaItemIndex
             if (mediaItem?.localConfiguration?.uri.toString().isEmpty()) {

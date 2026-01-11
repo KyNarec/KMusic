@@ -1518,18 +1518,23 @@ suspend fun getPlaylistAndSongs(browseId: String): PlaylistWithSongsAndIndices? 
                             val artistName = run.getPlaylistAndSongsText
                             artistList.add(SongArtist(id = artistId, name = artistName?: ""))
                         }
-                    } else if (artistRuns[index].getPlaylistAndSongsNavigationEndpoint
-                            ?.getPlaylistAndSongsBrowseEndpoint
-                            ?.getPlaylistAndSongsBrowseEndpointContextSupportedConfigs
-                            ?.getPlaylistAndSongsBrowseEndpointContextMusicConfig
-                            ?.getPlaylistAndSongsPageType == "MUSIC_PAGE_TYPE_ALBUM")
-                    {
-                        val run = artistRuns[index]
-                        albumId = run
-                            .getPlaylistAndSongsNavigationEndpoint
-                            ?.getPlaylistAndSongsBrowseEndpoint
-                            ?.getPlaylistAndSongsBrowseId?: ""
                     }
+                }
+
+                val browseEndpoint = flexColumn.getPlaylistAndSongsMusicResponsiveListItemFlexColumnRenderer
+                    ?.getPlaylistAndSongsText
+                    ?.getPlaylistAndSongsRuns
+                    ?.firstOrNull()
+                    ?.getPlaylistAndSongsNavigationEndpoint
+                    ?.getPlaylistAndSongsBrowseEndpoint
+
+
+                if (browseEndpoint
+                        ?.getPlaylistAndSongsBrowseEndpointContextSupportedConfigs
+                        ?.getPlaylistAndSongsBrowseEndpointContextMusicConfig
+                        ?.getPlaylistAndSongsPageType == "MUSIC_PAGE_TYPE_ALBUM"
+                ) {
+                    albumId = browseEndpoint.getPlaylistAndSongsBrowseId?: ""
                 }
             }
 
