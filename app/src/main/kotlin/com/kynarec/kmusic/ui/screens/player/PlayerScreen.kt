@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -21,6 +22,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.SliderDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Pause
@@ -44,12 +47,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.addOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -57,8 +65,8 @@ import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
@@ -214,60 +222,111 @@ fun PlayerScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Song title
-            Button(
-                onClick = {
-                    if (uiState.currentSong?.albumId != "") {
-                        onClose()
-                        navController.navigate(AlbumDetailScreen(uiState.currentSong?.albumId!!))
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0f, 0f, 0f, 0f))
+            val isLiked = database.songDao().getSongFlowById(uiState.currentSong!!.id)
+                .collectAsStateWithLifecycle(null).value?.isLiked ?: false
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = uiState.currentSong?.title ?: "NA",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.basicMarquee()
-                )
-            }
+                Button(
 
-            val artists = uiState.currentSong?.artists ?: emptyList()
-
-            val annotatedString = buildAnnotatedString {
-                artists.forEachIndexed { index, artist ->
-                    withLink(
-                        LinkAnnotation.Clickable(
-                            tag = "artistId",
-                            linkInteractionListener = {
-                                Log.i("PlayerScreen", "Clicked Artist ID: ${artist.id}")
-                                onClose()
-                                navController.navigate(ArtistDetailScreen(artist.id))
-                            }
-                        )
-                    ) {
-                        withStyle(style = SpanStyle(
-                            color = MaterialTheme.colorScheme.onBackground,
-                            textDecoration = TextDecoration.None // Explicitly remove underline
-                        )) {
-                            append(artist.name)
+                    onClick = {
+                        if (uiState.currentSong?.albumId != "") {
+                            onClose()
+                            navController.navigate(AlbumDetailScreen(uiState.currentSong?.albumId!!))
                         }
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    contentPadding = PaddingValues(0.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 56.dp)
+                        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                        .drawWithContent {
+                            drawContent()
+                            // Left fade
+                            drawRect(
+                                brush = Brush.horizontalGradient(
+                                    0f to Color.Transparent, 0.15f to Color.Black,
+                                    startX = 0f, endX = 80f
+                                ),
+                                blendMode = BlendMode.DstIn
+                            )
+                            // Right fade
+                            drawRect(
+                                brush = Brush.horizontalGradient(
+                                    0.85f to Color.Black, 1f to Color.Transparent,
+                                    startX = size.width - 80f, endX = size.width
+                                ),
+                                blendMode = BlendMode.DstIn
+                            )
+                        }
+                ) {
+                    Text(
+                        text = uiState.currentSong?.title ?: "NA",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        maxLines = 1,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.basicMarquee(
+                            iterations = Int.MAX_VALUE,
+                            initialDelayMillis = 2000
+                        )
+                    )
+                }
 
-                    if (index < artists.lastIndex) {
-                        append(", ")
-                    }
+                IconButton(
+                    onClick = { viewModel.toggleFavoriteSong(uiState.currentSong!!) },
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        tint = Color.White,
+                        contentDescription = null
+                    )
                 }
             }
 
-            Text(
-                text = annotatedString,
-                fontSize = 16.sp,
-                maxLines = 1,
-                modifier = Modifier.basicMarquee()
-            )
+                val artists = uiState.currentSong?.artists ?: emptyList()
+
+                val annotatedString = buildAnnotatedString {
+                    artists.forEachIndexed { index, artist ->
+                        withLink(
+                            LinkAnnotation.Clickable(
+                                tag = "artistId",
+                                linkInteractionListener = {
+                                    Log.i("PlayerScreen", "Clicked Artist ID: ${artist.id}")
+                                    onClose()
+                                    navController.navigate(ArtistDetailScreen(artist.id))
+                                }
+                            )
+                        ) {
+                            withStyle(
+                                style = SpanStyle(
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    textDecoration = TextDecoration.None // Explicitly remove underline
+                                )
+                            ) {
+                                append(artist.name)
+                            }
+                        }
+
+                        if (index < artists.lastIndex) {
+                            append(", ")
+                        }
+                    }
+                }
+
+                Text(
+                    text = annotatedString,
+                    fontSize = 16.sp,
+                    maxLines = 1,
+                    modifier = Modifier.basicMarquee()
+                )
 //        // Song artist
 //        LazyRow() {
 //            items(uiState.currentSong?.artists ?: emptyList()) {
@@ -290,14 +349,14 @@ fun PlayerScreen(
 //            }
 //        }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            // Seek bar and time display
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-            ) {
+                // Seek bar and time display
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                ) {
 //            Slider(
 //                value = if (uiState.totalDuration > 0) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,
 //                onValueChange = { newValue ->
@@ -306,29 +365,29 @@ fun PlayerScreen(
 //                modifier = Modifier.fillMaxWidth()
 //            )
 
-                val customSliderColors = SliderDefaults.colors(
-                    activeTrackColor = MaterialTheme.colorScheme.inversePrimary,
-                    inactiveTrackColor = MaterialTheme.colorScheme.secondary,
-                    activeTickColor = Color.Transparent,
-                    inactiveTickColor = Color.Transparent,
-                    thumbColor = MaterialTheme.colorScheme.inversePrimary
-                )
+                    val customSliderColors = SliderDefaults.colors(
+                        activeTrackColor = MaterialTheme.colorScheme.inversePrimary,
+                        inactiveTrackColor = MaterialTheme.colorScheme.secondary,
+                        activeTickColor = Color.Transparent,
+                        inactiveTickColor = Color.Transparent,
+                        thumbColor = MaterialTheme.colorScheme.inversePrimary
+                    )
 
-                // Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentPosition: ${uiState.currentPosition}")
+                    // Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentPosition: ${uiState.currentPosition}")
 
-                WavySlider(
-                    value = if (uiState.currentDurationLong != 0L) uiState.currentPosition.toFloat() / uiState.currentDurationLong.toFloat() else 0f,
-                    onValueChange = { newValue ->
-                        viewModel.seekTo((newValue * uiState.currentDurationLong).toLong())
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    waveHeight = if (uiState.isPlaying) 4.dp else 0.dp,
-                    waveLength = 32.dp,
-                    waveVelocity = 12.dp to WaveDirection.TAIL,
-                    waveThickness = 2.dp,
-                    trackThickness = 2.dp,
-                    incremental = false,
-                    colors = customSliderColors,
+                    WavySlider(
+                        value = if (uiState.currentDurationLong != 0L) uiState.currentPosition.toFloat() / uiState.currentDurationLong.toFloat() else 0f,
+                        onValueChange = { newValue ->
+                            viewModel.seekTo((newValue * uiState.currentDurationLong).toLong())
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        waveHeight = if (uiState.isPlaying) 4.dp else 0.dp,
+                        waveLength = 32.dp,
+                        waveVelocity = 12.dp to WaveDirection.TAIL,
+                        waveThickness = 2.dp,
+                        trackThickness = 2.dp,
+                        incremental = false,
+                        colors = customSliderColors,
 //                thumb = {
 //                    SliderDefaults.Thumb(
 //                        interactionSource = remember { MutableInteractionSource() },
@@ -353,7 +412,7 @@ fun PlayerScreen(
 //                        drawStopIndicator = null,
 //                    )
 //                }
-                )
+                    )
 //            WavySlider(
 //                value = if (uiState.totalDuration > 0) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,
 //                onValueChange = { newValue ->
@@ -368,157 +427,157 @@ fun PlayerScreen(
 //                incremental = false,
 //                thumbRadius = 8.dp, // <--- Add this line and adjust the value
 //            )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "${uiState.currentPosition / 1000 / 60}:${
-                            (uiState.currentPosition / 1000 % 60).toString().padStart(2, '0')
-                        }",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                    )
-                    Text(
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "${uiState.currentPosition / 1000 / 60}:${
+                                (uiState.currentPosition / 1000 % 60).toString().padStart(2, '0')
+                            }",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                        )
+                        Text(
 //                    text = "${uiState.currentDuration / 1000 / 60}:${(uiState.totalDuration / 1000 % 60).toString().padStart(2, '0')}",
 //                    text = parseMillisToDuration(uiState.currentDurationLong),
-                        text = uiState.currentSong?.duration?: "NA",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                    )
+                            text = uiState.currentSong?.duration ?: "NA",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                        )
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            // Player controls
-            Row(
-                modifier = Modifier
-                    .width(260.dp),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = { viewModel.skipToPrevious() },
-                    modifier = Modifier.size(48.dp)
+                // Player controls
+                Row(
+                    modifier = Modifier
+                        .width(260.dp),
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.SkipPrevious,
-                        contentDescription = "Skip back",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
+                    IconButton(
+                        onClick = { viewModel.skipToPrevious() },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SkipPrevious,
+                            contentDescription = "Skip back",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                    IconButton(
+                        onClick = {
+                            if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
+                        },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (uiState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = if (uiState.isPlaying) "Pause" else "Play",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                    IconButton(
+                        onClick = { viewModel.skipToNext() },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.SkipNext,
+                            contentDescription = "Skip forward",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
                 }
-                IconButton(
-                    onClick = {
-                        if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
-                    },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = if (uiState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (uiState.isPlaying) "Pause" else "Play",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-                IconButton(
-                    onClick = { viewModel.skipToNext() },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.SkipNext,
-                        contentDescription = "Skip forward",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-            }
 
 //        Spacer(modifier = Modifier.height(16.dp))
-            Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.weight(1f))
 
 
-            if (showQueueBottomSheet.value) {
-                QueueScreen(
-                    viewModel = viewModel,
-                    onClose = { showQueueBottomSheet.value = false },
-                    sheetState = sheetState,
-                    showBottomSheet = showQueueBottomSheet,
-                    database = database,
-                    navController = navController
-                )
-            }
+                if (showQueueBottomSheet.value) {
+                    QueueScreen(
+                        viewModel = viewModel,
+                        onClose = { showQueueBottomSheet.value = false },
+                        sheetState = sheetState,
+                        showBottomSheet = showQueueBottomSheet,
+                        database = database,
+                        navController = navController
+                    )
+                }
 
-            if (showOptionsBottomSheet.value) {
-                SongOptionsBottomSheet(
-                    song = uiState.currentSong!!,
-                    onDismiss = { showOptionsBottomSheet.value = false },
-                    viewModel = viewModel,
-                    database = database,
-                    navController = navController
-                )
-            }
-        }
-    }
-
-
-}
-
-/**
- * Code from https://medium.com/@yuriyskul/different-approaches-to-create-android-style-shadows-with-transparent-containers-in-jetpack-compose-e299a215557e
- */
-fun Modifier.multiLayersShadow(
-    elevation: Dp,
-    transparencyMultiplier: Float = 0.1f,
-    color: Color = Color.Black,
-    layers: Int = 20,
-    shape: Shape = RoundedCornerShape(8.dp)
-): Modifier = this.drawWithCache {
-
-    // Set the shadow size based on the elevation
-    val shadowSize =
-        elevation.toPx() * 1.2f  // tweak the multiplier for proper shadow size
-    val layerSize = shadowSize / layers
-
-    // Create the outline based on the shape and size
-    val outline = shape.createOutline(size, layoutDirection, this)
-    val path = Path().apply { addOutline(outline) }
-
-    onDrawWithContent {
-        // Draw each shadow layer with decreasing opacity and expanding size
-        repeat(layers) { layer ->
-            val layerAlpha = 1f - (1 / layers.toFloat()) * layer
-            val reducedLayerAlpha = layerAlpha * transparencyMultiplier
-
-            // Adjust the scale factor based on the layer
-            val scaleFactorX = 1f + (layer * layerSize) / size.width
-            val scaleFactorY = 1f + (layer * layerSize) / size.height
-
-            drawIntoCanvas { canvas ->
-                // Save the current state of the canvas
-                canvas.save()
-
-                // Move the canvas to the center
-                val centerX = size.width / 2
-                val centerY = size.height / 2
-                canvas.translate(centerX, centerY)
-
-                // Apply scale transformation, scaling differently in X and Y directions
-                canvas.scale(scaleFactorX, scaleFactorY)
-
-                // Translate back to the original position
-                canvas.translate(-centerX, -centerY)
-
-                // Draw the outline using the path and apply transparency for the shadow effect
-                drawPath(
-                    path = path,
-                    color = color.copy(alpha = reducedLayerAlpha),
-                    style = Stroke(width = layerSize)  // Set stroke width for each layer
-                )
-
-                // Restore the canvas to its original state
-                canvas.restore()
+                if (showOptionsBottomSheet.value) {
+                    SongOptionsBottomSheet(
+                        song = uiState.currentSong!!,
+                        onDismiss = { showOptionsBottomSheet.value = false },
+                        viewModel = viewModel,
+                        database = database,
+                        navController = navController
+                    )
+                }
             }
         }
 
-        drawContent()
+
     }
-}
+
+    /**
+     * Code from https://medium.com/@yuriyskul/different-approaches-to-create-android-style-shadows-with-transparent-containers-in-jetpack-compose-e299a215557e
+     */
+    fun Modifier.multiLayersShadow(
+        elevation: Dp,
+        transparencyMultiplier: Float = 0.1f,
+        color: Color = Color.Black,
+        layers: Int = 20,
+        shape: Shape = RoundedCornerShape(8.dp)
+    ): Modifier = this.drawWithCache {
+
+        // Set the shadow size based on the elevation
+        val shadowSize =
+            elevation.toPx() * 1.2f  // tweak the multiplier for proper shadow size
+        val layerSize = shadowSize / layers
+
+        // Create the outline based on the shape and size
+        val outline = shape.createOutline(size, layoutDirection, this)
+        val path = Path().apply { addOutline(outline) }
+
+        onDrawWithContent {
+            // Draw each shadow layer with decreasing opacity and expanding size
+            repeat(layers) { layer ->
+                val layerAlpha = 1f - (1 / layers.toFloat()) * layer
+                val reducedLayerAlpha = layerAlpha * transparencyMultiplier
+
+                // Adjust the scale factor based on the layer
+                val scaleFactorX = 1f + (layer * layerSize) / size.width
+                val scaleFactorY = 1f + (layer * layerSize) / size.height
+
+                drawIntoCanvas { canvas ->
+                    // Save the current state of the canvas
+                    canvas.save()
+
+                    // Move the canvas to the center
+                    val centerX = size.width / 2
+                    val centerY = size.height / 2
+                    canvas.translate(centerX, centerY)
+
+                    // Apply scale transformation, scaling differently in X and Y directions
+                    canvas.scale(scaleFactorX, scaleFactorY)
+
+                    // Translate back to the original position
+                    canvas.translate(-centerX, -centerY)
+
+                    // Draw the outline using the path and apply transparency for the shadow effect
+                    drawPath(
+                        path = path,
+                        color = color.copy(alpha = reducedLayerAlpha),
+                        style = Stroke(width = layerSize)  // Set stroke width for each layer
+                    )
+
+                    // Restore the canvas to its original state
+                    canvas.restore()
+                }
+            }
+
+            drawContent()
+        }
+    }

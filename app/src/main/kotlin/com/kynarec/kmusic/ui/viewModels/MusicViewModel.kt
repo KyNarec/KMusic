@@ -542,6 +542,7 @@ class MusicViewModel
         viewModelScope.launch {
             val updated = song.toggleLike()
             songDao.updateSong(updated)
+            uiState.value.currentSong = updated
         }
     }
 
