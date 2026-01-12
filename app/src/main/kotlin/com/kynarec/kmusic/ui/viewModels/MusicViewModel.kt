@@ -470,6 +470,19 @@ class MusicViewModel
         }
     }
 
+    fun moveSong(fromIndex: Int, toIndex: Int) {
+        Log.i(tag, "moveSong called with fromIndex: $fromIndex, toIndex: $toIndex")
+        _uiState.update { currentState ->
+            val newList = currentState.songsList.toMutableList().apply {
+                add(toIndex, removeAt(fromIndex))
+            }
+            currentState.copy(songsList = newList)
+        }
+        viewModelScope.launch {
+            mediaController?.moveMediaItem(fromIndex, toIndex)
+        }
+    }
+
     /**
      * Only adds Song, when it is not already in the db
      */

@@ -37,6 +37,7 @@ material3 = "1.5.0-alpha11"
 ui = "1.10.0"
 uiTooling = "1.10.0"
 wavySlider = "2.2.0"
+reorderable = "3.0.0"
 
 [libraries]
 androidx-cardview = { module = "androidx.cardview:cardview", version.ref = "cardview" }
@@ -92,6 +93,7 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3",
 androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "uiTooling" }
 wavy-slider = { module = "ir.mahozad.multiplatform:wavy-slider", version.ref = "wavySlider" }
+reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
 
 [plugins]
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
