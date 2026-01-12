@@ -209,7 +209,13 @@ fun Navigation(
             SearchResultScreen(args.query, musicViewModel, database = database, navController = navController)
         }
         composable<SettingsScreen> {
-            SettingsScreen(prefs = settingsViewModel, navController = navController, updateManager = updateManager, updateViewModel = updateViewModel)
+            SettingsScreen(
+                prefs = settingsViewModel,
+                navController = navController,
+                updateManager = updateManager,
+                updateViewModel = updateViewModel,
+                musicViewModel = musicViewModel
+            )
         }
         composable<AlbumDetailScreen> {
             Log.i("Navigation", "AlbumDetailScreen")
