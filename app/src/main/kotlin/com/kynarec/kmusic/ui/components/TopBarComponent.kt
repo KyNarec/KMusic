@@ -21,6 +21,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -28,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.ui.SearchScreen
 import com.kynarec.kmusic.ui.SettingsScreen
@@ -38,6 +41,12 @@ fun TopBarComponent(
     isSearchScreen: Boolean,
     navController: NavHostController
 ) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val isSettingsScreen = remember(currentRoute) {
+        currentRoute?.startsWith(SettingsScreen::class.qualifiedName!!) == true
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -115,7 +124,7 @@ fun TopBarComponent(
             )
         }
         IconButton(
-            onClick = { navController.navigate(SettingsScreen) },
+            onClick = { if (!isSettingsScreen) navController.navigate(SettingsScreen) },
             modifier = Modifier
                 .align(Alignment.CenterVertically)
         ) {
