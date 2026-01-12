@@ -29,7 +29,6 @@ import com.kynarec.kmusic.ui.AlbumsScreen
 import com.kynarec.kmusic.ui.ArtistsScreen
 import com.kynarec.kmusic.ui.HomeScreen
 import com.kynarec.kmusic.ui.PlaylistsScreen
-import com.kynarec.kmusic.ui.SearchScreen
 import com.kynarec.kmusic.ui.SongsScreen
 
 // Define data for navigation destinations
@@ -45,7 +44,6 @@ fun MyNavigationRailComponent(
     navController: NavHostController,
     currentRoute: String?
 ) {
-
 
     val destinations = listOf(
         NavigationDestination("Home", { Icon(Icons.Default.Home, contentDescription = "Home") }, HomeScreen),
