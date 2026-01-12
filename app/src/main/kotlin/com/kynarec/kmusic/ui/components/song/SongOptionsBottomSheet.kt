@@ -73,7 +73,8 @@ fun SongOptionsBottomSheet(
     database: KmusicDatabase,
     navController: NavHostController,
     isInPlaylistDetailScreen: Boolean = false,
-    playlistId: Long? = null
+    playlistIdLong: Long? = null,
+    playlistIdString: String? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -240,13 +241,13 @@ fun SongOptionsBottomSheet(
                     }
                 )
 
-                if (isInPlaylistDetailScreen && playlistId != null) {
+                if (isInPlaylistDetailScreen && playlistIdLong != null) {
                     BottomSheetItem(
                         icon = Icons.Default.Delete,
                         text = "Delete from playlist",
                         onClick = {
                             scope.launch {
-                                database.playlistDao().removeSongFromPlaylist(playlistId, dbSong!!.id)
+                                database.playlistDao().removeSongFromPlaylist(playlistIdLong, dbSong!!.id)
                             }
                             onDismiss()
                         }

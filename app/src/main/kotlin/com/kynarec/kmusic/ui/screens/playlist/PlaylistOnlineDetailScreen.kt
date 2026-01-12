@@ -1,0 +1,177 @@
+package com.kynarec.kmusic.ui.screens.playlist
+
+import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
+import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.service.innertube.PlaylistWithSongsAndIndices
+import com.kynarec.kmusic.service.innertube.getPlaylistAndSongs
+import com.kynarec.kmusic.ui.components.playlist.PlaylistOnlineOptionsBottomSheet
+import com.kynarec.kmusic.ui.components.song.SongComponent
+import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
+import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun PlaylistOnlineDetailScreen(
+    modifier: Modifier = Modifier,
+    playlistId: String,
+    thumbnail: String,
+    viewModel: MusicViewModel,
+    database: KmusicDatabase,
+    navController: NavHostController
+) {
+    val scope = rememberCoroutineScope()
+    var songs by remember { mutableStateOf(emptyList<Song>()) }
+    var playlist by remember { mutableStateOf(emptyList<PlaylistWithSongsAndIndices>()) }
+
+    var longClickSong by remember { mutableStateOf<Song?>(null) }
+
+    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+
+    val showSongDetailBottomSheet = remember { mutableStateOf(false) }
+    val showPlaylistOptionsBottomSheet = remember { mutableStateOf(false) }
+
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(Unit) {
+        val playlistWithSongsAndIndices = getPlaylistAndSongs(playlistId)
+        if (playlistWithSongsAndIndices != null) {
+            playlist = playlist + playlistWithSongsAndIndices
+            playlistWithSongsAndIndices.songs.forEach {
+                songs = songs + it
+            }
+        }
+    }
+
+    if (playlist.isEmpty()) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CircularWavyProgressIndicator()
+        }
+        return
+    } else {
+        Column(
+            Modifier.fillMaxSize()
+        ) {
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                item {
+                    IconButton(
+                        onClick = {
+                            viewModel.playShuffledPlaylist(songs)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Shuffle,
+                            contentDescription = "Shuffle"
+                        )
+                    }
+                }
+                item {
+                    IconButton(
+                        onClick = {
+                            showPlaylistOptionsBottomSheet.value = true
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "More Options"
+                        )
+                    }
+                }
+            }
+            LazyColumn(
+                Modifier.fillMaxWidth()
+            ) {
+                items(songs) { song ->
+                    Log.i("PlaylistScreen", "Song: ${song.title}")
+                    SongComponent(
+                        song = song,
+                        onClick = {
+                            scope.launch {
+                                viewModel.playPlaylist(songs, song)
+                            }
+                        },
+                        onLongClick = {
+                            longClickSong = song
+                            showSongDetailBottomSheet.value = true
+                        }
+                    )
+                }
+                if (showControlBar)
+                    item {
+                        Spacer(Modifier.height(70.dp))
+                    }
+            }
+        }
+    }
+
+    if (showSongDetailBottomSheet.value && longClickSong != null) {
+        Log.i("SongsScreen", "Showing bottom sheet")
+        Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
+        SongOptionsBottomSheet(
+            song = longClickSong!!,
+            onDismiss = { showSongDetailBottomSheet.value = false },
+            viewModel = viewModel,
+            database = database,
+            navController = navController,
+            isInPlaylistDetailScreen = true,
+        )
+    }
+
+    if (showPlaylistOptionsBottomSheet.value) {
+        PlaylistOnlineOptionsBottomSheet(
+//            playlistId = playlistId,
+            thumbnail = thumbnail,
+            playlist = playlist.first().playlist,
+            songs = songs,
+            onDismiss = {
+                showPlaylistOptionsBottomSheet.value = false
+                focusManager.clearFocus()
+                keyboardController?.hide()
+            },
+            viewModel = viewModel,
+            database = database,
+            navController = navController
+        )
+    }
+}

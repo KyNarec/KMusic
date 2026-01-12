@@ -51,7 +51,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun PlaylistOptionsBottomSheet(
+fun PlaylistOfflineOptionsBottomSheet(
     playlistId: Long,
     onDismiss: () -> Unit,
     viewModel: MusicViewModel,
