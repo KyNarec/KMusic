@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -38,6 +39,7 @@ import com.kynarec.kmusic.service.update.getCurrentVersion
 import com.kynarec.kmusic.ui.components.UpdateDialog
 import com.kynarec.kmusic.ui.components.settings.SettingComponentEnumChoice
 import com.kynarec.kmusic.ui.components.settings.SettingComponentSwitch
+import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
 import com.kynarec.kmusic.utils.Constants.DARK_MODE_KEY
@@ -53,6 +55,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     prefs: SettingsViewModel,
     navController: NavHostController,
+    musicViewModel: MusicViewModel,
     updateManager: UpdateManager,
     updateViewModel: UpdateViewModel,
 ) {
@@ -64,7 +67,8 @@ fun SettingsScreen(
     val transitionEffectFlow by prefs.transitionEffectFlow.collectAsStateWithLifecycle(prefs.transitionEffect)
     val startDestinationFlow by prefs.startDestinationFlow.collectAsStateWithLifecycle(prefs.startDestination)
 
-
+    val showControlBar = musicViewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val bottomPadding = if (showControlBar) 70.dp else 0.dp
 
     if (updateViewModel.showDialog && updateViewModel.updateInfo != null) {
         Log.i("UpdateChecker", "Now showing update dialog")
@@ -162,6 +166,9 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
+            }
+            if (showControlBar) {
+                Spacer(Modifier.height(bottomPadding))
             }
         }
     }
