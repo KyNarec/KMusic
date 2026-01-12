@@ -37,7 +37,8 @@ import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.AlbumListScreen
 import com.kynarec.kmusic.ui.ArtistDetailScreen
 import com.kynarec.kmusic.ui.Navigation
-import com.kynarec.kmusic.ui.PlaylistScreen
+import com.kynarec.kmusic.ui.PlaylistOfflineDetailScreen
+import com.kynarec.kmusic.ui.PlaylistOnlineDetailScreen
 import com.kynarec.kmusic.ui.SearchResultScreen
 import com.kynarec.kmusic.ui.SearchScreen
 import com.kynarec.kmusic.ui.SettingsScreen
@@ -101,8 +102,11 @@ fun MainScreen() {
     val isSettingsScreen = remember(currentRoute) {
         currentRoute?.startsWith(SettingsScreen::class.qualifiedName!!) == true
     }
-    val isPlaylistScreen = remember(currentRoute) {
-        currentRoute?.startsWith(PlaylistScreen::class.qualifiedName!!) == true
+    val isPlaylistOfflineDetailScreen = remember(currentRoute) {
+        currentRoute?.startsWith(PlaylistOfflineDetailScreen::class.qualifiedName!!) == true
+    }
+    val isPlaylistOnlineDetailScreen = remember(currentRoute) {
+        currentRoute?.startsWith(PlaylistOnlineDetailScreen::class.qualifiedName!!) == true
     }
     val isAlbumDetailScreen = remember(currentRoute) {
         currentRoute?.startsWith(AlbumDetailScreen::class.qualifiedName!!) == true
@@ -122,7 +126,7 @@ fun MainScreen() {
 
 
     val shouldHideNavElements =
-        isSearchScreen || isSearchResultScreen || isSettingsScreen || isPlaylistScreen || isAlbumDetailScreen || isArtistDetailScreen || isSongListScreen || isAlbumListScreen
+        isSearchScreen || isSearchResultScreen || isSettingsScreen || isPlaylistOfflineDetailScreen || isPlaylistOnlineDetailScreen || isAlbumDetailScreen || isArtistDetailScreen || isSongListScreen || isAlbumListScreen
 
     val darkTheme by settingsViewModel.darkModeFLow.collectAsStateWithLifecycle(DEFAULT_DARK_MODE)
 

@@ -32,7 +32,6 @@ import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
-import com.kynarec.kmusic.ui.screens.playlist.PlaylistListItem
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -81,7 +80,7 @@ fun AddToPlaylistDialog(
                 ) {
                     items(playlists, key = { it.id }) { playlist ->
                         var showCheckmark by remember { mutableStateOf(false) }
-                        PlaylistListItem(
+                        PlaylistComponent(
                             playlist = playlist, navController, onRemove = {
                                 scope.launch {
                                     database.playlistDao().deletePlaylist(it)

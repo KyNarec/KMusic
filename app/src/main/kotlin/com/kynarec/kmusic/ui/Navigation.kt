@@ -36,7 +36,8 @@ import com.kynarec.kmusic.ui.screens.album.AlbumsScreen
 import com.kynarec.kmusic.ui.screens.artist.ArtistDetailScreen
 import com.kynarec.kmusic.ui.screens.artist.ArtistsScreen
 import com.kynarec.kmusic.ui.screens.home.HomeScreen
-import com.kynarec.kmusic.ui.screens.playlist.PlaylistDetailScreen
+import com.kynarec.kmusic.ui.screens.playlist.PlaylistOfflineDetailScreen
+import com.kynarec.kmusic.ui.screens.playlist.PlaylistOnlineDetailScreen
 import com.kynarec.kmusic.ui.screens.playlist.PlaylistsScreen
 import com.kynarec.kmusic.ui.screens.search.SearchResultScreen
 import com.kynarec.kmusic.ui.screens.search.SearchScreen
@@ -185,10 +186,20 @@ fun Navigation(
                 viewModel = musicViewModel
             )
         }
-        composable<PlaylistScreen> {
-            val args = it.toRoute<PlaylistScreen>()
-            PlaylistDetailScreen(
+        composable<PlaylistOfflineDetailScreen> {
+            val args = it.toRoute<PlaylistOfflineDetailScreen>()
+            PlaylistOfflineDetailScreen(
                 playlistId = args.playlistId,
+                viewModel = musicViewModel,
+                database = database,
+                navController = navController
+            )
+        }
+        composable<PlaylistOnlineDetailScreen> {
+            val args = it.toRoute<PlaylistOnlineDetailScreen>()
+            PlaylistOnlineDetailScreen(
+                playlistId = args.playlistId,
+                thumbnail = args.thumbnail,
                 viewModel = musicViewModel,
                 database = database,
                 navController = navController
@@ -287,9 +298,16 @@ object AlbumsScreen
 object PlaylistsScreen
 
 @Serializable
-data class PlaylistScreen(
+data class PlaylistOfflineDetailScreen(
     val playlistId: Long
 )
+
+@Serializable
+data class PlaylistOnlineDetailScreen(
+    val playlistId: String,
+    val thumbnail: String
+)
+
 
 @Serializable
 object SearchScreen

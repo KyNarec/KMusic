@@ -32,7 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
-import com.kynarec.kmusic.ui.components.playlist.PlaylistOptionsBottomSheet
+import com.kynarec.kmusic.ui.components.playlist.PlaylistOfflineOptionsBottomSheet
 import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
@@ -40,14 +40,13 @@ import kotlinx.coroutines.launch
 
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-fun PlaylistDetailScreen(
+fun PlaylistOfflineDetailScreen(
     modifier: Modifier = Modifier,
     playlistId: Long,
     viewModel: MusicViewModel,
     database: KmusicDatabase,
     navController: NavHostController
 ) {
-//    Log.i("PlaylistScreen", "PlaylistScreen: $playlistId")
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -141,12 +140,12 @@ fun PlaylistDetailScreen(
             database = database,
             navController = navController,
             isInPlaylistDetailScreen = true,
-            playlistId = playlistId
+            playlistIdLong = playlistId
         )
     }
 
     if (showPlaylistOptionsBottomSheet.value) {
-        PlaylistOptionsBottomSheet(
+        PlaylistOfflineOptionsBottomSheet(
             playlistId = playlistId,
             onDismiss = {
                 showPlaylistOptionsBottomSheet.value = false

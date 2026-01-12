@@ -38,14 +38,18 @@ import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.AlbumPreview
 import com.kynarec.kmusic.data.db.entities.ArtistPreview
+import com.kynarec.kmusic.data.db.entities.PlaylistPreview
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.innertube.searchAlbums
 import com.kynarec.kmusic.service.innertube.searchArtists
+import com.kynarec.kmusic.service.innertube.searchCommunityPlaylists
 import com.kynarec.kmusic.service.innertube.searchSongsFlow
 import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.ArtistDetailScreen
+import com.kynarec.kmusic.ui.PlaylistOnlineDetailScreen
 import com.kynarec.kmusic.ui.components.album.AlbumComponent
 import com.kynarec.kmusic.ui.components.artist.ArtistComponent
+import com.kynarec.kmusic.ui.components.playlist.PlaylistComponent
 import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.screens.song.SortOption
@@ -69,6 +73,7 @@ fun SearchResultScreen(
     var songs by remember { mutableStateOf(emptyList<Song>()) }
     var albums by remember { mutableStateOf(emptyList<AlbumPreview>()) }
     var artists by remember { mutableStateOf(emptyList<ArtistPreview>()) }
+    var playlists by remember { mutableStateOf(emptyList<PlaylistPreview>()) }
 
     var isLoading by remember { mutableStateOf(true) }
 
@@ -138,6 +143,22 @@ fun SearchResultScreen(
                         .flowOn(Dispatchers.IO)
                         .collect {
                             artists = artists + it
+                            initialLoading = false
+                            isLoading = false
+                        }
+                }
+            }
+
+            "Playlist" -> {
+                if (playlists.isEmpty()) {
+                    isLoading = true
+                    Log.i("SearchResultScreen", "isLoading is now true")
+                    playlists = emptyList()
+
+                    searchCommunityPlaylists(query)
+                        .flowOn(Dispatchers.IO)
+                        .collect {
+                            playlists = playlists + it
                             initialLoading = false
                             isLoading = false
                         }
@@ -301,6 +322,40 @@ fun SearchResultScreen(
                                             onClick = {
                                                 navController.navigate(ArtistDetailScreen(artist.id))
                                             }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    "Playlist" -> {
+                        Column {
+                            if (isLoading) {
+                                Box(
+                                    contentAlignment = Alignment.TopCenter,
+                                    modifier = Modifier.fillMaxSize()
+                                        .padding(vertical = 8.dp)
+                                ) {
+                                    CircularWavyProgressIndicator()
+                                }
+                            } else {
+                                LazyVerticalGrid(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 8.dp),
+                                    contentPadding = PaddingValues(
+                                        top = 8.dp,
+                                        bottom = bottomPadding
+                                    ),
+                                    columns = GridCells.Adaptive(minSize = 100.dp)
+                                ) {
+                                    items(playlists, key = { it.id }) { playlist ->
+                                        PlaylistComponent(
+                                            playlistPreview = playlist,
+                                            onClick = {
+                                                navController.navigate(PlaylistOnlineDetailScreen(playlist.id, playlist.thumbnail))
+                                            },
                                         )
                                     }
                                 }
