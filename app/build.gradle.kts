@@ -155,4 +155,6 @@ dependencies {
     implementation(libs.multiplatform.markdown.renderer.m3)
 
     implementation(libs.filekit.dialogs)
+
+    implementation(libs.reorderable)
 }
