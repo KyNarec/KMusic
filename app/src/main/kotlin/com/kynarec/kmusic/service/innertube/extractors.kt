@@ -1486,6 +1486,26 @@ suspend fun getPlaylistAndSongs(browseId: String): PlaylistWithSongsAndIndices? 
                 ?.firstOrNull()
                 ?.getPlaylistAndSongsText
 
+            var duration = song
+                ?.getPlaylistAndSongsFixedColumns
+                ?.firstOrNull()
+                ?.getPlaylistAndSongsMusicResponsiveListItemFixedColumnRenderer
+                ?.getPlaylistAndSongsText
+                ?.getPlaylistAndSongsRuns
+                ?.firstOrNull()
+                ?.getPlaylistAndSongsText
+
+            if (duration.isNullOrEmpty()) {
+                duration = song
+                    ?.getPlaylistAndSongsFlexColumns
+                    ?.get(song.getPlaylistAndSongsFlexColumns.size - 2)
+                    ?.getPlaylistAndSongsMusicResponsiveListItemFlexColumnRenderer
+                    ?.getPlaylistAndSongsText
+                    ?.getPlaylistAndSongsRuns
+                    ?.firstOrNull()
+                    ?.getPlaylistAndSongsText ?: ""
+            }
+
             var albumId = ""
             val artistList = mutableListOf<SongArtist>()
             for (flexColumn in song?.getPlaylistAndSongsFlexColumns.orEmpty()) {
@@ -1537,15 +1557,6 @@ suspend fun getPlaylistAndSongs(browseId: String): PlaylistWithSongsAndIndices? 
                     albumId = browseEndpoint.getPlaylistAndSongsBrowseId?: ""
                 }
             }
-
-            val duration = song
-                ?.getPlaylistAndSongsFixedColumns
-                ?.firstOrNull()
-                ?.getPlaylistAndSongsMusicResponsiveListItemFixedColumnRenderer
-                ?.getPlaylistAndSongsText
-                ?.getPlaylistAndSongsRuns
-                ?.firstOrNull()
-                ?.getPlaylistAndSongsText
 
             if (id != null)
                 songsList.add(
@@ -1630,7 +1641,7 @@ suspend fun browsePlaylistSongsContinuation(
                     ?.maxByOrNull { it.browsePlaylistSongsContinuationWidth + it.browsePlaylistSongsContinuationHeight }
                     ?.browsePlaylistSongsContinuationUrl?.split("=")?.getOrNull(0) ?: ""
 
-                val duration = songRenderer.browsePlaylistSongsContinuationFixedColumns
+                var duration = songRenderer.browsePlaylistSongsContinuationFixedColumns
                     ?.firstOrNull()
                     ?.browsePlaylistSongsContinuationMusicResponsiveListItemFixedColumnRenderer
                     ?.browsePlaylistSongsContinuationText
@@ -1668,6 +1679,17 @@ suspend fun browsePlaylistSongsContinuation(
                             }
                         }
                     }
+                }
+
+                if (duration.isEmpty()) {
+                    duration = songRenderer
+                        .browsePlaylistSongsContinuationFlexColumns
+                        ?.get(songRenderer.browsePlaylistSongsContinuationFlexColumns.size - 2)
+                        ?.browsePlaylistSongsContinuationMusicResponsiveListItemFlexColumnRenderer
+                        ?.browsePlaylistSongsContinuationText
+                        ?.browsePlaylistSongsContinuationRuns
+                        ?.firstOrNull()
+                        ?.browsePlaylistSongsContinuationText ?: ""
                 }
 
                 allSongsList.add(
