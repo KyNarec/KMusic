@@ -42,7 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.enums.PopupType
-import com.kynarec.kmusic.ui.PlaylistsScreen
+import com.kynarec.kmusic.ui.StarterScreens
 import com.kynarec.kmusic.ui.components.song.BottomSheetItem
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
@@ -193,7 +193,7 @@ fun PlaylistOfflineOptionsBottomSheet(
                     text = "Delete",
                     onClick = {
                         viewModel.deletePlaylist(playlist!!)
-                        navController.navigate(PlaylistsScreen)
+                        navController.navigate(StarterScreens)
                         SmartMessage(
                             "Playlist deleted successfully",
                             type = PopupType.Success,
