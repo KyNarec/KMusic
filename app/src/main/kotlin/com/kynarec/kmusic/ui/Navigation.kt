@@ -25,25 +25,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import com.kynarec.kmusic.data.db.KmusicDatabase
-import com.kynarec.kmusic.enums.StartDestination
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.service.update.UpdateManager
+import com.kynarec.kmusic.ui.screens.ScreenWithContent
+import com.kynarec.kmusic.ui.screens.StarterScreensContainer
 import com.kynarec.kmusic.ui.screens.album.AlbumDetailScreen
 import com.kynarec.kmusic.ui.screens.album.AlbumListScreen
-import com.kynarec.kmusic.ui.screens.album.AlbumsScreen
 import com.kynarec.kmusic.ui.screens.artist.ArtistDetailScreen
-import com.kynarec.kmusic.ui.screens.artist.ArtistsScreen
-import com.kynarec.kmusic.ui.screens.home.HomeScreen
 import com.kynarec.kmusic.ui.screens.playlist.PlaylistOfflineDetailScreen
 import com.kynarec.kmusic.ui.screens.playlist.PlaylistOnlineDetailScreen
-import com.kynarec.kmusic.ui.screens.playlist.PlaylistsScreen
 import com.kynarec.kmusic.ui.screens.search.SearchResultScreen
 import com.kynarec.kmusic.ui.screens.search.SearchScreen
 import com.kynarec.kmusic.ui.screens.settings.SettingsScreen
 import com.kynarec.kmusic.ui.screens.song.SongListScreen
-import com.kynarec.kmusic.ui.screens.song.SongsScreen
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
@@ -61,6 +58,9 @@ fun Navigation(
 ) {
     // Get the Application context using LocalContext.
     // This is safe to use in a Composable because it's tied to the Composable's scope.
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
     val application = LocalContext.current.applicationContext as Application
 
     // Use a custom ViewModel factory to inject the database DAO.
@@ -71,13 +71,7 @@ fun Navigation(
 
     NavHost(
         navController = navController,
-        startDestination = when (startDestination) {
-            StartDestination.HomeScreen -> HomeScreen
-            StartDestination.SongsScreen -> SongsScreen
-            StartDestination.ArtistsScreen -> ArtistsScreen
-            StartDestination.AlbumsScreen -> AlbumsScreen
-            StartDestination.PlaylistsScreen -> PlaylistsScreen
-        },
+        startDestination = StarterScreens,
         enterTransition = {
             when (transitionEffect) {
                 TransitionEffect.None -> EnterTransition.None
@@ -163,118 +157,184 @@ fun Navigation(
             }
         }
     ) {
-        composable<HomeScreen> {
-            HomeScreen()
+        composable<StarterScreens> {
+            StarterScreensContainer(
+                rootNavController = navController,
+                musicViewModel,
+                database,
+                settingsViewModel
+            )
         }
 
-        composable<SongsScreen> {
-//            val songs = viewModel.songsList.collectAsStateWithLifecycle()
-//            val songs = musicViewModel.uiState.collectAsStateWithLifecycle().value.songsList
-            SongsScreen(viewModel = musicViewModel, database = database, navController = navController)
-        }
-        composable<ArtistsScreen> {
-            ArtistsScreen(
-                viewModel = musicViewModel,
-                database = database,
-                navController = navController
-            )
-        }
-        composable<PlaylistsScreen> {
-            PlaylistsScreen(
-                navController = navController,
-                database = database,
-                viewModel = musicViewModel
-            )
-        }
         composable<PlaylistOfflineDetailScreen> {
             val args = it.toRoute<PlaylistOfflineDetailScreen>()
-            PlaylistOfflineDetailScreen(
-                playlistId = args.playlistId,
-                viewModel = musicViewModel,
+            ScreenWithContent(
                 database = database,
-                navController = navController
-            )
+                navController = navController,
+                currentRoute = currentRoute,
+                isSearchScreen = false,
+                musicViewModel = musicViewModel,
+                hideVertNavElements = true
+            ) {
+                PlaylistOfflineDetailScreen(
+                    playlistId = args.playlistId,
+                    viewModel = musicViewModel,
+                    database = database,
+                    navController = navController
+                )
+            }
         }
         composable<PlaylistOnlineDetailScreen> {
             val args = it.toRoute<PlaylistOnlineDetailScreen>()
-            PlaylistOnlineDetailScreen(
-                playlistId = args.playlistId,
-                thumbnail = args.thumbnail,
-                viewModel = musicViewModel,
+            ScreenWithContent(
                 database = database,
-                navController = navController
-            )
+                navController = navController,
+                currentRoute = currentRoute,
+                isSearchScreen = false,
+                musicViewModel = musicViewModel,
+                hideVertNavElements = true
+            ) {
+                PlaylistOnlineDetailScreen(
+                    playlistId = args.playlistId,
+                    thumbnail = args.thumbnail,
+                    viewModel = musicViewModel,
+                    database = database,
+                    navController = navController
+                )
+            }
         }
-        composable<AlbumsScreen> {
-            AlbumsScreen(
-                viewModel = musicViewModel,
-                database = database,
-                navController = navController
-            )
-        }
+
         composable<SearchScreen> {
-            SearchScreen(navController)
+            ScreenWithContent(
+                database = database,
+                navController = navController,
+                currentRoute = currentRoute,
+                isSearchScreen = true,
+                musicViewModel = musicViewModel,
+                hideVertNavElements = true
+            ) {
+                SearchScreen(navController)
+            }
         }
         composable<SearchResultScreen> {
             val args = it.toRoute<SearchResultScreen>()
-            SearchResultScreen(args.query, musicViewModel, database = database, navController = navController)
+            ScreenWithContent(
+                database = database,
+                navController = navController,
+                currentRoute = currentRoute,
+                isSearchScreen = false,
+                musicViewModel = musicViewModel,
+                hideVertNavElements = true
+            ) {
+                SearchResultScreen(
+                    args.query,
+                    musicViewModel,
+                    database = database,
+                    navController = navController
+                )
+            }
         }
         composable<SettingsScreen> {
-            SettingsScreen(
-                prefs = settingsViewModel,
+            ScreenWithContent(
+                database = database,
                 navController = navController,
-                updateManager = updateManager,
-                updateViewModel = updateViewModel,
-                musicViewModel = musicViewModel
-            )
+                currentRoute = currentRoute,
+                isSearchScreen = false,
+                musicViewModel = musicViewModel,
+                hideVertNavElements = true
+            ) {
+                SettingsScreen(
+                    prefs = settingsViewModel,
+                    navController = navController,
+                    updateManager = updateManager,
+                    updateViewModel = updateViewModel,
+                    musicViewModel = musicViewModel
+                )
+            }
         }
         composable<AlbumDetailScreen> {
             Log.i("Navigation", "AlbumDetailScreen")
             val args = it.toRoute<AlbumDetailScreen>()
-            AlbumDetailScreen(
-                albumId = args.albumId,
-                viewModel = musicViewModel,
+            ScreenWithContent(
                 database = database,
-                navController = navController
-            )
+                navController = navController,
+                currentRoute = currentRoute,
+                isSearchScreen = false,
+                musicViewModel = musicViewModel,
+                hideVertNavElements = true
+            ) {
+                AlbumDetailScreen(
+                    albumId = args.albumId,
+                    viewModel = musicViewModel,
+                    database = database,
+                    navController = navController
+                )
+            }
         }
         composable<ArtistDetailScreen> {
             Log.i("Navigation", "ArtistDetailScreen")
             val args = it.toRoute<ArtistDetailScreen>()
-            ArtistDetailScreen(
-                artistId = args.artistId,
-                viewModel = musicViewModel,
+            ScreenWithContent(
                 database = database,
-                navController = navController
-            )
+                navController = navController,
+                currentRoute = currentRoute,
+                isSearchScreen = false,
+                musicViewModel = musicViewModel,
+                hideVertNavElements = true
+            ) {
+                ArtistDetailScreen(
+                    artistId = args.artistId,
+                    viewModel = musicViewModel,
+                    database = database,
+                    navController = navController
+                )
+            }
         }
 
         composable<SongListScreen> {
             Log.i("Navigation", "SongListScreen")
             val args = it.toRoute<SongListScreen>()
-            SongListScreen(
-                browseId = args.browseId,
-                browseParams = args.browseParams,
-                viewModel = musicViewModel,
+            ScreenWithContent(
                 database = database,
-                navController = navController
-            )
+                navController = navController,
+                currentRoute = currentRoute,
+                isSearchScreen = false,
+                musicViewModel = musicViewModel,
+                hideVertNavElements = true
+            ) {
+                SongListScreen(
+                    browseId = args.browseId,
+                    browseParams = args.browseParams,
+                    viewModel = musicViewModel,
+                    database = database,
+                    navController = navController
+                )
+            }
         }
 
         composable<AlbumListScreen> {
             Log.i("Navigation", "AlbumListScreen")
             val args = it.toRoute<AlbumListScreen>()
-            AlbumListScreen(
-                browseId = args.browseId,
-                browseParams = args.browseParams,
+            ScreenWithContent(
+                database = database,
                 navController = navController,
-                viewModel = musicViewModel,
-                database = database
-            )
+                currentRoute = currentRoute,
+                isSearchScreen = false,
+                musicViewModel = musicViewModel,
+                hideVertNavElements = true
+            ) {
+                AlbumListScreen(
+                    browseId = args.browseId,
+                    browseParams = args.browseParams,
+                    navController = navController,
+                    viewModel = musicViewModel,
+                    database = database
+                )
+            }
         }
     }
 }
-
+@Serializable object StarterScreens
 
 @Serializable
 object MainScreen
@@ -282,20 +342,6 @@ object MainScreen
 @Serializable
 object PlayerScreen
 
-@Serializable
-object HomeScreen
-
-@Serializable
-object SongsScreen
-
-@Serializable
-object ArtistsScreen
-
-@Serializable
-object AlbumsScreen
-
-@Serializable
-object PlaylistsScreen
 
 @Serializable
 data class PlaylistOfflineDetailScreen(

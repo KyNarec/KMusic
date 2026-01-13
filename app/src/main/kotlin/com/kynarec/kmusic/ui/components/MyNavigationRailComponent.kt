@@ -25,11 +25,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.R
-import com.kynarec.kmusic.ui.AlbumsScreen
-import com.kynarec.kmusic.ui.ArtistsScreen
-import com.kynarec.kmusic.ui.HomeScreen
-import com.kynarec.kmusic.ui.PlaylistsScreen
-import com.kynarec.kmusic.ui.SongsScreen
+import com.kynarec.kmusic.ui.screens.AlbumsScreen
+import com.kynarec.kmusic.ui.screens.ArtistsScreen
+import com.kynarec.kmusic.ui.screens.HomeScreen
+import com.kynarec.kmusic.ui.screens.PlaylistsScreen
+import com.kynarec.kmusic.ui.screens.SongsScreen
 
 // Define data for navigation destinations
 data class NavigationDestination(
