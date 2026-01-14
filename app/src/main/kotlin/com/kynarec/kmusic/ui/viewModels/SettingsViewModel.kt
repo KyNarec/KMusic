@@ -1,6 +1,5 @@
 package com.kynarec.kmusic.ui.viewModels
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.kynarec.kmusic.enums.StartDestination
@@ -18,7 +17,6 @@ import eu.anifantakis.lib.ksafe.compose.mutableStateOf
 
 class SettingsViewModel(
     val ksafe: KSafe,
-    context: Context
 ): ViewModel() {
 
     var transitionEffect by ksafe.mutableStateOf(DEFAULT_TRANSITION_EFFECT, TRANSITION_EFFECT_KEY)
@@ -65,12 +63,11 @@ class SettingsViewModel(
      */
     class Factory(
         private val ksafe: KSafe,
-        private val context: Context
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return SettingsViewModel(ksafe, context) as T
+                return SettingsViewModel(ksafe) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

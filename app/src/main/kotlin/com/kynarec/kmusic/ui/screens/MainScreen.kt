@@ -34,11 +34,11 @@ fun MainScreen() {
 
     val musicViewModel: MusicViewModel = viewModel(
         factory = MusicViewModel.Factory(
+            application,
             database.songDao(),
             database.playlistDao(),
             database.albumDao(),
             database.artistDao(),
-            LocalContext.current
         )
     )
     val ksafeInstance = remember { (application as KMusic).ksafe }
@@ -46,7 +46,6 @@ fun MainScreen() {
     val settingsViewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModel.Factory(
             ksafeInstance, // Use the remembered, stable KSafe instance
-            LocalContext.current
         )
     )
     val navController = rememberNavController()
