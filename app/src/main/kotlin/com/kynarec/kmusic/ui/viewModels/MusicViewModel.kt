@@ -1,9 +1,10 @@
 package com.kynarec.kmusic.ui.viewModels
 
+import android.app.Application
 import android.content.ComponentName
-import android.content.Context
 import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -62,12 +63,12 @@ data class MusicUiState(
 @OptIn(UnstableApi::class)
 class MusicViewModel
     (
+    application: Application,
     private val songDao: SongDao,
     private val playlistDao: PlaylistDao,
     private val albumDao: AlbumDao,
     private val artistDao: ArtistDao,
-    private val context: Context
-) : ViewModel() {
+) : AndroidViewModel(application) {
     private val tag = "MusicViewModel"
 
     private val _uiState = MutableStateFlow(MusicUiState())
@@ -106,6 +107,7 @@ class MusicViewModel
             val controller = mediaController ?: return
 
             viewModelScope.launch {
+                val context = getApplication<Application>().applicationContext
                 // Handle Previous Song
                 if (index > 0) {
                     val songBefore = withContext(Dispatchers.IO) {
@@ -134,6 +136,7 @@ class MusicViewModel
     }
 
     private fun initializeController() {
+        val context = getApplication<Application>().applicationContext
         val sessionToken =
             SessionToken(context, ComponentName(context, PlayerServiceModern::class.java))
 
@@ -199,6 +202,7 @@ class MusicViewModel
      */
     fun playSong(song: Song) {
         Log.i(tag, "playSong called")
+        val context = getApplication<Application>().applicationContext
 
         val controller = mediaController ?: return
         val songList = _uiState.value.songsList
@@ -234,6 +238,7 @@ class MusicViewModel
         playlistId: String = Uuid.random().toString()
     ) {
         Log.i(tag, "playPlaylist called with ${songs.size} songs, starting at ${startSong.title}")
+        val context = getApplication<Application>().applicationContext
 
         playlistLoadJob?.cancel()
         currentLoadingPlaylistId = playlistId
@@ -296,6 +301,7 @@ class MusicViewModel
     }
 
     private suspend fun loadChunks(songs: List<Song>, append: Boolean, playlistId: String) {
+        val context = getApplication<Application>().applicationContext
         val chunkSize = 30
         val chunks = songs.chunked(chunkSize)
 
@@ -332,6 +338,7 @@ class MusicViewModel
 
     fun playSongByIdWithRadio(song: Song, removeViewModelList: Boolean = true) {
         Log.i(tag, "playSongByIdWithRadio called with songId: ${song.id}")
+        val context = getApplication<Application>().applicationContext
 
         if (removeViewModelList) {
             _uiState.update {
@@ -375,6 +382,7 @@ class MusicViewModel
 
     fun playNext(song: Song) {
         Log.i(tag, "playNext called with song ${song.title}")
+        val context = getApplication<Application>().applicationContext
         viewModelScope.launch {
             try {
                 val mediaItem = createPartialMediaItemFromSong(song, context)
@@ -405,6 +413,7 @@ class MusicViewModel
     }
 
     fun enqueueSong(song: Song) {
+        val context = getApplication<Application>().applicationContext
         Log.i(tag, "enqueue called with song ${song.title}")
         viewModelScope.launch {
             try {
@@ -422,6 +431,7 @@ class MusicViewModel
     }
 
     fun playNextList(songs: List<Song>) {
+        val context = getApplication<Application>().applicationContext
         viewModelScope.launch {
             try {
                 val mediaItems = songs.map { song ->
@@ -454,6 +464,7 @@ class MusicViewModel
     }
 
     fun enqueueSongList(songs: List<Song>) {
+        val context = getApplication<Application>().applicationContext
         viewModelScope.launch {
             try {
                 val mediaItems = songs.map { song ->
@@ -636,16 +647,16 @@ class MusicViewModel
      * Factory for creating the ViewModel with dependencies.
      */
     class Factory(
+        private val application: Application,
         private val songDao: SongDao,
         private val playlistDao: PlaylistDao,
         private val albumDao: AlbumDao,
         private val artistDao: ArtistDao,
-        private val context: Context
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(MusicViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return MusicViewModel(songDao, playlistDao, albumDao, artistDao, context) as T
+                return MusicViewModel(application, songDao, playlistDao, albumDao, artistDao) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }
