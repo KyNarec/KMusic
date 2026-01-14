@@ -1,7 +1,6 @@
 package com.kynarec.kmusic.ui.components.album
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,7 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,7 +25,7 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.data.db.entities.AlbumPreview
-import com.kynarec.kmusic.utils.ConditionalMarqueeText
+import com.kynarec.kmusic.ui.components.MarqueeBox
 
 @Composable
 fun AlbumComponent(
@@ -69,37 +67,20 @@ fun AlbumComponent(
                     imageLoader = LocalContext.current.imageLoader
                 )
             }
-            Text(
+            MarqueeBox(
+                contentAlignment = Alignment.Center,
                 text = albumPreview.title,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .basicMarquee(initialDelayMillis = 1000)
-                    .align(Alignment.CenterHorizontally),
                 maxLines = 1
             )
-//            ConditionalMarqueeText(
-//                text = albumPreview.title,
-//                style = MaterialTheme.typography.titleMedium,
-//                color = MaterialTheme.colorScheme.onSurfaceVariant,
-//                modifier = Modifier
-//                    .align(Alignment.CenterHorizontally)
-//            )
-            ConditionalMarqueeText(
+
+            MarqueeBox(
+                contentAlignment = Alignment.Center,
                 text = albumPreview.artist,
-//                style = MaterialTheme.typography.titleMedium,
-//                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .basicMarquee(initialDelayMillis = 2000)
-                    .align(Alignment.CenterHorizontally)
             )
-            ConditionalMarqueeText(
+            MarqueeBox(
                 text = albumPreview.year,
-//                style = MaterialTheme.typography.titleMedium,
-//                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .basicMarquee(initialDelayMillis = 1000)
-                    .align(Alignment.CenterHorizontally)
             )
         }
     }

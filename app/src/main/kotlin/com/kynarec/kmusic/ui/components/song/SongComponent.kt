@@ -2,7 +2,6 @@ package com.kynarec.kmusic.ui.components.song
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.ui.components.MarqueeBox
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -41,7 +41,6 @@ fun SongComponent(
     onLongClick: () ->  Unit = {},
     isPlaying: Boolean = false
 ) {
-    // The main Row acts as the container, mimicking the XML's fixed height and clickable behavior.
     val title = song.title
     val artist = song.artists.joinToString(", ") { it.name }
     val duration = song.duration
@@ -54,11 +53,10 @@ fun SongComponent(
                 onClick = onClick,
                 onLongClick = onLongClick
             )
-            .background(Color.Transparent) // Equivalent to ?attr/selectableItemBackground
-            .padding(vertical = 8.dp), // Add padding to make space for the content
+            .background(Color.Transparent)
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Image View, sized and padded
         AsyncImage(
             model = imageUrl,
             contentDescription = "Album art",
@@ -72,36 +70,25 @@ fun SongComponent(
 
         )
 
-        // Spacer to replicate the margin between the image and the text
         Spacer(modifier = Modifier.width(16.dp))
 
-        // Column for the title and artist, with a weight to take up remaining space
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight(),
             verticalArrangement = Arrangement.Center
         ) {
-            // Smart marquee for title - only scrolls if text is too long
-            Text(
+
+            MarqueeBox(
                 text = title,
                 fontSize = 24.sp,
-                maxLines = 1,
-                modifier = Modifier
-                    .basicMarquee(
-                        initialDelayMillis = 1000, iterations = Int.MAX_VALUE
-                    )
+                maxLines = 1
             )
 
-            // Smart marquee for artist - only scrolls if text is too long
-            Text(
+            MarqueeBox(
                 text = artist,
                 fontSize = 14.sp,
-                maxLines = 1,
-                modifier = Modifier
-                    .basicMarquee(
-                        initialDelayMillis = 1000, iterations = Int.MAX_VALUE
-                    )
+                maxLines = 1
             )
         }
 

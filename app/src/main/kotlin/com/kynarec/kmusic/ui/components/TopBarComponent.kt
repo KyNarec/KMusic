@@ -39,7 +39,8 @@ import com.kynarec.kmusic.ui.SettingsScreen
 @Composable
 fun TopBarComponent(
     isSearchScreen: Boolean,
-    navController: NavHostController
+    navController: NavHostController,
+    isInStarterScreen: Boolean = false
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -58,7 +59,7 @@ fun TopBarComponent(
                 .align(Alignment.CenterVertically)
                 .clickable(true, onClick = {
                     val startRoute = navController.graph.startDestinationRoute
-                    if (startRoute != null) {
+                    if (startRoute != null && !isInStarterScreen) {
                         navController.navigate(startRoute)
                     }
                 })

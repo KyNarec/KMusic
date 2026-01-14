@@ -1,7 +1,6 @@
 package com.kynarec.kmusic.ui.components.player
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +18,6 @@ import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -29,7 +27,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -37,6 +34,7 @@ import coil.imageLoader
 import coil.request.ImageRequest
 import coil.transform.RoundedCornersTransformation
 import com.kynarec.kmusic.R
+import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.Constants.THUMBNAIL_ROUNDNESS
 
@@ -83,30 +81,18 @@ fun PlayerControlBar(
                 .weight(1f)
                 .padding(horizontal = 8.dp),
         ) {
-            Text(
+            MarqueeBox(
                 text = uiState.currentSong?.title ?: "NA",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.basicMarquee(
-                    repeatDelayMillis = 1000,
-                    initialDelayMillis = 1000,
-                    iterations = Int.MAX_VALUE
-                )
             )
-            Text(
+            MarqueeBox(
                 text = uiState.currentSong?.artists?.joinToString(", ") { it.name } ?: "NA",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.basicMarquee(
-                    repeatDelayMillis = 1000,
-                    initialDelayMillis = 1000,
-                    iterations = Int.MAX_VALUE
-                )
             )
         }
 
