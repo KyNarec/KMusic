@@ -285,8 +285,8 @@ fun PlayerScreen(
                 ) {
                     Icon(
                         imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        tint = Color.White,
-                        contentDescription = null
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        contentDescription = "Toggle Liked"
                     )
                 }
             }

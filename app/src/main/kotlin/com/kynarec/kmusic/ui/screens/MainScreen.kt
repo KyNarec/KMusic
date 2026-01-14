@@ -4,9 +4,12 @@ import android.app.Application
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
@@ -53,7 +56,16 @@ fun MainScreen() {
 
     val dynamicColors by settingsViewModel.dynamicColorsFlow.collectAsStateWithLifecycle(DEFAULT_DYNAMIC_COLORS)
 
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
+    LaunchedEffect(navController) {
+        navController.addOnDestinationChangedListener { controller, destination, arguments ->
+            focusManager.clearFocus()
+            keyboardController?.hide()
+
+        }
+    }
     AppTheme(
         darkTheme = darkTheme,
         dynamicColor = dynamicColors

@@ -1,7 +1,6 @@
 package com.kynarec.kmusic.ui.components.playlist
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,7 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
@@ -32,7 +30,7 @@ import coil.imageLoader
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.PlaylistPreview
-import com.kynarec.kmusic.utils.ConditionalMarqueeText
+import com.kynarec.kmusic.ui.components.MarqueeBox
 
 @Composable
 fun PlaylistComponent(
@@ -83,16 +81,11 @@ fun PlaylistComponent(
                     songsThumbnailList
                 )
             }
-            ConditionalMarqueeText(
+            MarqueeBox(
+                contentAlignment = Alignment.Center,
                 text = playlist.name,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .basicMarquee(
-                        initialDelayMillis = 1000,
-                        iterations = Int.MAX_VALUE
-                    )
 
             )
         }
@@ -140,26 +133,21 @@ fun PlaylistComponent(
                     imageLoader = LocalContext.current.imageLoader
                 )
             }
-            Text(
+            MarqueeBox(
+                contentAlignment = Alignment.Center,
                 text = playlistPreview.title,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .basicMarquee(initialDelayMillis = 1000, iterations = Int.MAX_VALUE)
-                    .align(Alignment.CenterHorizontally),
-                maxLines = 1
+                maxLines = 1,
             )
-            ConditionalMarqueeText(
+            MarqueeBox(
+                contentAlignment = Alignment.Center,
                 text = playlistPreview.author,
-                modifier = Modifier
-                    .basicMarquee(initialDelayMillis = 2000, iterations = Int.MAX_VALUE)
-                    .align(Alignment.CenterHorizontally)
             )
-            ConditionalMarqueeText(
+            MarqueeBox(
+                contentAlignment = Alignment.Center,
                 text = playlistPreview.views,
-                modifier = Modifier
-                    .basicMarquee(initialDelayMillis = 1000, iterations = Int.MAX_VALUE)
-                    .align(Alignment.CenterHorizontally)
+
             )
         }
     }

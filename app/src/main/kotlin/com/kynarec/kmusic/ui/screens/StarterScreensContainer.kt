@@ -90,7 +90,7 @@ fun StarterScreensContainer(
     Scaffold(
         topBar = {
             Box(modifier = Modifier.padding(top = 16.dp)) {
-                TopBarComponent(false, rootNavController)
+                TopBarComponent(false, rootNavController, true)
             }
         },
     ) { contentPadding ->
