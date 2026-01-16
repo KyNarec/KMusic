@@ -93,9 +93,11 @@ fun MyNavigationRailComponent(
                         .padding(0.dp, 14.dp),
                     selected = selectedDestination == index,
                     onClick = {
-                        selectedDestination = index
-                        navController.navigate(destination.navigationScreen)
-                              },
+                        if (selectedDestination != index) {
+                            selectedDestination = index
+                            navController.navigate(destination.navigationScreen)
+                        }
+                    },
                     icon = {
 //                         Conditionally display the icon
                         if (selectedDestination == index) {

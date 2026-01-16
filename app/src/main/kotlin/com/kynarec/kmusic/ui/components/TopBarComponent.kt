@@ -38,7 +38,7 @@ import com.kynarec.kmusic.ui.SettingsScreen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBarComponent(
-    isSearchScreen: Boolean,
+    showBackButton: Boolean,
     navController: NavHostController,
     isInStarterScreen: Boolean = false
 ) {
@@ -46,6 +46,9 @@ fun TopBarComponent(
     val currentRoute = navBackStackEntry?.destination?.route
     val isSettingsScreen = remember(currentRoute) {
         currentRoute?.startsWith(SettingsScreen::class.qualifiedName!!) == true
+    }
+    val isSearchScreen = remember(currentRoute) {
+        currentRoute?.startsWith(SearchScreen::class.qualifiedName!!) == true
     }
 
     Row(
@@ -65,7 +68,7 @@ fun TopBarComponent(
                 })
         ){
             Row {
-                if (isSearchScreen) {
+                if (showBackButton) {
                     IconButton(
                         onClick = { navController.popBackStack() },
                         modifier = Modifier
@@ -113,7 +116,7 @@ fun TopBarComponent(
         Spacer(modifier = Modifier.weight(1f)
         )
         IconButton(
-            onClick = { navController.navigate(SearchScreen) },
+            onClick = {  if (!isSearchScreen) navController.navigate(SearchScreen) },
             modifier = Modifier
                 .align(Alignment.CenterVertically)
         ) {
