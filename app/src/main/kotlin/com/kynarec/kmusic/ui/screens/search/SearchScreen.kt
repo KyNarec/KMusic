@@ -1,6 +1,7 @@
 package com.kynarec.kmusic.ui.screens.search
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -93,7 +95,6 @@ fun SearchScreen(
                     .padding(top = 40.dp)
                     .fillMaxWidth()
                     .background(
-//                    color = Color(0xFF2B3233),
                         color = MaterialTheme.colorScheme.primaryContainer,
                         shape = RoundedCornerShape(24.dp)
                     ),
@@ -113,16 +114,21 @@ fun SearchScreen(
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            null
+                        )
+                    },
                     trailingIcon = {
                         if (searchQuery.text.isNotEmpty()) {
                             IconButton(
                                 onClick = { searchQuery = TextFieldValue("") },
-                                modifier = Modifier.padding(end = 16.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Clear,
                                     contentDescription = "Clear",
-                                    tint = MaterialTheme.colorScheme.error
+                                    tint = MaterialTheme.colorScheme.errorContainer
                                 )
                             }
                         }
@@ -163,13 +169,9 @@ fun SearchScreen(
             var searchSuggestions by remember { mutableStateOf(emptyList<String>()) }
 
             LaunchedEffect(searchQuery) {
-//                searchSuggestions = emptyList()
                 searchSuggestions = searchSuggestions(searchQuery.text)
                     .flowOn(Dispatchers.IO)
                     .toList()
-//                    .collect {
-//                        searchSuggestions = searchSuggestions+ it
-//                    }
             }
             LazyColumn(
                 modifier = Modifier
@@ -244,10 +246,15 @@ fun SearchScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
 
-                        Text(searchQueries[index].query)
+                        Text(searchQueries[index].query,
+                            modifier = Modifier
+                                .basicMarquee(
+                                    initialDelayMillis = 1000, iterations = Int.MAX_VALUE
+                                )
+                                .weight(1f)
+                                .padding(end = 8.dp),
+                            )
 
-
-                        Spacer(Modifier.weight(1f))
                         IconButton(onClick = {
                             scope.launch {
                                 searchQueryDao.deleteQuery(searchQueries[index].query)
