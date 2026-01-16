@@ -8,19 +8,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,6 +42,7 @@ import com.kynarec.kmusic.service.innertube.searchSongsFlow
 import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.ArtistDetailScreen
 import com.kynarec.kmusic.ui.PlaylistOnlineDetailScreen
+import com.kynarec.kmusic.ui.components.SortSection
 import com.kynarec.kmusic.ui.components.album.AlbumComponent
 import com.kynarec.kmusic.ui.components.artist.ArtistComponent
 import com.kynarec.kmusic.ui.components.playlist.PlaylistComponent
@@ -187,22 +183,13 @@ fun SearchResultScreen(
             Column(
                 Modifier.fillMaxSize()
             ) {
-                LazyRow(
-                    Modifier.fillMaxWidth()
-                ) {
-                    items(searchParams) { searchParam ->
-                        Button(
-                            onClick = {
-                                viewModel.setSearchParam(searchParam)
-                            },
-                            enabled = selectedSearchParam != searchParam,
-                            modifier = Modifier.padding(horizontal = 2.dp)
-
-                        ) {
-                            Text(text = searchParam.text)
-                        }
+                SortSection(
+                    sortOptions = searchParams,
+                    selectedSortOption = selectedSearchParam,
+                    onOptionSelected = {
+                        viewModel.setSearchParam(it)
                     }
-                }
+                )
                 when (selectedSearchParam.text) {
                     "Song" -> {
                         Column(
