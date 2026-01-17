@@ -43,9 +43,9 @@ import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.ui.StarterScreens
+import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.song.BottomSheetItem
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import com.kynarec.kmusic.utils.SmartMessage
 import kotlinx.coroutines.launch
 
@@ -134,7 +134,7 @@ fun PlaylistOfflineOptionsBottomSheet(
                     Column(
                         Modifier.weight(1f)
                     ) {
-                        ConditionalMarqueeText(
+                        MarqueeBox(
                             text = playlist!!.name,
                             fontSize = iconAndTextSize,
                             maxLines = 1,
@@ -149,7 +149,7 @@ fun PlaylistOfflineOptionsBottomSheet(
                                 modifier = Modifier.size(iconSizeDp)
                             )
                             Spacer(Modifier.width(8.dp))
-                            ConditionalMarqueeText(
+                            MarqueeBox(
                                 text = songs.size.toString(),
                                 fontSize = iconAndTextSize,
                                 maxLines = 1,
