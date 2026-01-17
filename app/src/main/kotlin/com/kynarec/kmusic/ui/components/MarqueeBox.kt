@@ -1,12 +1,15 @@
 package com.kynarec.kmusic.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,63 +47,74 @@ fun MarqueeBox(
     textAlign: TextAlign? = null,
     lineHeight: TextUnit = TextUnit.Unspecified,
     overflow: TextOverflow = TextOverflow.Clip,
-    softWrap: Boolean = true,
+    softWrap: Boolean = false,
     maxLines: Int = Int.MAX_VALUE,
     minLines: Int = 1,
     style: TextStyle = LocalTextStyle.current
 ) {
     var isMarqueeActive by remember(text) { mutableStateOf(false) }
-    Box(
-        contentAlignment = contentAlignment,
-        modifier = boxModifier
-            .fillMaxWidth()
-            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-            .drawWithContent {
-                drawContent()
-                if (isMarqueeActive) {
-                    val fadeWidth = 80f
-                    // Left fade
-                    drawRect(
-                        brush = Brush.horizontalGradient(
-                            0f to Color.Transparent, 1f to Color.Black,
-                            startX = 0f, endX = fadeWidth
-                        ),
-                        blendMode = BlendMode.DstIn
-                    )
-                    // Right fade
-                    drawRect(
-                        brush = Brush.horizontalGradient(
-                            0f to Color.Black, 1f to Color.Transparent,
-                            startX = size.width - fadeWidth, endX = size.width
-                        ),
-                        blendMode = BlendMode.DstIn
-                    )
-                }
-            }
+    LaunchedEffect(isMarqueeActive) {
+        Log.i("MarqueeBox", "isMarqueeActive now: $isMarqueeActive")
+    }
+
+    BoxWithConstraints(
+        modifier = boxModifier.fillMaxWidth(),
+        contentAlignment = contentAlignment
     ) {
-        Text(
-            modifier = modifier
-                .basicMarquee(
-                    initialDelayMillis = 1000, iterations = Int.MAX_VALUE
+        val containerWidth = constraints.maxWidth
+
+        Box(
+            contentAlignment = contentAlignment,
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                .drawWithContent {
+                    drawContent()
+                    if (isMarqueeActive) {
+                        val fadeWidth = 10f
+                        // Left fade
+                        drawRect(
+                            brush = Brush.horizontalGradient(
+                                0f to Color.Transparent, 1f to Color.Black,
+                                startX = 0f, endX = fadeWidth
+                            ),
+                            blendMode = BlendMode.DstIn
+                        )
+                        // Right fade
+                        drawRect(
+                            brush = Brush.horizontalGradient(
+                                0f to Color.Black, 1f to Color.Transparent,
+                                startX = size.width - fadeWidth, endX = size.width
+                            ),
+                            blendMode = BlendMode.DstIn
+                        )
+                    }
+                }
+        ) {
+            Text(
+                text = text,
+                modifier = modifier.basicMarquee(
+                    initialDelayMillis = 1000,
+                    iterations = Int.MAX_VALUE
                 ),
-            text = text,
-            color = color,
-            autoSize = autoSize,
-            fontSize = fontSize,
-            fontStyle = fontStyle,
-            fontWeight = fontWeight,
-            letterSpacing = letterSpacing,
-            textDecoration = textDecoration,
-            textAlign = textAlign,
-            lineHeight = lineHeight,
-            overflow = overflow,
-            softWrap = softWrap,
-            maxLines = maxLines,
-            minLines = minLines,
-            style = style,
-            onTextLayout = { textLayoutResult ->
-                isMarqueeActive = textLayoutResult.hasVisualOverflow
-            }
-        )
+                color = color,
+                autoSize = autoSize,
+                fontSize = fontSize,
+                fontStyle = fontStyle,
+                fontWeight = fontWeight,
+                letterSpacing = letterSpacing,
+                textDecoration = textDecoration,
+                textAlign = textAlign,
+                lineHeight = lineHeight,
+                overflow = overflow,
+                maxLines = maxLines,
+                minLines = minLines,
+                style = style,
+                onTextLayout = { textLayoutResult ->
+                    isMarqueeActive = textLayoutResult.size.width > containerWidth
+                },
+                softWrap = softWrap
+            )
+        }
     }
 }
