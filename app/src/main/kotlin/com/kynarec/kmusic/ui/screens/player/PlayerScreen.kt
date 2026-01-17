@@ -329,27 +329,6 @@ fun PlayerScreen(
                     maxLines = 1,
                     modifier = Modifier.basicMarquee()
                 )
-//        // Song artist
-//        LazyRow() {
-//            items(uiState.currentSong?.artists ?: emptyList()) {
-//                Button(
-//                    onClick = {
-//                        onClose()
-//                        navController.navigate(ArtistDetailScreen(it.id))
-//                    },
-//                    colors = ButtonDefaults.buttonColors(containerColor = Color(0f, 0f, 0f, 0f))
-//                ) {
-//                    Text(
-//                        text = it.name,
-//                        fontSize = 16.sp,
-//                        color = MaterialTheme.colorScheme.onBackground,
-//                        maxLines = 1,
-//                        overflow = TextOverflow.Ellipsis,
-//                        modifier = Modifier.basicMarquee()
-//                    )
-//                }
-//            }
-//        }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -359,13 +338,6 @@ fun PlayerScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp)
                 ) {
-//            Slider(
-//                value = if (uiState.totalDuration > 0) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,
-//                onValueChange = { newValue ->
-//                    playerViewModel.seekTo((newValue * uiState.totalDuration).toLong())
-//                },
-//                modifier = Modifier.fillMaxWidth()
-//            )
 
                     val customSliderColors = SliderDefaults.colors(
                         activeTrackColor = MaterialTheme.colorScheme.inversePrimary,
@@ -375,15 +347,18 @@ fun PlayerScreen(
                         thumbColor = MaterialTheme.colorScheme.inversePrimary
                     )
 
-                    // Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentPosition: ${uiState.currentPosition}")
 
                     val newSliderValue = remember { mutableFloatStateOf(0f) }
                     val isDragging = remember { mutableStateOf(false) }
+
+                    val displayValue = when {
+                        isDragging.value -> newSliderValue.floatValue
+                        uiState.currentDurationLong > 0 -> uiState.currentPosition.toFloat() / uiState.currentDurationLong.toFloat()
+                        else -> 0f
+                    }
+
                     WavySlider(
-                        value = if (uiState.currentDurationLong != 0L && !isDragging.value)
-                            uiState.currentPosition.toFloat() / uiState.currentDurationLong.toFloat()
-                        else if (isDragging.value)
-                            newSliderValue.floatValue else 0f,
+                        value = displayValue.coerceIn(0f,1f),
                         onValueChange = { newValue ->
                             isDragging.value = true
                             newSliderValue.floatValue = newValue
@@ -400,56 +375,30 @@ fun PlayerScreen(
                         trackThickness = 2.dp,
                         incremental = false,
                         colors = customSliderColors,
-//                thumb = {
-//                    SliderDefaults.Thumb(
-//                        interactionSource = remember { MutableInteractionSource() },
-//                        colors = customSliderColors,
-//                        thumbSize = DpSize(12.dp, 12.dp),
-//                        modifier = Modifier
-//                            .align(Alignment.CenterHorizontally)
-//                            .shadow(1.dp, CircleShape, clip = false)
-//                            .indication(
-//                                interactionSource = remember { MutableInteractionSource() },
-//                                indication = ripple(bounded = false, radius = 12.dp)
-////                        .align(Arrangement.Center as Alignment.Horizontal)
-//                            )
-//                    )
-//                },
-//                track = {
-//                    SliderDefaults.Track(
-//                        sliderState = it,
-////                        modifier = Modifier.height(trackHeight),
-//                        thumbTrackGapSize = 0.dp,
-//                        trackInsideCornerSize = 0.dp,
-//                        drawStopIndicator = null,
-//                    )
-//                }
                     )
-//            WavySlider(
-//                value = if (uiState.totalDuration > 0) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,
-//                onValueChange = { newValue ->
-//                    playerViewModel.seekTo((newValue * uiState.totalDuration).toLong())
-//                },
-//                modifier = Modifier.fillMaxWidth(),
-//                waveHeight = if (uiState.isPlaying) 8.dp else 0.dp,
-//                waveLength = 32.dp,
-//                waveVelocity = 12.dp to WaveDirection.TAIL,
-//                waveThickness = 2.dp,
-//                trackThickness = 2.dp,
-//                incremental = false,
-//                thumbRadius = 8.dp, // <--- Add this line and adjust the value
-//            )
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "${uiState.currentPosition / 1000 / 60}:${
-                                (uiState.currentPosition / 1000 % 60).toString().padStart(2, '0')
-                            }",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                        )
+                        if (isDragging.value) {
+                            Text(
+                                text = "${(newSliderValue.floatValue * uiState.currentDurationLong).toLong() / 1000 / 60}:${
+                                    ((newSliderValue.floatValue * uiState.currentDurationLong).toLong() / 1000 % 60).toString().padStart(2, '0')
+                                }",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                            )
+                        } else {
+                            Text(
+                                text = "${uiState.currentPosition / 1000 / 60}:${
+                                    (uiState.currentPosition / 1000 % 60).toString().padStart(2, '0')
+                                }",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                            )
+                        }
+
                         Text(
 //                    text = "${uiState.currentDuration / 1000 / 60}:${(uiState.totalDuration / 1000 % 60).toString().padStart(2, '0')}",
 //                    text = parseMillisToDuration(uiState.currentDurationLong),
