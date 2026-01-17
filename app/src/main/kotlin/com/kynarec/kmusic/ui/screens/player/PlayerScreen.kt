@@ -26,13 +26,12 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -459,69 +458,42 @@ fun PlayerScreen(
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ElevatedButton(
+                    IconButton(
                         onClick = { viewModel.skipToPrevious() },
-                        modifier = Modifier.size(80.dp),
-                        contentPadding = PaddingValues(0.dp),
+                        modifier = Modifier.size(50.dp),
                         shape = IconButtonDefaults.mediumSquareShape,
-                        elevation = ButtonDefaults.elevatedButtonElevation(
-                            defaultElevation = 2.dp,
-                            pressedElevation = 6.dp
-                        ),
-                        colors = ButtonDefaults.elevatedButtonColors(
-                            containerColor = MaterialTheme.colorScheme.onSecondary,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
                     ) {
                         Icon(
-                            imageVector = Icons.Default.SkipPrevious,
+                            imageVector = Icons.Rounded.SkipPrevious,
                             contentDescription = "Skip back",
                             tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.size(50.dp)
+                            modifier = Modifier.size(35.dp)
                         )
                     }
-                    ElevatedButton(
+                    IconButton(
                         onClick = {
                             if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
                         },
-                        modifier = Modifier.size(96.dp),
+                        modifier = Modifier.size(70.dp),
                         shape = IconButtonDefaults.mediumSquareShape,
-                        contentPadding = PaddingValues(0.dp),
-                        elevation = ButtonDefaults.elevatedButtonElevation(
-                            defaultElevation = 4.dp,
-                            pressedElevation = 8.dp
-                        ),
-                        colors = ButtonDefaults.elevatedButtonColors(
-                            containerColor = MaterialTheme.colorScheme.onSecondary,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
                     ) {
                         Icon(
-                            imageVector = if (uiState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            imageVector = if (uiState.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                             contentDescription = if (uiState.isPlaying) "Pause" else "Play",
                             tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.size(70.dp)
+                            modifier = Modifier.size(60.dp)
                         )
                     }
-                    ElevatedButton(
+                    IconButton(
                         onClick = { viewModel.skipToNext() },
-                        modifier = Modifier.size(80.dp),
-                        contentPadding = PaddingValues(0.dp),
+                        modifier = Modifier.size(50.dp),
                         shape = IconButtonDefaults.mediumSquareShape,
-                        elevation = ButtonDefaults.elevatedButtonElevation(
-                            defaultElevation = 2.dp,
-                            pressedElevation = 6.dp
-                        ),
-                        colors = ButtonDefaults.elevatedButtonColors(
-                            containerColor = MaterialTheme.colorScheme.onSecondary,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.SkipNext,
+                            imageVector = Icons.Rounded.SkipNext,
                             contentDescription = "Skip forward",
                             tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.size(50.dp)
+                            modifier = Modifier.size(35.dp)
                         )
                     }
                 }
