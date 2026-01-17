@@ -80,6 +80,7 @@ fun AlbumComponent(
                 text = albumPreview.artist,
             )
             MarqueeBox(
+                contentAlignment = Alignment.Center,
                 text = albumPreview.year,
             )
         }
