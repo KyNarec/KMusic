@@ -41,9 +41,9 @@ import coil.imageLoader
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.song.BottomSheetItem
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import com.kynarec.kmusic.utils.SmartMessage
 import kotlinx.coroutines.launch
 
@@ -108,7 +108,7 @@ fun PlaylistOnlineOptionsBottomSheet(
                 Column(
                     Modifier.weight(1f)
                 ) {
-                    ConditionalMarqueeText(
+                    MarqueeBox(
                         text = playlist.name,
                         fontSize = iconAndTextSize,
                         maxLines = 1,
@@ -123,7 +123,7 @@ fun PlaylistOnlineOptionsBottomSheet(
                             modifier = Modifier.size(iconSizeDp)
                         )
                         Spacer(Modifier.width(8.dp))
-                        ConditionalMarqueeText(
+                        MarqueeBox(
                             text = songs.size.toString(),
                             fontSize = iconAndTextSize,
                             maxLines = 1,

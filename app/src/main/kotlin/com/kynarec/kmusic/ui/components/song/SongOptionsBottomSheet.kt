@@ -52,10 +52,10 @@ import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.player.SleepTimerDialog
 import com.kynarec.kmusic.ui.components.playlist.AddToPlaylistDialog
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.shareUrl
 import kotlinx.coroutines.launch
@@ -139,16 +139,16 @@ fun SongOptionsBottomSheet(
 
                     // Song Info
                     Column(
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f).padding(end = 8.dp)
                     ) {
-                        ConditionalMarqueeText(
+                        MarqueeBox(
                             text = dbSong!!.title,
                             fontSize = 18.sp,
                             maxLines = 1,
                             //overflow = TextOverflow.Ellipsis,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        ConditionalMarqueeText(
+                        MarqueeBox(
                             text = dbSong!!.artists.joinToString(", ") { it.name },
                             fontSize = 14.sp,
                             maxLines = 1,
