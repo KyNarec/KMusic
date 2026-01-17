@@ -1,5 +1,6 @@
 package com.kynarec.kmusic.ui.components.player
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -11,18 +12,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -38,12 +43,26 @@ import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.Constants.THUMBNAIL_ROUNDNESS
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PlayerControlBar(
     onBarClick: () -> Unit,
     viewModel: MusicViewModel
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val progress = if (uiState.currentDurationLong != 0L) {
+        uiState.currentPosition.toFloat() / uiState.currentDurationLong.toFloat()
+    } else {
+        0f
+    }
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
+        label = "ProgressAnimation"
+    )
+
+    val fillColor = MaterialTheme.colorScheme.onSecondary
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -52,6 +71,12 @@ fun PlayerControlBar(
             .clip(RoundedCornerShape(THUMBNAIL_ROUNDNESS.toFloat()))
 
             .background(MaterialTheme.colorScheme.secondaryContainer)
+            .drawBehind {
+                drawRect(
+                    color = fillColor,
+                    size = size.copy(width = size.width * animatedProgress)
+                )
+            }
             .clickable(onClick = onBarClick)
 //            .padding()
             .padding(8.dp, 8.dp),
@@ -98,25 +123,34 @@ fun PlayerControlBar(
 
         // Playback Controls
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { viewModel.skipToPrevious() }) {
+            IconButton(
+                onClick = { viewModel.skipToPrevious() },
+                shape = IconButtonDefaults.mediumSquareShape
+            ) {
                 Icon(
-                    imageVector = Icons.Filled.SkipPrevious,
+                    imageVector = Icons.Rounded.SkipPrevious,
                     contentDescription = "Skip Previous",
                     tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
-            IconButton(onClick = {
-                if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
-            }) {
+            IconButton(
+                onClick = {
+                    if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
+                },
+                shape = IconButtonDefaults.mediumSquareShape
+            ) {
                 Icon(
-                    imageVector = if (uiState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    imageVector = if (uiState.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                     contentDescription = if (uiState.isPlaying) "Pause" else "Play",
                     tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
-            IconButton(onClick = { viewModel.skipToNext() }) {
+            IconButton(
+                onClick = { viewModel.skipToNext() },
+                shape = IconButtonDefaults.mediumSquareShape
+            ) {
                 Icon(
-                    imageVector = Icons.Filled.SkipNext,
+                    imageVector = Icons.Rounded.SkipNext,
                     contentDescription = "Skip Forward",
                     tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )

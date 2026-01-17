@@ -26,21 +26,24 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -90,7 +93,7 @@ import ir.mahozad.multiplatform.wavyslider.material.WavySlider
  *
  * @param onClose A callback function to be invoked when the user requests to close the screen.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PlayerScreen(
     onClose: () -> Unit,
@@ -105,7 +108,6 @@ fun PlayerScreen(
     val showQueueBottomSheet = remember { mutableStateOf(false) }
     val showOptionsBottomSheet = remember { mutableStateOf(false) }
 
-    // Handle system back button press
     BackHandler {
         onClose()
     }
@@ -200,7 +202,7 @@ fun PlayerScreen(
                 modifier = Modifier
                     .size(300.dp)
                     .multiLayersShadow(
-                        elevation = 10.dp,
+                        elevation = 15.dp,
                         transparencyMultiplier = 0.2f,
                         layers = 10,
                         shape = RoundedCornerShape(16.dp)
@@ -327,27 +329,6 @@ fun PlayerScreen(
                     maxLines = 1,
                     modifier = Modifier.basicMarquee()
                 )
-//        // Song artist
-//        LazyRow() {
-//            items(uiState.currentSong?.artists ?: emptyList()) {
-//                Button(
-//                    onClick = {
-//                        onClose()
-//                        navController.navigate(ArtistDetailScreen(it.id))
-//                    },
-//                    colors = ButtonDefaults.buttonColors(containerColor = Color(0f, 0f, 0f, 0f))
-//                ) {
-//                    Text(
-//                        text = it.name,
-//                        fontSize = 16.sp,
-//                        color = MaterialTheme.colorScheme.onBackground,
-//                        maxLines = 1,
-//                        overflow = TextOverflow.Ellipsis,
-//                        modifier = Modifier.basicMarquee()
-//                    )
-//                }
-//            }
-//        }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -357,13 +338,6 @@ fun PlayerScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp)
                 ) {
-//            Slider(
-//                value = if (uiState.totalDuration > 0) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,
-//                onValueChange = { newValue ->
-//                    playerViewModel.seekTo((newValue * uiState.totalDuration).toLong())
-//                },
-//                modifier = Modifier.fillMaxWidth()
-//            )
 
                     val customSliderColors = SliderDefaults.colors(
                         activeTrackColor = MaterialTheme.colorScheme.inversePrimary,
@@ -373,12 +347,25 @@ fun PlayerScreen(
                         thumbColor = MaterialTheme.colorScheme.inversePrimary
                     )
 
-                    // Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentPosition: ${uiState.currentPosition}")
+
+                    val newSliderValue = remember { mutableFloatStateOf(0f) }
+                    val isDragging = remember { mutableStateOf(false) }
+
+                    val displayValue = when {
+                        isDragging.value -> newSliderValue.floatValue
+                        uiState.currentDurationLong > 0 -> uiState.currentPosition.toFloat() / uiState.currentDurationLong.toFloat()
+                        else -> 0f
+                    }
 
                     WavySlider(
-                        value = if (uiState.currentDurationLong != 0L) uiState.currentPosition.toFloat() / uiState.currentDurationLong.toFloat() else 0f,
+                        value = displayValue.coerceIn(0f,1f),
                         onValueChange = { newValue ->
-                            viewModel.seekTo((newValue * uiState.currentDurationLong).toLong())
+                            isDragging.value = true
+                            newSliderValue.floatValue = newValue
+                        },
+                        onValueChangeFinished = {
+                            viewModel.seekTo((newSliderValue.floatValue * uiState.currentDurationLong).toLong())
+                            isDragging.value = false
                         },
                         modifier = Modifier.fillMaxWidth(),
                         waveHeight = if (uiState.isPlaying) 4.dp else 0.dp,
@@ -388,56 +375,30 @@ fun PlayerScreen(
                         trackThickness = 2.dp,
                         incremental = false,
                         colors = customSliderColors,
-//                thumb = {
-//                    SliderDefaults.Thumb(
-//                        interactionSource = remember { MutableInteractionSource() },
-//                        colors = customSliderColors,
-//                        thumbSize = DpSize(12.dp, 12.dp),
-//                        modifier = Modifier
-//                            .align(Alignment.CenterHorizontally)
-//                            .shadow(1.dp, CircleShape, clip = false)
-//                            .indication(
-//                                interactionSource = remember { MutableInteractionSource() },
-//                                indication = ripple(bounded = false, radius = 12.dp)
-////                        .align(Arrangement.Center as Alignment.Horizontal)
-//                            )
-//                    )
-//                },
-//                track = {
-//                    SliderDefaults.Track(
-//                        sliderState = it,
-////                        modifier = Modifier.height(trackHeight),
-//                        thumbTrackGapSize = 0.dp,
-//                        trackInsideCornerSize = 0.dp,
-//                        drawStopIndicator = null,
-//                    )
-//                }
                     )
-//            WavySlider(
-//                value = if (uiState.totalDuration > 0) uiState.currentPosition.toFloat() / uiState.totalDuration.toFloat() else 0f,
-//                onValueChange = { newValue ->
-//                    playerViewModel.seekTo((newValue * uiState.totalDuration).toLong())
-//                },
-//                modifier = Modifier.fillMaxWidth(),
-//                waveHeight = if (uiState.isPlaying) 8.dp else 0.dp,
-//                waveLength = 32.dp,
-//                waveVelocity = 12.dp to WaveDirection.TAIL,
-//                waveThickness = 2.dp,
-//                trackThickness = 2.dp,
-//                incremental = false,
-//                thumbRadius = 8.dp, // <--- Add this line and adjust the value
-//            )
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "${uiState.currentPosition / 1000 / 60}:${
-                                (uiState.currentPosition / 1000 % 60).toString().padStart(2, '0')
-                            }",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                        )
+                        if (isDragging.value) {
+                            Text(
+                                text = "${(newSliderValue.floatValue * uiState.currentDurationLong).toLong() / 1000 / 60}:${
+                                    ((newSliderValue.floatValue * uiState.currentDurationLong).toLong() / 1000 % 60).toString().padStart(2, '0')
+                                }",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                            )
+                        } else {
+                            Text(
+                                text = "${uiState.currentPosition / 1000 / 60}:${
+                                    (uiState.currentPosition / 1000 % 60).toString().padStart(2, '0')
+                                }",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                            )
+                        }
+
                         Text(
 //                    text = "${uiState.currentDuration / 1000 / 60}:${(uiState.totalDuration / 1000 % 60).toString().padStart(2, '0')}",
 //                    text = parseMillisToDuration(uiState.currentDurationLong),
@@ -453,40 +414,46 @@ fun PlayerScreen(
                 // Player controls
                 Row(
                     modifier = Modifier
-                        .width(260.dp),
+                        .width(300.dp),
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(
                         onClick = { viewModel.skipToPrevious() },
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(50.dp),
+                        shape = IconButtonDefaults.mediumSquareShape,
                     ) {
                         Icon(
-                            imageVector = Icons.Default.SkipPrevious,
+                            imageVector = Icons.Rounded.SkipPrevious,
                             contentDescription = "Skip back",
-                            tint = MaterialTheme.colorScheme.onBackground
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(35.dp)
                         )
                     }
                     IconButton(
                         onClick = {
                             if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
                         },
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(70.dp),
+                        shape = IconButtonDefaults.mediumSquareShape,
                     ) {
                         Icon(
-                            imageVector = if (uiState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            imageVector = if (uiState.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                             contentDescription = if (uiState.isPlaying) "Pause" else "Play",
-                            tint = MaterialTheme.colorScheme.onBackground
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(60.dp)
                         )
                     }
                     IconButton(
                         onClick = { viewModel.skipToNext() },
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(50.dp),
+                        shape = IconButtonDefaults.mediumSquareShape,
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.SkipNext,
+                            imageVector = Icons.Rounded.SkipNext,
                             contentDescription = "Skip forward",
-                            tint = MaterialTheme.colorScheme.onBackground
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(35.dp)
                         )
                     }
                 }
