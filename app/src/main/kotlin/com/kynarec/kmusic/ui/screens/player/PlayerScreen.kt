@@ -32,9 +32,12 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -90,7 +93,7 @@ import ir.mahozad.multiplatform.wavyslider.material.WavySlider
  *
  * @param onClose A callback function to be invoked when the user requests to close the screen.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PlayerScreen(
     onClose: () -> Unit,
@@ -105,7 +108,6 @@ fun PlayerScreen(
     val showQueueBottomSheet = remember { mutableStateOf(false) }
     val showOptionsBottomSheet = remember { mutableStateOf(false) }
 
-    // Handle system back button press
     BackHandler {
         onClose()
     }
@@ -200,7 +202,7 @@ fun PlayerScreen(
                 modifier = Modifier
                     .size(300.dp)
                     .multiLayersShadow(
-                        elevation = 10.dp,
+                        elevation = 15.dp,
                         transparencyMultiplier = 0.2f,
                         layers = 10,
                         shape = RoundedCornerShape(16.dp)
@@ -453,40 +455,73 @@ fun PlayerScreen(
                 // Player controls
                 Row(
                     modifier = Modifier
-                        .width(260.dp),
+                        .width(300.dp),
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
+                    ElevatedButton(
                         onClick = { viewModel.skipToPrevious() },
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(80.dp),
+                        contentPadding = PaddingValues(0.dp),
+                        shape = IconButtonDefaults.mediumSquareShape,
+                        elevation = ButtonDefaults.elevatedButtonElevation(
+                            defaultElevation = 2.dp,
+                            pressedElevation = 6.dp
+                        ),
+                        colors = ButtonDefaults.elevatedButtonColors(
+                            containerColor = MaterialTheme.colorScheme.onSecondary,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
                     ) {
                         Icon(
                             imageVector = Icons.Default.SkipPrevious,
                             contentDescription = "Skip back",
-                            tint = MaterialTheme.colorScheme.onBackground
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(50.dp)
                         )
                     }
-                    IconButton(
+                    ElevatedButton(
                         onClick = {
                             if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
                         },
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(96.dp),
+                        shape = IconButtonDefaults.mediumSquareShape,
+                        contentPadding = PaddingValues(0.dp),
+                        elevation = ButtonDefaults.elevatedButtonElevation(
+                            defaultElevation = 4.dp,
+                            pressedElevation = 8.dp
+                        ),
+                        colors = ButtonDefaults.elevatedButtonColors(
+                            containerColor = MaterialTheme.colorScheme.onSecondary,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
                     ) {
                         Icon(
                             imageVector = if (uiState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = if (uiState.isPlaying) "Pause" else "Play",
-                            tint = MaterialTheme.colorScheme.onBackground
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(70.dp)
                         )
                     }
-                    IconButton(
+                    ElevatedButton(
                         onClick = { viewModel.skipToNext() },
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(80.dp),
+                        contentPadding = PaddingValues(0.dp),
+                        shape = IconButtonDefaults.mediumSquareShape,
+                        elevation = ButtonDefaults.elevatedButtonElevation(
+                            defaultElevation = 2.dp,
+                            pressedElevation = 6.dp
+                        ),
+                        colors = ButtonDefaults.elevatedButtonColors(
+                            containerColor = MaterialTheme.colorScheme.onSecondary,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
                     ) {
                         Icon(
                             imageVector = Icons.Filled.SkipNext,
                             contentDescription = "Skip forward",
-                            tint = MaterialTheme.colorScheme.onBackground
+                            tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(50.dp)
                         )
                     }
                 }
