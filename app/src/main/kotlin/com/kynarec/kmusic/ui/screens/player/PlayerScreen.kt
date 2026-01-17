@@ -43,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -376,10 +377,20 @@ fun PlayerScreen(
 
                     // Log.i("PlayerScreen", "total duration: ${uiState.totalDuration}, currentPosition: ${uiState.currentPosition}")
 
+                    val newSliderValue = remember { mutableFloatStateOf(0f) }
+                    val isDragging = remember { mutableStateOf(false) }
                     WavySlider(
-                        value = if (uiState.currentDurationLong != 0L) uiState.currentPosition.toFloat() / uiState.currentDurationLong.toFloat() else 0f,
+                        value = if (uiState.currentDurationLong != 0L && !isDragging.value)
+                            uiState.currentPosition.toFloat() / uiState.currentDurationLong.toFloat()
+                        else if (isDragging.value)
+                            newSliderValue.floatValue else 0f,
                         onValueChange = { newValue ->
-                            viewModel.seekTo((newValue * uiState.currentDurationLong).toLong())
+                            isDragging.value = true
+                            newSliderValue.floatValue = newValue
+                        },
+                        onValueChangeFinished = {
+                            viewModel.seekTo((newSliderValue.floatValue * uiState.currentDurationLong).toLong())
+                            isDragging.value = false
                         },
                         modifier = Modifier.fillMaxWidth(),
                         waveHeight = if (uiState.isPlaying) 4.dp else 0.dp,

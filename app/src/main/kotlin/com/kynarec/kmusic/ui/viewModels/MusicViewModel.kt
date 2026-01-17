@@ -524,6 +524,7 @@ class MusicViewModel
      * @param position The position to seek to in milliseconds.
      */
     fun seekTo(position: Long) {
+        _uiState.update { it.copy(currentDurationLong = position) }
         mediaController?.seekTo(position)
     }
 
