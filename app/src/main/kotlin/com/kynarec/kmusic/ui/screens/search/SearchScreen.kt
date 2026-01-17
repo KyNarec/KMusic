@@ -1,7 +1,6 @@
 package com.kynarec.kmusic.ui.screens.search
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,6 +52,7 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.SearchQuery
 import com.kynarec.kmusic.service.innertube.searchSuggestions
 import com.kynarec.kmusic.ui.SearchResultScreen
+import com.kynarec.kmusic.ui.components.MarqueeBox
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.toList
@@ -195,7 +195,11 @@ fun SearchScreen(
                         },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(searchSuggestions[index])
+                        MarqueeBox(text = searchSuggestions[index],
+                            boxModifier = Modifier
+                                .weight(1f)
+                                .padding(end = 8.dp),
+                        )
                         Spacer(Modifier.weight(1f))
                         IconButton(onClick = {
                             scope.launch {
@@ -246,11 +250,8 @@ fun SearchScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
 
-                        Text(searchQueries[index].query,
-                            modifier = Modifier
-                                .basicMarquee(
-                                    initialDelayMillis = 1000, iterations = Int.MAX_VALUE
-                                )
+                        MarqueeBox(text = searchQueries[index].query,
+                            boxModifier = Modifier
                                 .weight(1f)
                                 .padding(end = 8.dp),
                             )
