@@ -32,6 +32,7 @@ This app is still unstable and database resets are common. Use at your own risk.
 - [**YouTube-Internal-Clients**](https://github.com/zerodytrash/YouTube-Internal-Clients): A python script that discovers hidden YouTube API clients. Just a research project.
 - [**waveformSeekBar**](https://github.com/massoudss/waveformSeekBar): Android Waveform SeekBar library
 - [**HarmonyMusic**](https://github.com/anandnet/Harmony-Music): A cross platform App for streaming Music
+- [**OuterTune**](https://github.com/OuterTune/OuterTune): A Material 3 Music Player for Android with local file & YouTube Music support.
 - [**Seal**](https://github.com/JunkFood02/Seal): 🦭 Video/Audio Downloader for Android, based on yt-dlp (took heavy inspiration from their in-app updater)
 
 ## ❗ Disclaimer
