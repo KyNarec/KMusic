@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,12 +53,12 @@ import com.kynarec.kmusic.service.innertube.getArtist
 import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.AlbumListScreen
 import com.kynarec.kmusic.ui.SongListScreen
+import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.album.AlbumComponent
 import com.kynarec.kmusic.ui.components.artist.ArtistOptionsBottomSheet
 import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -154,7 +153,8 @@ fun ArtistDetailScreen(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    ConditionalMarqueeText(
+                    MarqueeBox(
+                        contentAlignment = Alignment.Center,
                         text = artistFlow?.name ?: "NA",
                         style = MaterialTheme.typography.titleLarge
                     )
@@ -163,7 +163,8 @@ fun ArtistDetailScreen(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    ConditionalMarqueeText(
+                    MarqueeBox(
+                        contentAlignment = Alignment.Center,
                         text = "${artistFlow?.subscriber} Followers",
                     )
                 }
@@ -234,12 +235,12 @@ fun ArtistDetailScreen(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ConditionalMarqueeText(
+                MarqueeBox(
+                    boxModifier = Modifier
+                        .weight(1f),
                     text = "Top Songs",
                     style = MaterialTheme.typography.titleLargeEmphasized.copy(fontWeight = FontWeight.SemiBold),
                 )
-
-                Spacer(Modifier.weight(1f))
 
                 IconButton(
                     onClick = {
@@ -318,12 +319,12 @@ fun ArtistDetailScreen(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ConditionalMarqueeText(
+                MarqueeBox(
+                    boxModifier = Modifier
+                        .weight(1f),
                     text = "Albums",
                     style = MaterialTheme.typography.titleLargeEmphasized.copy(fontWeight = FontWeight.SemiBold),
                 )
-
-                Spacer(Modifier.weight(1f))
 
                 if (artistPage.isNotEmpty() && artistPage.first().albumsBrowseId.isNotEmpty()) {
                     IconButton(
@@ -356,13 +357,13 @@ fun ArtistDetailScreen(
                 }
             }
         } else {
-            item() {
+            item {
                 LazyRow() {
                     items(albums) {
                         AlbumComponent(
                             modifier = Modifier
                                 .padding(horizontal = 4.dp)
-                                .width(IntrinsicSize.Min),
+                                .width(100.dp),
                             albumPreview = it,
                             navController = navController,
                             onClick = {
@@ -382,12 +383,12 @@ fun ArtistDetailScreen(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ConditionalMarqueeText(
+                MarqueeBox(
+                    boxModifier = Modifier
+                        .weight(1f),
                     text = "Singles & EPs",
                     style = MaterialTheme.typography.titleLargeEmphasized.copy(fontWeight = FontWeight.SemiBold),
                 )
-
-                Spacer(Modifier.weight(1f))
 
                 if (artistPage.isNotEmpty() && artistPage.first().singlesAndEpsBrowseId.isNotEmpty()) {
                     IconButton(
@@ -427,7 +428,7 @@ fun ArtistDetailScreen(
                         AlbumComponent(
                             modifier = Modifier
                                 .padding(horizontal = 4.dp)
-                                .width(IntrinsicSize.Min),
+                                .width(100.dp),
                             albumPreview = it,
                             navController = navController,
                             onClick = {
