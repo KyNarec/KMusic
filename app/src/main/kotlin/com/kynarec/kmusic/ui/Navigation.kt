@@ -1,6 +1,6 @@
 package com.kynarec.kmusic.ui
 
-import android.app.Application
+import android.content.Intent
 import android.util.Log
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
@@ -18,14 +18,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.navigation
 import androidx.navigation.toRoute
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.enums.TransitionEffect
@@ -39,6 +40,9 @@ import com.kynarec.kmusic.ui.screens.playlist.PlaylistOfflineDetailScreen
 import com.kynarec.kmusic.ui.screens.playlist.PlaylistOnlineDetailScreen
 import com.kynarec.kmusic.ui.screens.search.SearchResultScreen
 import com.kynarec.kmusic.ui.screens.search.SearchScreen
+import com.kynarec.kmusic.ui.screens.settings.AboutScreen
+import com.kynarec.kmusic.ui.screens.settings.AppearanceScreen
+import com.kynarec.kmusic.ui.screens.settings.InterfaceScreen
 import com.kynarec.kmusic.ui.screens.settings.SettingsScreen
 import com.kynarec.kmusic.ui.screens.song.SongListScreen
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
@@ -56,18 +60,12 @@ fun Navigation(
     musicViewModel: MusicViewModel,
     database: KmusicDatabase
 ) {
-    // Get the Application context using LocalContext.
-    // This is safe to use in a Composable because it's tied to the Composable's scope.
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val application = LocalContext.current.applicationContext as Application
-
-    // Use a custom ViewModel factory to inject the database DAO.
-    val songDao = remember { database.songDao() }
+    val context = LocalContext.current
 
     val transitionEffect by settingsViewModel.transitionEffectFlow.collectAsStateWithLifecycle(settingsViewModel.transitionEffect)
-    val startDestination by settingsViewModel.startDestinationFlow.collectAsStateWithLifecycle(settingsViewModel.startDestination)
 
     NavHost(
         navController = navController,
@@ -236,24 +234,81 @@ fun Navigation(
                 )
             }
         }
-        composable<SettingsScreen> {
-            ScreenWithContent(
-                database = database,
-                navController = navController,
-                currentRoute = currentRoute,
-                isSearchScreen = false,
-                musicViewModel = musicViewModel,
-                hideVertNavElements = true
-            ) {
-                SettingsScreen(
-                    prefs = settingsViewModel,
+
+        navigation<SettingsGraph>(startDestination = Settings.SettingsScreen) {
+            composable<Settings.SettingsScreen> {
+                ScreenWithContent(
+                    database = database,
                     navController = navController,
-                    updateManager = updateManager,
-                    updateViewModel = updateViewModel,
-                    musicViewModel = musicViewModel
-                )
+                    currentRoute = currentRoute,
+                    isSearchScreen = false,
+                    musicViewModel = musicViewModel,
+                    hideVertNavElements = true,
+                    isSettingsScreen = true
+                ) {
+                    SettingsScreen(
+                        prefs = settingsViewModel,
+                        navController = navController,
+                        updateManager = updateManager,
+                        updateViewModel = updateViewModel,
+                        musicViewModel = musicViewModel
+                    )
+                }
             }
+            composable<Settings.Appearance> {
+                ScreenWithContent(
+                    database = database,
+                    navController = navController,
+                    currentRoute = currentRoute,
+                    isSearchScreen = false,
+                    musicViewModel = musicViewModel,
+                    hideVertNavElements = true,
+                    isSettingsScreen = true
+                ) {
+                    AppearanceScreen(
+                        prefs = settingsViewModel,
+                        musicViewModel = musicViewModel
+                    )
+                }
+            }
+            composable<Settings.Interface> {
+                ScreenWithContent(
+                    database = database,
+                    navController = navController,
+                    currentRoute = currentRoute,
+                    isSearchScreen = false,
+                    musicViewModel = musicViewModel,
+                    hideVertNavElements = true,
+                    isSettingsScreen = true
+                ) {
+                    InterfaceScreen(
+                        prefs = settingsViewModel,
+                        musicViewModel = musicViewModel
+                    )
+                }
+            }
+
+            composable<Settings.AboutScreen> {
+                ScreenWithContent(
+                    database = database,
+                    navController = navController,
+                    currentRoute = currentRoute,
+                    isSearchScreen = false,
+                    musicViewModel = musicViewModel,
+                    hideVertNavElements = true,
+                    isSettingsScreen = true
+                ) {
+                    AboutScreen(
+                        onOpenUrl = { url ->
+                            val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                            context.startActivity(intent)
+                        }
+                    )
+                }
+            }
+
         }
+
         composable<AlbumDetailScreen> {
             Log.i("Navigation", "AlbumDetailScreen")
             val args = it.toRoute<AlbumDetailScreen>()
@@ -339,13 +394,6 @@ fun Navigation(
 @Serializable object StarterScreens
 
 @Serializable
-object MainScreen
-
-@Serializable
-object PlayerScreen
-
-
-@Serializable
 data class PlaylistOfflineDetailScreen(
     val playlistId: Long
 )
@@ -368,7 +416,23 @@ data class SearchResultScreen(
 )
 
 @Serializable
-object SettingsScreen
+data object SettingsGraph
+
+@Serializable
+sealed class Settings {
+    @Serializable
+    object SettingsScreen : Settings()
+
+    @Serializable
+    object Appearance : Settings()
+
+    @Serializable
+    object Interface : Settings()
+
+    @Serializable
+    object AboutScreen : Settings()
+}
+
 
 @Serializable
 data class AlbumDetailScreen(

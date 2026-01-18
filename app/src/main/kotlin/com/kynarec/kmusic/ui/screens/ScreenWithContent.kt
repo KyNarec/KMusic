@@ -42,6 +42,7 @@ fun ScreenWithContent(
     isSearchScreen: Boolean,
     musicViewModel: MusicViewModel,
     hideVertNavElements: Boolean,
+    isSettingsScreen: Boolean = false,
     content: @Composable () -> Unit,
     ) {
     val scope = rememberCoroutineScope()
@@ -59,7 +60,10 @@ fun ScreenWithContent(
     Scaffold(
         topBar = {
             Box(modifier = Modifier.padding(top = 16.dp)) {
-                TopBarComponent(hideVertNavElements, navController)
+                TopBarComponent(
+                    showBackButton = hideVertNavElements,
+                    navController = navController,
+                    isSettingsScreen = isSettingsScreen)
             }
         },
     ) { contentPadding ->

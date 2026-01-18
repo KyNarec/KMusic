@@ -33,20 +33,18 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.ui.SearchScreen
-import com.kynarec.kmusic.ui.SettingsScreen
+import com.kynarec.kmusic.ui.SettingsGraph
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBarComponent(
     showBackButton: Boolean,
     navController: NavHostController,
-    isInStarterScreen: Boolean = false
+    isInStarterScreen: Boolean = false,
+    isSettingsScreen: Boolean = false
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val isSettingsScreen = remember(currentRoute) {
-        currentRoute?.startsWith(SettingsScreen::class.qualifiedName!!) == true
-    }
     val isSearchScreen = remember(currentRoute) {
         currentRoute?.startsWith(SearchScreen::class.qualifiedName!!) == true
     }
@@ -93,7 +91,6 @@ fun TopBarComponent(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_launcher_foreground_scaled),
                         contentDescription = "Logo",
-                        // 3. Set the size of the *actual icon* content
                         modifier = Modifier
                             .size(40.dp)
                             .padding(bottom = 6.dp, top = 0.dp)
@@ -127,17 +124,19 @@ fun TopBarComponent(
                 modifier = Modifier.size(32.dp)
             )
         }
-        IconButton(
-            onClick = { if (!isSettingsScreen) navController.navigate(SettingsScreen) },
-            modifier = Modifier
-                .align(Alignment.CenterVertically)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "Settings",
-                tint = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.size(32.dp)
-            )
+        if (!isSettingsScreen) {
+            IconButton(
+                onClick = { navController.navigate(SettingsGraph) },
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
         }
         Spacer(modifier = Modifier.width(16.dp))
     }

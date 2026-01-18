@@ -77,6 +77,9 @@ fun <T : Enum<T>> SettingComponentEnumChoice(
                     }
                 }
             },
+            icon = {
+                Icon(icon, contentDescription = title)
+            },
             confirmButton = {
                 TextButton(onClick = { showDialog = false }) { Text("Cancel") }
             }
