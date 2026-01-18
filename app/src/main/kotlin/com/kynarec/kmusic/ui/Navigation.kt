@@ -205,6 +205,8 @@ fun Navigation(
         }
 
         composable<SearchScreen> {
+            val args = it.toRoute<SearchScreen>()
+
             ScreenWithContent(
                 database = database,
                 navController = navController,
@@ -213,7 +215,7 @@ fun Navigation(
                 musicViewModel = musicViewModel,
                 hideVertNavElements = true
             ) {
-                SearchScreen(navController)
+                SearchScreen(navController, args.query)
             }
         }
         composable<SearchResultScreen> {
@@ -356,7 +358,9 @@ data class PlaylistOnlineDetailScreen(
 
 
 @Serializable
-object SearchScreen
+data class SearchScreen(
+    val query: String? = null
+)
 
 @Serializable
 data class SearchResultScreen(

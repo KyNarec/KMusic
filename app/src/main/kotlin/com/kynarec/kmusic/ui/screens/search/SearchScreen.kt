@@ -60,7 +60,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SearchScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    query: String? = null
 ) {
     var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
     val focusRequester = remember { FocusRequester() }
@@ -78,7 +79,14 @@ fun SearchScreen(
         searchQueryDao.observeRecentQueries(10).collect {
             searchQueries = it
         }
+    }
 
+    LaunchedEffect(Unit) {
+        if (query != null) {
+            searchQuery = TextFieldValue(query,
+                selection = TextRange(query.length)
+            )
+        }
     }
     Column(
         Modifier.fillMaxSize(),
@@ -200,13 +208,11 @@ fun SearchScreen(
                                 .weight(1f)
                                 .padding(end = 8.dp),
                         )
-                        Spacer(Modifier.weight(1f))
                         IconButton(onClick = {
                             scope.launch {
                                 searchQuery = TextFieldValue(searchSuggestions[index],
                                     selection = TextRange(searchSuggestions[index].length)
                                 )
-
                             }
                         }) {
                             Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")

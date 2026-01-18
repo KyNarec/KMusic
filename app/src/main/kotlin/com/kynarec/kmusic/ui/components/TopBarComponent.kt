@@ -116,7 +116,7 @@ fun TopBarComponent(
         Spacer(modifier = Modifier.weight(1f)
         )
         IconButton(
-            onClick = {  if (!isSearchScreen) navController.navigate(SearchScreen) },
+            onClick = {  if (!isSearchScreen) navController.navigate(SearchScreen()) },
             modifier = Modifier
                 .align(Alignment.CenterVertically)
         ) {

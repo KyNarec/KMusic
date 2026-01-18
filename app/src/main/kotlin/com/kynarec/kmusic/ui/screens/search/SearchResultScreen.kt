@@ -6,16 +6,23 @@ import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,6 +49,8 @@ import com.kynarec.kmusic.service.innertube.searchSongsFlow
 import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.ArtistDetailScreen
 import com.kynarec.kmusic.ui.PlaylistOnlineDetailScreen
+import com.kynarec.kmusic.ui.SearchScreen
+import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.SortSection
 import com.kynarec.kmusic.ui.components.album.AlbumComponent
 import com.kynarec.kmusic.ui.components.artist.ArtistComponent
@@ -85,6 +94,8 @@ fun SearchResultScreen(
         SortOption("Album"),
         SortOption("Artist"),
         SortOption("Playlist"),
+        SortOption("Videos"),
+        SortOption("Podcasts"),
     )
 
     LaunchedEffect(query, selectedSearchParam) {
@@ -183,6 +194,27 @@ fun SearchResultScreen(
             Column(
                 Modifier.fillMaxSize()
             ) {
+                Row(
+                    Modifier.fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    MarqueeBox(
+                        text = query,
+                        style = MaterialTheme.typography.titleLarge,
+                        boxModifier = Modifier
+                            .weight(1f)
+                            .padding(end = 8.dp)
+                    )
+
+                    IconButton(
+                        onClick = {
+                            navController.navigate(SearchScreen(query))
+                        }
+                    ) {
+                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
+                    }
+                }
                 SortSection(
                     sortOptions = searchParams,
                     selectedSortOption = selectedSearchParam,
