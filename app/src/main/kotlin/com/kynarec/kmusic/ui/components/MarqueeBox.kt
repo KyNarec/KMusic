@@ -1,6 +1,5 @@
 package com.kynarec.kmusic.ui.components
 
-import android.util.Log
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -9,7 +8,6 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,9 +51,6 @@ fun MarqueeBox(
     style: TextStyle = LocalTextStyle.current
 ) {
     var isMarqueeActive by remember(text) { mutableStateOf(false) }
-    LaunchedEffect(isMarqueeActive) {
-        Log.i("MarqueeBox", "isMarqueeActive now: $isMarqueeActive")
-    }
 
     BoxWithConstraints(
         modifier = boxModifier.fillMaxWidth(),

@@ -3,6 +3,7 @@
 package com.kynarec.kmusic.ui.screens.search
 
 import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -222,175 +223,180 @@ fun SearchResultScreen(
                         viewModel.setSearchParam(it)
                     }
                 )
-                when (selectedSearchParam.text) {
-                    "Song" -> {
-                        Column(
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            if (isLoading) {
-                                Box(
-                                    contentAlignment = Alignment.TopCenter,
-                                    modifier = Modifier.fillMaxSize()
-                                        .padding(vertical = 8.dp)
-                                ) {
-                                    CircularWavyProgressIndicator()
-                                }
-                            } else {
-                                LazyColumn {
-                                    items(
-                                        count = songs.size,
-                                        key = { index -> songs[index].id } // Add stable key!
-                                    ) { index ->
-                                        val song = songs[index]
+                AnimatedContent(
+                    targetState = selectedSearchParam.text
+                ) { targetState ->
+                    when (targetState) {
+                        "Song" -> {
+                            Column(
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                if (isLoading) {
+                                    Box(
+                                        contentAlignment = Alignment.TopCenter,
+                                        modifier = Modifier.fillMaxSize()
+                                            .padding(vertical = 8.dp)
+                                    ) {
+                                        CircularWavyProgressIndicator()
+                                    }
+                                } else {
+                                    LazyColumn {
+                                        items(
+                                            count = songs.size,
+                                            key = { index -> songs[index].id } // Add stable key!
+                                        ) { index ->
+                                            val song = songs[index]
 
-                                        // Create stable onClick callback
-                                        val onSongClick = remember(song.id) {
-                                            {
-                                                Log.d("SongClick", "Song clicked: ${song.title}")
-                                                //viewModel.playSong(song)
-                                                Log.i(
-                                                    "PlayerControlBar",
-                                                    "Song clicked: ${song.title}"
-                                                )
-                                                Log.i(
-                                                    "PlayerControlBar",
-                                                    "Song thumbnail: ${song.thumbnail}"
-                                                )
+                                            // Create stable onClick callback
+                                            val onSongClick = remember(song.id) {
+                                                {
+                                                    Log.d("SongClick", "Song clicked: ${song.title}")
+                                                    //viewModel.playSong(song)
+                                                    Log.i(
+                                                        "PlayerControlBar",
+                                                        "Song clicked: ${song.title}"
+                                                    )
+                                                    Log.i(
+                                                        "PlayerControlBar",
+                                                        "Song thumbnail: ${song.thumbnail}"
+                                                    )
 
-                                                viewModel.playSongByIdWithRadio(song)
+                                                    viewModel.playSongByIdWithRadio(song)
+                                                }
                                             }
+
+                                            SongComponent(
+                                                song = song,
+                                                onClick = onSongClick,
+                                                onLongClick = {
+                                                    longClickSong = song
+                                                    showBottomSheet.value = true
+                                                }
+                                            )
                                         }
-
-                                        SongComponent(
-                                            song = song,
-                                            onClick = onSongClick,
-                                            onLongClick = {
-                                                longClickSong = song
-                                                showBottomSheet.value = true
+                                        if (showControlBar)
+                                            item {
+                                                Spacer(Modifier.height(70.dp))
                                             }
-                                        )
                                     }
-                                    if (showControlBar)
-                                        item {
-                                            Spacer(Modifier.height(70.dp))
+                                }
+                            }
+                        }
+
+                        "Album" -> {
+                            Column {
+                                if (isLoading) {
+                                    Box(
+                                        contentAlignment = Alignment.TopCenter,
+                                        modifier = Modifier.fillMaxSize()
+                                            .padding(vertical = 8.dp)
+                                    ) {
+                                        CircularWavyProgressIndicator()
+                                    }
+                                } else {
+                                    LazyVerticalGrid(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 8.dp),
+                                        contentPadding = PaddingValues(
+                                            top = 8.dp,
+                                            bottom = bottomPadding
+                                        ),
+                                        columns = GridCells.Adaptive(minSize = 100.dp)
+                                    ) {
+                                        items(albums, key = { it.id }) { album ->
+                                            AlbumComponent(
+                                                albumPreview = album,
+                                                navController = navController,
+                                                onClick = {
+                                                    navController.navigate(AlbumDetailScreen(album.id))
+                                                }
+                                            )
                                         }
-                                }
-                            }
-                        }
-                    }
-
-                    "Album" -> {
-                        Column {
-                            if (isLoading) {
-                                Box(
-                                    contentAlignment = Alignment.TopCenter,
-                                    modifier = Modifier.fillMaxSize()
-                                        .padding(vertical = 8.dp)
-                                ) {
-                                    CircularWavyProgressIndicator()
-                                }
-                            } else {
-                                LazyVerticalGrid(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(horizontal = 8.dp),
-                                    contentPadding = PaddingValues(
-                                        top = 8.dp,
-                                        bottom = bottomPadding
-                                    ),
-                                    columns = GridCells.Adaptive(minSize = 100.dp)
-                                ) {
-                                    items(albums, key = { it.id }) { album ->
-                                        AlbumComponent(
-                                            albumPreview = album,
-                                            navController = navController,
-                                            onClick = {
-                                                navController.navigate(AlbumDetailScreen(album.id))
-                                            }
-                                        )
                                     }
                                 }
                             }
                         }
-                    }
 
-                    "Artist" -> {
-                        Column {
-                            if (isLoading) {
-                                Box(
-                                    contentAlignment = Alignment.TopCenter,
-                                    modifier = Modifier.fillMaxSize()
-                                        .padding(vertical = 8.dp)
-                                ) {
-                                    CircularWavyProgressIndicator()
-                                }
-                            } else {
-                                LazyVerticalGrid(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(horizontal = 8.dp),
-                                    contentPadding = PaddingValues(
-                                        top = 8.dp,
-                                        bottom = bottomPadding
-                                    ),
-                                    columns = GridCells.Adaptive(minSize = 100.dp)
-                                ) {
-                                    items(artists, key = { it.id }) { artist ->
-                                        ArtistComponent(
-                                            artistPreview = artist,
-                                            onClick = {
-                                                navController.navigate(ArtistDetailScreen(artist.id))
-                                            }
-                                        )
+                        "Artist" -> {
+                            Column {
+                                if (isLoading) {
+                                    Box(
+                                        contentAlignment = Alignment.TopCenter,
+                                        modifier = Modifier.fillMaxSize()
+                                            .padding(vertical = 8.dp)
+                                    ) {
+                                        CircularWavyProgressIndicator()
+                                    }
+                                } else {
+                                    LazyVerticalGrid(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 8.dp),
+                                        contentPadding = PaddingValues(
+                                            top = 8.dp,
+                                            bottom = bottomPadding
+                                        ),
+                                        columns = GridCells.Adaptive(minSize = 100.dp)
+                                    ) {
+                                        items(artists, key = { it.id }) { artist ->
+                                            ArtistComponent(
+                                                artistPreview = artist,
+                                                onClick = {
+                                                    navController.navigate(ArtistDetailScreen(artist.id))
+                                                }
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    "Playlist" -> {
-                        Column {
-                            if (isLoading) {
-                                Box(
-                                    contentAlignment = Alignment.TopCenter,
-                                    modifier = Modifier.fillMaxSize()
-                                        .padding(vertical = 8.dp)
-                                ) {
-                                    CircularWavyProgressIndicator()
-                                }
-                            } else {
-                                LazyVerticalGrid(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(horizontal = 8.dp),
-                                    contentPadding = PaddingValues(
-                                        top = 8.dp,
-                                        bottom = bottomPadding
-                                    ),
-                                    columns = GridCells.Adaptive(minSize = 100.dp)
-                                ) {
-                                    items(playlists, key = { it.id }) { playlist ->
-                                        PlaylistComponent(
-                                            playlistPreview = playlist,
-                                            onClick = {
-                                                navController.navigate(PlaylistOnlineDetailScreen(playlist.id, playlist.thumbnail))
-                                            },
-                                        )
+                        "Playlist" -> {
+                            Column {
+                                if (isLoading) {
+                                    Box(
+                                        contentAlignment = Alignment.TopCenter,
+                                        modifier = Modifier.fillMaxSize()
+                                            .padding(vertical = 8.dp)
+                                    ) {
+                                        CircularWavyProgressIndicator()
+                                    }
+                                } else {
+                                    LazyVerticalGrid(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 8.dp),
+                                        contentPadding = PaddingValues(
+                                            top = 8.dp,
+                                            bottom = bottomPadding
+                                        ),
+                                        columns = GridCells.Adaptive(minSize = 100.dp)
+                                    ) {
+                                        items(playlists, key = { it.id }) { playlist ->
+                                            PlaylistComponent(
+                                                playlistPreview = playlist,
+                                                onClick = {
+                                                    navController.navigate(PlaylistOnlineDetailScreen(playlist.id, playlist.thumbnail))
+                                                },
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    else -> {
-                        Box(
-                            contentAlignment = Alignment.TopCenter,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            CircularWavyProgressIndicator()
+                        else -> {
+                            Box(
+                                contentAlignment = Alignment.TopCenter,
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                CircularWavyProgressIndicator()
+                            }
                         }
                     }
                 }
+
             }
 
 

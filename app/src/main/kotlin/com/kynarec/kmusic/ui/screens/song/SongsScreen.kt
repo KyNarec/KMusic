@@ -2,6 +2,7 @@ package com.kynarec.kmusic.ui.screens.song
 
 import android.os.Parcelable
 import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,7 +39,6 @@ data class SortOption(
     ExperimentalMaterial3ExpressiveApi::class
 )
 @ExperimentalMaterial3ExpressiveApi
-
 @Composable
 fun SongsScreen(
     modifier: Modifier = Modifier,
@@ -76,27 +76,82 @@ fun SongsScreen(
             onOptionSelected = { viewModel.setSortOption(it) }
         )
 
-        LazyColumn {
-            items(
-                sortedSongs.value,
-                key = { song -> song.id }
-            ) { song ->
-                val song = song
-                // Create stable onClick callback
-                val onSongClick = remember(song.id) {
-                    {
-                        viewModel.playPlaylist(sortedSongs.value,song)
+        AnimatedContent(
+            targetState = selectedSortOption
+        ) { targetState ->
+            when (targetState.text) {
+                "All" -> {
+                    LazyColumn {
+                        items(
+                            sortedSongs.value,
+                            key = { song -> song.id }
+                        ) { song ->
+                            val song = song
+                            val onSongClick = remember(song.id) {
+                                {
+                                    viewModel.playPlaylist(sortedSongs.value,song)
+                                }
+                            }
+
+                            SongComponent(
+                                song = song,
+                                onClick = onSongClick,
+                                onLongClick = {
+                                    longClickSong = song
+                                    showBottomSheet.value = true
+                                }
+                            )
+                        }
                     }
                 }
+                "Favorites" -> {
+                    LazyColumn {
+                        items(
+                            sortedSongs.value,
+                            key = { song -> song.id }
+                        ) { song ->
+                            val song = song
+                            val onSongClick = remember(song.id) {
+                                {
+                                    viewModel.playPlaylist(sortedSongs.value,song)
+                                }
+                            }
 
-                SongComponent(
-                    song = song,
-                    onClick = onSongClick as () -> Unit,
-                    onLongClick = {
-                        longClickSong = song
-                        showBottomSheet.value = true
+                            SongComponent(
+                                song = song,
+                                onClick = onSongClick,
+                                onLongClick = {
+                                    longClickSong = song
+                                    showBottomSheet.value = true
+                                }
+                            )
+                        }
                     }
-                )
+                }
+                "Listened" -> {
+                    LazyColumn {
+                        items(
+                            sortedSongs.value,
+                            key = { song -> song.id }
+                        ) { song ->
+                            val song = song
+                            val onSongClick = remember(song.id) {
+                                {
+                                    viewModel.playPlaylist(sortedSongs.value,song)
+                                }
+                            }
+
+                            SongComponent(
+                                song = song,
+                                onClick = onSongClick,
+                                onLongClick = {
+                                    longClickSong = song
+                                    showBottomSheet.value = true
+                                }
+                            )
+                        }
+                    }
+                }
             }
         }
         if (showBottomSheet.value && longClickSong != null) {
