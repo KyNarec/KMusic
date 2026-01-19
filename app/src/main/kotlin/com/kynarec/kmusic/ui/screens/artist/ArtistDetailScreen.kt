@@ -1,6 +1,9 @@
 package com.kynarec.kmusic.ui.screens.artist
 
 import android.util.Log
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -81,7 +84,7 @@ fun ArtistDetailScreen(
     var songs by remember { mutableStateOf(emptyList<Song>()) }
     var albums by remember { mutableStateOf(emptyList<AlbumPreview>()) }
     var singlesAndEps by remember { mutableStateOf(emptyList<AlbumPreview>()) }
-    var artistPage by remember { mutableStateOf(emptyList<ArtistPage>())}
+    var artistPage by remember { mutableStateOf(emptyList<ArtistPage>()) }
 
     var isLoading by remember { mutableStateOf(false) }
 
@@ -138,7 +141,7 @@ fun ArtistDetailScreen(
                         .fillMaxWidth()
 //                        .aspectRatio(1f)
 //                        .clip(RoundedCornerShape(8.dp)),
-                            ,
+                    ,
                     imageLoader = LocalContext.current.imageLoader,
                     contentScale = ContentScale.FillWidth
                 )
@@ -186,34 +189,32 @@ fun ArtistDetailScreen(
                         fontWeight = FontWeight.Bold
                     )
 
-                    if (!readMore)
-                        Text(
-                            text = artistFlow?.description?.substring(
+                    Text(
+                        text = if (!readMore) {
+                            artistFlow?.description?.substring(
                                 0,
                                 if ((artistFlow?.description?.length
                                         ?: 0) >= 100
                                 ) 100 else artistFlow?.description?.length ?: 0
-                            ).plus("..."),
-                            style = TextStyle.Default.copy(textAlign = TextAlign.Justify),
-                            modifier = Modifier
-                                .padding(horizontal = 8.dp)
-                                .weight(1f)
-                                .clickable {
-                                    readMore = !readMore
-                                }
-                        )
+                            ).plus("...")
+                        } else {
+                            artistFlow?.description ?: "NA"
+                        },
+                        style = TextStyle.Default.copy(textAlign = TextAlign.Justify),
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .weight(1f)
+                            .animateContentSize(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = Spring.StiffnessLow
+                                )
+                            )
+                            .clickable {
+                                readMore = !readMore
+                            },
+                    )
 
-                    if (readMore)
-                        Text(
-                            text = artistFlow?.description ?: "NA",
-                            style = TextStyle.Default.copy(textAlign = TextAlign.Justify),
-                            modifier = Modifier
-                                .padding(horizontal = 8.dp)
-                                .weight(1f)
-                                .clickable {
-                                    readMore = !readMore
-                                }
-                        )
 
                     Text(
                         text = "„",
@@ -460,7 +461,7 @@ fun ArtistDetailScreen(
 
     if (showArtistOptionsBottomSheet.value) {
         ArtistOptionsBottomSheet(
-            artistId = artistFlow?.id?: "",
+            artistId = artistFlow?.id ?: "",
             onDismiss = { showArtistOptionsBottomSheet.value = false },
             viewModel = viewModel,
             database = database,
