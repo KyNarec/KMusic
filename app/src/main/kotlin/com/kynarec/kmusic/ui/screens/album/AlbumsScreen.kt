@@ -61,7 +61,7 @@ fun AlbumsScreen(
                     .fillMaxSize()
                     .padding(horizontal = 8.dp),
                 contentPadding = PaddingValues(top = 8.dp, bottom = bottomPadding),
-                columns = GridCells.Adaptive(minSize = 100.dp)
+                    columns = GridCells.Adaptive(   120.dp)
             ) {
                 items(albums!!, key = { it.id }) { album ->
                     AlbumComponent(
@@ -75,7 +75,9 @@ fun AlbumsScreen(
                         navController = navController,
                         onClick = {
                             navController.navigate(AlbumDetailScreen(album.id))
-                        }
+                        },
+                        imageWith = 120,
+                        imageHeight = 120,
                     )
                 }
 

@@ -45,7 +45,8 @@ fun ArtistsScreen(
         if (isLoading) {
             Box(
                 contentAlignment = Alignment.TopCenter,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
                     .padding(vertical = 8.dp)
             ) {
                 CircularWavyProgressIndicator()
@@ -56,7 +57,7 @@ fun ArtistsScreen(
                     .fillMaxSize()
                     .padding(horizontal = 8.dp),
                 contentPadding = PaddingValues(top = 8.dp, bottom = bottomPadding),
-                columns = GridCells.Adaptive(minSize = 100.dp)
+                columns = GridCells.Adaptive(minSize = 120.dp)
             ) {
                 items(artists!!, key = { it.id }) { artist ->
                     ArtistComponent(
@@ -64,11 +65,13 @@ fun ArtistsScreen(
                             id = artist.id,
                             name = artist.name,
                             thumbnailUrl = artist.thumbnailUrl,
-                            monthlyListeners = artist.subscriber?: "",
+                            monthlyListeners = artist.subscriber ?: "",
                         ),
                         onClick = {
                             navController.navigate(ArtistDetailScreen(artist.id))
-                        }
+                        },
+                        imageWith = 120,
+                        imageHeight = 120
                     )
                 }
 

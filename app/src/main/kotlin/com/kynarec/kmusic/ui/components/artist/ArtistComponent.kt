@@ -30,7 +30,9 @@ import com.kynarec.kmusic.ui.components.MarqueeBox
 fun ArtistComponent(
     modifier: Modifier = Modifier,
     artistPreview: ArtistPreview,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    imageWith: Int = 100,
+    imageHeight: Int = 100
 ) {
     Card(
         modifier = Modifier
@@ -50,8 +52,8 @@ fun ArtistComponent(
         ) {
             Box(
                 Modifier
-                    .width(100.dp)
-                    .height(100.dp)
+                    .width(imageWith.dp)
+                    .height(imageHeight.dp)
                     .align(Alignment.CenterHorizontally)
             )
             {
