@@ -1,6 +1,13 @@
 package com.kynarec.kmusic.ui.components.player
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -121,38 +128,55 @@ fun PlayerControlBar(
             )
         }
 
-        // Playback Controls
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+//            modifier = Modifier.height(50.dp)
+        ) {
             IconButton(
                 onClick = { viewModel.skipToPrevious() },
-                shape = IconButtonDefaults.mediumSquareShape
-            ) {
+                shape = IconButtonDefaults.smallSquareShape,
+                modifier = Modifier.size(48.dp),
+                ) {
                 Icon(
                     imageVector = Icons.Rounded.SkipPrevious,
                     contentDescription = "Skip Previous",
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(40.dp)
+
                 )
             }
             IconButton(
                 onClick = {
                     if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
                 },
-                shape = IconButtonDefaults.mediumSquareShape
+                modifier = Modifier.size(48.dp),
+                shape = IconButtonDefaults.smallSquareShape,
             ) {
-                Icon(
-                    imageVector = if (uiState.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                    contentDescription = if (uiState.isPlaying) "Pause" else "Play",
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer
-                )
+                AnimatedContent(
+                    targetState = uiState.isPlaying,
+                    transitionSpec = {
+                        (fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.8f))
+                            .togetherWith(fadeOut(animationSpec = tween(220)) + scaleOut(targetScale = 0.8f))
+                    }
+                ) { isPlaying ->
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                        contentDescription = if (isPlaying) "Pause" else "Play",
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
             }
             IconButton(
                 onClick = { viewModel.skipToNext() },
-                shape = IconButtonDefaults.mediumSquareShape
+                modifier = Modifier.size(48.dp),
+                shape = IconButtonDefaults.smallSquareShape,
             ) {
                 Icon(
                     imageVector = Icons.Rounded.SkipNext,
                     contentDescription = "Skip Forward",
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(40.dp)
                 )
             }
         }
