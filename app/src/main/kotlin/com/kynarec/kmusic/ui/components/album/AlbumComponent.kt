@@ -33,6 +33,8 @@ fun AlbumComponent(
     albumPreview: AlbumPreview,
     navController: NavHostController,
     onClick: () -> Unit,
+    imageWith: Int = 100,
+    imageHeight: Int = 100
 ) {
     Card(
         modifier = modifier
@@ -52,8 +54,8 @@ fun AlbumComponent(
         ) {
             Box(
                 Modifier
-                    .width(100.dp)
-                    .height(100.dp)
+                    .width(imageWith.dp)
+                    .height(imageHeight.dp)
                     .align(Alignment.CenterHorizontally)
             )
             {
