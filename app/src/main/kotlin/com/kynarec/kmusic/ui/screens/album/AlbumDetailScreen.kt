@@ -1,6 +1,9 @@
 package com.kynarec.kmusic.ui.screens.album
 
 import android.util.Log
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -161,36 +164,31 @@ fun AlbumDetailScreen(
                         fontWeight = FontWeight.Bold
                     )
 
-                    if (!readMore)
-                        Text(
-                            text = albumFLow?.authorsText?.substring(
+                    Text(
+                        text = if (!readMore) {
+                            albumFLow?.authorsText?.substring(
                                 0,
                                 if ((albumFLow?.authorsText?.length
                                         ?: 0) >= 100
                                 ) 100 else albumFLow?.authorsText?.length ?: 0
-                            ).plus("..."),
-//                        style = typography().xxs.secondary.align(TextAlign.Justify),
-//                        style = MaterialTheme.typography.bodySmall.textAlign,
-                            style = TextStyle.Default.copy(textAlign = TextAlign.Justify),
-                            modifier = Modifier
-                                .padding(horizontal = 8.dp)
-                                .weight(1f)
-                                .clickable {
-                                    readMore = !readMore
-                                }
-                        )
-
-                    if (readMore)
-                        Text(
-                            text = albumFLow?.authorsText ?: "NA",
-                            style = TextStyle.Default.copy(textAlign = TextAlign.Justify),
-                            modifier = Modifier
-                                .padding(horizontal = 8.dp)
-                                .weight(1f)
-                                .clickable {
-                                    readMore = !readMore
-                                }
-                        )
+                            ).plus("...")
+                        } else {
+                            albumFLow?.authorsText ?: "NA"
+                        },
+                        style = TextStyle.Default.copy(textAlign = TextAlign.Justify),
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .weight(1f)
+                            .animateContentSize(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = Spring.StiffnessLow
+                                )
+                            )
+                            .clickable {
+                                readMore = !readMore
+                            },
+                    )
 
                     Text(
                         text = "„",
