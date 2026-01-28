@@ -62,6 +62,8 @@ import com.kynarec.kmusic.ui.screens.song.SortOption
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(
     UnstableApi::class, ExperimentalMaterial3ExpressiveApi::class
@@ -69,10 +71,9 @@ import kotlinx.coroutines.flow.flowOn
 @Composable
 fun SearchResultScreen(
     query: String,
-    viewModel: MusicViewModel,
-    modifier: Modifier = Modifier,
+    viewModel: MusicViewModel = koinViewModel(),
     navController: NavHostController,
-    database: KmusicDatabase
+    database: KmusicDatabase = koinInject()
 ) {
     LocalContext.current
     var initialLoading by remember { mutableStateOf(true) }

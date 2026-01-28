@@ -89,6 +89,7 @@ android {
 
 
 dependencies {
+    implementation(project(":LrcLib"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity)
@@ -147,7 +148,7 @@ dependencies {
     // wavy seekbar
     implementation(libs.wavy.slider)
 
-    implementation(libs.okhttp)
+//    implementation(libs.okhttp)
     implementation(libs.json)
 
     implementation(libs.ksafe)
@@ -157,4 +158,13 @@ dependencies {
     implementation(libs.filekit.dialogs)
 
     implementation(libs.reorderable)
+
+    // Koin
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.compose)
+    implementation(libs.koin.compose.viewmodel)
+
 }

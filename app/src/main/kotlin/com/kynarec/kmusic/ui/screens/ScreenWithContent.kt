@@ -32,15 +32,17 @@ import com.kynarec.kmusic.ui.components.player.PlayerControlBar
 import com.kynarec.kmusic.ui.screens.player.PlayerScreen
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScreenWithContent(
-    database: KmusicDatabase,
+    database: KmusicDatabase = koinInject(),
     navController: NavHostController,
     currentRoute: String?,
     isSearchScreen: Boolean,
-    musicViewModel: MusicViewModel,
+    musicViewModel: MusicViewModel = koinViewModel(),
     hideVertNavElements: Boolean,
     isSettingsScreen: Boolean = false,
     content: @Composable () -> Unit,

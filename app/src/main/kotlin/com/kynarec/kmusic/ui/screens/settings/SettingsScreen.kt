@@ -34,19 +34,19 @@ import com.kynarec.kmusic.ui.Settings
 import com.kynarec.kmusic.ui.components.UpdateDialog
 import com.kynarec.kmusic.ui.components.settings.SettingsFolder
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 
 @Composable
 fun SettingsScreen(
-    prefs: SettingsViewModel,
     navController: NavHostController,
-    musicViewModel: MusicViewModel,
-    updateManager: UpdateManager,
-    updateViewModel: UpdateViewModel,
+    musicViewModel: MusicViewModel = koinViewModel(),
+    updateManager: UpdateManager = koinInject(),
+    updateViewModel: UpdateViewModel = koinViewModel(),
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current

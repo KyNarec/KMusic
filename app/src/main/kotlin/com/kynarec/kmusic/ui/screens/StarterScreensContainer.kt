@@ -59,14 +59,16 @@ import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun StarterScreensContainer(
     rootNavController: NavHostController,
-    musicViewModel: MusicViewModel,
-    database: KmusicDatabase,
-    settingsViewModel: SettingsViewModel
+    musicViewModel: MusicViewModel = koinViewModel(),
+    database: KmusicDatabase = koinInject(),
+    settingsViewModel: SettingsViewModel = koinViewModel()
 ) {
     val childNavController = rememberNavController()
     val navBackStackEntry by childNavController.currentBackStackEntryAsState()

@@ -39,6 +39,8 @@ import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -46,8 +48,8 @@ fun SongListScreen(
     modifier: Modifier = Modifier,
     browseId: String,
     browseParams: String,
-    viewModel: MusicViewModel,
-    database: KmusicDatabase,
+    viewModel: MusicViewModel = koinViewModel(),
+    database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
     val context = LocalContext.current

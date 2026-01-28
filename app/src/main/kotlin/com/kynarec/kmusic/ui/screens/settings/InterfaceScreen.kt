@@ -19,11 +19,12 @@ import com.kynarec.kmusic.ui.components.settings.SettingComponentEnumChoice
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun InterfaceScreen(
-    prefs: SettingsViewModel,
-    musicViewModel: MusicViewModel
+    prefs: SettingsViewModel = koinViewModel(),
+    musicViewModel: MusicViewModel = koinViewModel()
 ) {
     val scope = rememberCoroutineScope()
 

@@ -94,6 +94,17 @@ fun Long.parseMillisToDuration(): String {
     return "$minutes:$seconds"
 }
 
+/**
+ * Converts a time string (e.g., "3:21" or "1:02:10") into total seconds.
+ * Returns 0 if the string is empty or invalid.
+ */
+fun String?.toSeconds(): Int {
+    if (this.isNullOrBlank()) return 0
+    return this.split(":")
+        .map { it.toIntOrNull() ?: 0 }
+        .fold(0) { acc, time -> acc * 60 + time }
+}
+
 suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = withContext(Dispatchers.IO) {
     val uri = playSongByIdWithBestBitrate(song.id) ?: return@withContext MediaItem.Builder().build()
 

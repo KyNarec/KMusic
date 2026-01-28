@@ -49,6 +49,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -110,6 +111,7 @@ fun PlayerScreen(
 ) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val lyrics = uiState.currentLyrics
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val showQueueBottomSheet = remember { mutableStateOf(false) }
@@ -117,6 +119,14 @@ fun PlayerScreen(
 
     BackHandler {
         onClose()
+    }
+
+    LaunchedEffect(Unit) {
+        val currentSong = uiState.currentSong
+
+        viewModel.getLyrics(currentSong!!)?.forEach { lyrics ->
+            Log.i("lyrics", "Lyrics found: ${lyrics.plainLyrics?.take(50)}...")
+        }
     }
 
     Scaffold(
@@ -199,12 +209,10 @@ fun PlayerScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top section with back button and app icon
-
-
             Spacer(modifier = Modifier.height(24.dp))
 
             // Album art
+            val lyricsToggled = remember { mutableStateOf(false) }
             Box(
                 modifier = Modifier
                     .size(300.dp)
@@ -215,16 +223,27 @@ fun PlayerScreen(
                         shape = RoundedCornerShape(16.dp)
                     )
             ) {
+
                 AsyncImage(
                     model = uiState.currentSong?.thumbnail,
                     contentDescription = "Album art",
                     modifier = Modifier
+                        .clickable(onClick = {lyricsToggled.value = !lyricsToggled.value})
                         .size(300.dp)
                         .aspectRatio(1f)
                         .clip(RoundedCornerShape(16.dp)),
                     contentScale = ContentScale.Crop,
                     imageLoader = LocalContext.current.imageLoader
                 )
+                if (lyricsToggled.value)
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color.Black.copy(alpha = 0.5f))
+                    ) {
+
+                    }
             }
 
 

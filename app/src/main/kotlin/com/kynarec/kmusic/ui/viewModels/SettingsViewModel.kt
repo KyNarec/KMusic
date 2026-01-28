@@ -1,7 +1,6 @@
 package com.kynarec.kmusic.ui.viewModels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import com.kynarec.kmusic.enums.StartDestination
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.utils.Constants.DARK_MODE_KEY
@@ -57,29 +56,4 @@ class SettingsViewModel(
         ksafe.put(key, value)
     }
 
-
-    /**
-     * Factory for creating the ViewModel with dependencies.
-     */
-    class Factory(
-        private val ksafe: KSafe,
-    ) : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return SettingsViewModel(ksafe) as T
-            }
-            throw IllegalArgumentException("Unknown ViewModel class")
-        }
-    }
 }
-
-
-//object SettingsPreferences {
-//    private val prefs get() = (KMusic.instance).ksafe
-//
-//    var transitionEffect by prefs(
-//        key = "transition_effect",
-//        defaultValue = TransitionEffect.Fade
-//    )
-//}
