@@ -149,8 +149,23 @@ class PlayerServiceModern : MediaLibraryService() {
             super.onPlayerError(error)
             val exoPlaybackException = error as ExoPlaybackException
             when (exoPlaybackException.message) {
-                "Source error" -> SmartMessage("Source Error", PopupType.Error, false, this@PlayerServiceModern)
-                else -> SmartMessage("Unknown playback error", PopupType.Error, false, this@PlayerServiceModern)
+                "Source error" -> {
+                    SmartMessage("Source Error", PopupType.Error, false, this@PlayerServiceModern)
+                    player?.seekToNextMediaItem()
+                    player?.prepare()
+                    player?.play()
+                }
+                else -> {
+                    SmartMessage(
+                        "Unknown playback error",
+                        PopupType.Error,
+                        false,
+                        this@PlayerServiceModern
+                    )
+                    player?.seekToNextMediaItem()
+                    player?.prepare()
+                    player?.play()
+                }
             }
             Log.e("PlayerService", "Player Error: ", error)
             // Here you could stop the service, show a toast, or try to recover.
