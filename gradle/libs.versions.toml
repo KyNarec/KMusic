@@ -39,6 +39,8 @@ uiTooling = "1.10.1"
 wavySlider = "2.2.0"
 reorderable = "3.0.0"
 koin-bom = "4.1.1"
+lyricsCore = "0.4.2"
+lyricsUi = "1.0.16"
 
 [libraries]
 androidx-cardview = { module = "androidx.cardview:cardview", version.ref = "cardview" }
@@ -103,6 +105,9 @@ koin-compose = { module = "io.insert-koin:koin-compose" }
 koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel" }
 koin-ktor = { module = "io.insert-koin:koin-ktor" }
 koin-logger-slf4j = { module = "io.insert-koin:koin-logger-slf4j" }
+lyrics-core = { module = "com.mocharealm.accompanist:lyrics-core", version.ref = "lyricsCore"}
+lyrics-ui = { module = "com.mocharealm.accompanist:lyrics-ui", version.ref = "lyricsUi"}
+
 
 [plugins]
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

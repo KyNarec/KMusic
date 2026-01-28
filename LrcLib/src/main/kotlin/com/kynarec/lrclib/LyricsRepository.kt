@@ -10,4 +10,12 @@ class LyricsRepository(private val lrcLib: LrcLib) {
             emptyList()
         }
     }
+
+    suspend fun getLyricsString(title: String, artist: String, album: String? = null, duration: Int? = null): String {
+        return try {
+            lrcLib.search(title, artist, album)
+        } catch (e: Exception) {
+            ""
+        }
+    }
 }

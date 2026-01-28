@@ -32,6 +32,8 @@ import com.kynarec.kmusic.utils.toSeconds
 import com.kynarec.kmusic.utils.toSong
 import com.kynarec.lrclib.LyricsRepository
 import com.kynarec.lrclib.model.Lyrics
+import com.mocharealm.accompanist.lyrics.core.model.SyncedLyrics
+import com.mocharealm.accompanist.lyrics.core.parser.LrcParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -58,7 +60,7 @@ data class MusicUiState(
     val songsSortOption: SortOption = SortOption("All"),
     val searchParam: SortOption = SortOption("Song"),
     val timeLeftMillis: Long = 0,
-    val currentLyrics: Lyrics? = null
+    val currentLyrics: SyncedLyrics? = null
 )
 
 // The new, combined ViewModel
@@ -127,6 +129,7 @@ class MusicViewModel
                     controller.replaceMediaItem(index + 1, songAfter)
                 }
             }
+            _uiState.update { it.copy(currentLyrics = null) }
         }
 
         override fun onTimelineChanged(timeline: Timeline, reason: Int) {
@@ -650,8 +653,23 @@ class MusicViewModel
         }
     }
 
-    fun setCurrentLyrics(lyrics: Lyrics) {
-        _uiState.update { it.copy(currentLyrics = lyrics) }
+    suspend fun getSyncedLyrics(song: Song): SyncedLyrics? {
+        return try {
+            LrcParser.parse(
+                lyricsRepository.getLyrics(
+                    song.title,
+                    artist = song.artists.joinToString(", ") { it.name },
+                    duration = song.duration.toSeconds()
+                ).first().syncedLyrics ?: ""
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun setCurrentLyrics(syncedLyrics: SyncedLyrics) {
+        _uiState.update { it.copy(currentLyrics = syncedLyrics) }
     }
 
     override fun onCleared() {

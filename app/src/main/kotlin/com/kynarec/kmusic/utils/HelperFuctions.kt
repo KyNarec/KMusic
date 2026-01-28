@@ -104,6 +104,12 @@ fun String?.toSeconds(): Int {
         .map { it.toIntOrNull() ?: 0 }
         .fold(0) { acc, time -> acc * 60 + time }
 }
+/**
+ * Converts milliseconds (Long) to seconds (Int).
+ */
+fun Long.toSeconds(): Int {
+    return (this / 1000).toInt()
+}
 
 suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = withContext(Dispatchers.IO) {
     val uri = playSongByIdWithBestBitrate(song.id) ?: return@withContext MediaItem.Builder().build()

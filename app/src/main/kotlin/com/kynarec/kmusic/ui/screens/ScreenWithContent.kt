@@ -25,20 +25,17 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.ui.components.MyNavigationRailComponent
 import com.kynarec.kmusic.ui.components.TopBarComponent
 import com.kynarec.kmusic.ui.components.player.PlayerControlBar
 import com.kynarec.kmusic.ui.screens.player.PlayerScreen
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScreenWithContent(
-    database: KmusicDatabase = koinInject(),
     navController: NavHostController,
     currentRoute: String?,
     isSearchScreen: Boolean,
@@ -134,8 +131,6 @@ fun ScreenWithContent(
                                 }
                             }
                         },
-                        viewModel = musicViewModel,
-                        database = database,
                         navController = navController
                     )
                 }

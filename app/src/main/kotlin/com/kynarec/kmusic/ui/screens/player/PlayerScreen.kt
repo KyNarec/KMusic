@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.SliderDefaults
 import androidx.compose.material.icons.Icons
@@ -44,6 +45,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -56,6 +58,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
@@ -78,6 +82,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextMotion
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
@@ -93,8 +98,12 @@ import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.ArtistDetailScreen
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.mocharealm.accompanist.lyrics.ui.composable.lyrics.KaraokeBreathingDotsDefaults
+import com.mocharealm.accompanist.lyrics.ui.composable.lyrics.KaraokeLyricsView
 import ir.mahozad.multiplatform.wavyslider.WaveDirection
 import ir.mahozad.multiplatform.wavyslider.material.WavySlider
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 /**
  * The full-screen music player composable.
@@ -105,13 +114,15 @@ import ir.mahozad.multiplatform.wavyslider.material.WavySlider
 @Composable
 fun PlayerScreen(
     onClose: () -> Unit,
-    viewModel: MusicViewModel,
-    database: KmusicDatabase,
+    viewModel: MusicViewModel = koinViewModel(),
+    database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val lyrics = uiState.currentLyrics
+
+    val isLoadingLyrics = remember { mutableStateOf(false) }
+    val lyricsToggled = remember { mutableStateOf(false) }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val showQueueBottomSheet = remember { mutableStateOf(false) }
@@ -121,12 +132,15 @@ fun PlayerScreen(
         onClose()
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(Unit, uiState.currentSong) {
         val currentSong = uiState.currentSong
 
-        viewModel.getLyrics(currentSong!!)?.forEach { lyrics ->
-            Log.i("lyrics", "Lyrics found: ${lyrics.plainLyrics?.take(50)}...")
-        }
+        isLoadingLyrics.value = true
+        val syncedLyrics = viewModel.getSyncedLyrics(currentSong!!)
+        Log.i("lyrics", "Synced Lyrics: ${syncedLyrics?.lines}")
+        Log.i("lyrics", "Synced Lyrics: ${syncedLyrics?.title}")
+        syncedLyrics?.let { viewModel.setCurrentLyrics(it) }
+        isLoadingLyrics.value = false
     }
 
     Scaffold(
@@ -164,7 +178,9 @@ fun PlayerScreen(
                     })
             ) {
                 IconButton(
-                    onClick = {}
+                    onClick = {
+                        lyricsToggled.value = !lyricsToggled.value
+                    }
                 ) {
                     Icon(
                         imageVector = Icons.Default.Lyrics,
@@ -212,7 +228,6 @@ fun PlayerScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Album art
-            val lyricsToggled = remember { mutableStateOf(false) }
             Box(
                 modifier = Modifier
                     .size(300.dp)
@@ -228,21 +243,66 @@ fun PlayerScreen(
                     model = uiState.currentSong?.thumbnail,
                     contentDescription = "Album art",
                     modifier = Modifier
-                        .clickable(onClick = {lyricsToggled.value = !lyricsToggled.value})
                         .size(300.dp)
                         .aspectRatio(1f)
-                        .clip(RoundedCornerShape(16.dp)),
+                        .clip(RoundedCornerShape(16.dp))
+                        .then(
+                            if (lyricsToggled.value && !isLoadingLyrics.value) {
+                                Modifier.blur(48.dp, BlurredEdgeTreatment(RoundedCornerShape(16.dp)))
+                            } else {
+                                Modifier
+                            }
+                        )
+                    ,
                     contentScale = ContentScale.Crop,
                     imageLoader = LocalContext.current.imageLoader
                 )
-                if (lyricsToggled.value)
+                if (lyricsToggled.value && !isLoadingLyrics.value)
                     Box(
                         modifier = Modifier
                             .matchParentSize()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Color.Black.copy(alpha = 0.5f))
+                            .background(Color.Black.copy(alpha = 0.3f))
                     ) {
-
+                        if (uiState.currentLyrics != null) {
+                            KaraokeLyricsView(
+                                listState = rememberLazyListState(),
+                                lyrics = uiState.currentLyrics!!,
+                                currentPosition = { uiState.currentPosition.toInt() },
+                                onLineClicked = { line ->
+                                    viewModel.seekTo(line.start.toLong())
+                                },
+                                onLinePressed = {},
+                                normalLineTextStyle = LocalTextStyle.current.copy(
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textMotion = TextMotion.Animated,
+                                    textAlign = TextAlign.Center
+                                ),
+                                // not used
+                                accompanimentLineTextStyle = LocalTextStyle.current.copy(
+                                    fontSize = 2.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textMotion = TextMotion.Animated,
+                                    textAlign = TextAlign.Center
+                                ),
+                                breathingDotsDefaults = KaraokeBreathingDotsDefaults(
+                                    number = 3,
+                                    size = 12.dp,
+                                    margin = 8.dp,
+                                    enterDurationMs = 1000,
+                                    preExitStillDuration = 200,
+                                    preExitDipAndRiseDuration = 500,
+                                    exitDurationMs = 200,
+                                    breathingDotsColor = MaterialTheme.colorScheme.onBackground,
+                                ),
+                                modifier = Modifier.graphicsLayer {
+                                    blendMode = BlendMode.Plus
+                                    compositingStrategy = CompositingStrategy.Offscreen
+                                },
+                                textColor = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
                     }
             }
 

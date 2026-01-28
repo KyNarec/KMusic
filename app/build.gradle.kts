@@ -167,4 +167,7 @@ dependencies {
     implementation(libs.koin.compose)
     implementation(libs.koin.compose.viewmodel)
 
+    // lyrics
+    implementation(libs.lyrics.core)
+    implementation(libs.lyrics.ui)
 }

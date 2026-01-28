@@ -281,8 +281,6 @@ fun StarterScreensContainer(
                                 }
                             }
                         },
-                        viewModel = musicViewModel,
-                        database = database,
                         navController = rootNavController
                     )
                 }
