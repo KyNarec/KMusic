@@ -6,8 +6,8 @@ import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.kynarec.kmusic.data.db.KmusicDatabase
-import com.kynarec.kmusic.service.koin.appModule
-import com.kynarec.kmusic.service.koin.lrcLibModule
+import com.kynarec.kmusic.service.di.appModule
+import com.kynarec.kmusic.service.di.lrcLibModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin

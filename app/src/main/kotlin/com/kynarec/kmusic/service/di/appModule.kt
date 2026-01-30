@@ -1,4 +1,4 @@
-package com.kynarec.kmusic.service.koin
+package com.kynarec.kmusic.service.di
 
 import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.data.db.KmusicDatabase

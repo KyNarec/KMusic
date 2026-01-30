@@ -94,10 +94,12 @@ import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.ArtistDetailScreen
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.utils.SmartMessage
 import com.mocharealm.accompanist.lyrics.ui.composable.lyrics.KaraokeBreathingDotsDefaults
 import com.mocharealm.accompanist.lyrics.ui.composable.lyrics.KaraokeLyricsView
 import ir.mahozad.multiplatform.wavyslider.WaveDirection
@@ -118,6 +120,7 @@ fun PlayerScreen(
     database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
+    val context = LocalContext.current
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -141,6 +144,10 @@ fun PlayerScreen(
         Log.i("lyrics", "Synced Lyrics: ${syncedLyrics?.title}")
         syncedLyrics?.let { viewModel.setCurrentLyrics(it) }
         isLoadingLyrics.value = false
+    }
+
+    LaunchedEffect(lyricsToggled) {
+        if (uiState.currentLyrics == null) SmartMessage("Loading Lyrics", PopupType.Info, false, context)
     }
 
     Scaffold(
@@ -288,16 +295,16 @@ fun PlayerScreen(
                                 ),
                                 breathingDotsDefaults = KaraokeBreathingDotsDefaults(
                                     number = 3,
-                                    size = 12.dp,
-                                    margin = 8.dp,
-                                    enterDurationMs = 1000,
-                                    preExitStillDuration = 200,
-                                    preExitDipAndRiseDuration = 500,
-                                    exitDurationMs = 200,
+                                    size = 10.dp,
+                                    margin = 6.dp,
+                                    enterDurationMs = 100,
+                                    preExitStillDuration = 0,
+                                    preExitDipAndRiseDuration = 0,
+                                    exitDurationMs = 100,
                                     breathingDotsColor = MaterialTheme.colorScheme.onBackground,
                                 ),
                                 modifier = Modifier.graphicsLayer {
-                                    blendMode = BlendMode.Plus
+                                    blendMode = BlendMode.SrcOver
                                     compositingStrategy = CompositingStrategy.Offscreen
                                 },
                                 textColor = MaterialTheme.colorScheme.onBackground
