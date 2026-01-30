@@ -206,14 +206,50 @@ data class PlayerResponse(
 
 @Serializable
 data class StreamingData(
-    val adaptiveFormats: List<AdaptiveFormat>? = null
+    val adaptiveFormats: List<AdaptiveFormat>? = null,
+    val formats: List<Format> = emptyList(),
+)
+
+@Serializable
+data class Format(
+    val itag: Int,
+    val url: String? = null,
+    val mimeType: String? = null,
+    val bitrate: Int? = null,
+    val width: Int? = null,
+    val height: Int? = null,
+    val lastModified: String? = null,
+    val quality: String? = null,
+    val fps: Int? = null,
+    val qualityLabel: String? = null,
+    val projectionType: String? = null,
+    val audioQuality: String? = null,
+    val approxDurationMs: String? = null,
+    val audioSampleRate: String? = null,
+    val audioChannels: Int? = null,
+
+    // Fields specific to Adaptive formats
+    val initRange: ByteRange? = null,
+    val indexRange: ByteRange? = null,
+    val contentLength: String? = null,
+    val averageBitrate: Int? = null,
+
+    // Signature Cipher (for formats requiring de-scrambling)
+    val signatureCipher: String? = null
+)
+
+@Serializable
+data class ByteRange(
+    val start: String,
+    val end: String
 )
 
 @Serializable
 data class AdaptiveFormat(
     val averageBitrate: Int? = null,
     val url: String? = null,
-    val audioQuality: String? = null
+    val audioQuality: String? = null,
+    val itag: Int? = null
 )
 
 // ========================================== betterGetRadio
