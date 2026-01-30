@@ -198,6 +198,30 @@ suspend fun playSongByIdWithBestBitrate(videoId: String): String {
     }
 }
 
+suspend fun playSongById(videoId: String): String {
+    val json = Json { ignoreUnknownKeys = true }
+
+    val raw = InnerTube(ClientName.Android).player(videoId)
+    try {
+        val response = json.decodeFromString<PlayerResponse>(raw)
+
+        val best = response.streamingData
+            ?.formats?.first { it.itag == 18 }
+
+//            ?.adaptiveFormats
+//            ?.filter { it.audioQuality in listOf("AUDIO_QUALITY_HIGH", "AUDIO_QUALITY_MEDIUM") }
+//            ?.filter { it.url != null }
+//            ?.maxByOrNull { it.averageBitrate ?: 0 }
+
+        println("Song URL: ${best?.url}")
+
+        return best?.url ?: "NA"
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return ""
+    }
+}
+
 fun getRadioFlow(
     videoId: String,
 ): Flow<Song> = flow {

@@ -33,7 +33,7 @@ import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
 import com.kynarec.kmusic.service.innertube.ClientName
 import com.kynarec.kmusic.service.innertube.InnerTube
 import com.kynarec.kmusic.service.innertube.getHighestDefinitionThumbnailFromPlayer
-import com.kynarec.kmusic.service.innertube.playSongByIdWithBestBitrate
+import com.kynarec.kmusic.service.innertube.playSongById
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -112,7 +112,7 @@ fun Long.toSeconds(): Int {
 }
 
 suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = withContext(Dispatchers.IO) {
-    val uri = playSongByIdWithBestBitrate(song.id) ?: return@withContext MediaItem.Builder().build()
+    val uri = playSongById(song.id) ?: return@withContext MediaItem.Builder().build()
 
     val extras = Bundle().apply {
         putString("ALBUM_ID", song.albumId)
@@ -169,7 +169,7 @@ fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
 }
 
 suspend fun MediaItem.createFullMediaItem(): MediaItem {
-    val uri = playSongByIdWithBestBitrate(this.mediaId)
+    val uri = playSongById(this.mediaId)
     return this.buildUpon()
         .setUri(uri)
         .build()
