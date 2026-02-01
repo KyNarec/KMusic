@@ -39,33 +39,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
 
-
-fun parseDurationToMillis(durationStr: String): Long {
-    val parts = durationStr.split(":")
-    return when (parts.size) {
-        2 -> {
-            val minutes = parts[0].toLongOrNull() ?: 0L
-            val seconds = parts[1].toLongOrNull() ?: 0L
-            (minutes * 60 + seconds) * 1000
-        }
-
-        3 -> { // For "HH:mm:ss" format
-            val hours = parts[0].toLongOrNull() ?: 0L
-            val minutes = parts[1].toLongOrNull() ?: 0L
-            val seconds = parts[2].toLongOrNull() ?: 0L
-            (hours * 3600 + minutes * 60 + seconds) * 1000
-        }
-
-        else -> 0L
-    }
-}
-
-fun parseMillisToDuration(timeMs: Long): String {
-    val minutes = timeMs / 1000 / 60
-    val seconds = (timeMs / 1000 % 60).toString().padStart(2, '0')
-    return "$minutes:$seconds"
-}
-
 @JvmName("StringParseDurationToMillis")
 fun String.parseDurationToMillis(): Long {
     val parts = this.split(":")
@@ -154,7 +127,7 @@ fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
 
     return MediaItem.Builder()
         .setMediaId(song.id)
-        .setUri("")
+        .setUri("EMPTY")
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setTitle(song.title)

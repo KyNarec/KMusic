@@ -46,12 +46,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
+import kotlin.random.Random
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-// A single state class for the entire music screen
 data class MusicUiState(
-    val songsList: List<Song> = emptyList(),
+    val songsList: List<PlaylistItem> = emptyList(),
     var currentSong: Song? = null,
     val isPlaying: Boolean = false,
     val currentPosition: Long = 0,
@@ -63,7 +63,14 @@ data class MusicUiState(
     val currentLyrics: SyncedLyrics? = null
 )
 
-// The new, combined ViewModel
+/**
+ * Using this because queue screen needs a key for the list
+ */
+data class PlaylistItem(
+    val id: Long = Random.nextLong(),
+    val song: Song
+)
+
 @OptIn(UnstableApi::class)
 class MusicViewModel
     (
@@ -98,7 +105,7 @@ class MusicViewModel
 
             // When the song changes, find it in list and update the state
             val songsList = _uiState.value.songsList
-            val currentSong = songsList.find { it.id == mediaItem?.mediaId }
+            val currentSong = songsList.find { it.song.id == mediaItem?.mediaId }?.song
 
             _uiState.update {
                 it.copy(
@@ -106,28 +113,6 @@ class MusicViewModel
                     currentDurationLong = _uiState.value.currentSong?.duration?.parseDurationToMillis()
                         ?: 0L,
                 )
-            }
-
-            val index = songsList.indexOf(currentSong)
-            val controller = mediaController ?: return
-
-            viewModelScope.launch {
-                val context = application.applicationContext
-                // Handle Previous Song
-                if (index > 0) {
-                    val songBefore = withContext(Dispatchers.IO) {
-                        createMediaItemFromSong(songsList[index - 1], context)
-                    }
-                    controller.replaceMediaItem(index - 1, songBefore)
-                }
-
-                // Handle Next Song
-                if (index < songsList.size - 1) {
-                    val songAfter = withContext(Dispatchers.IO) {
-                        createMediaItemFromSong(songsList[index + 1], context)
-                    }
-                    controller.replaceMediaItem(index + 1, songAfter)
-                }
             }
             _uiState.update { it.copy(currentLyrics = null) }
         }
@@ -156,9 +141,9 @@ class MusicViewModel
                 this.mediaController = controller
 
                 // Reconstruct the Playlist from the Player's current queue
-                val itemsInQueue = mutableListOf<Song>()
+                val itemsInQueue = mutableListOf<PlaylistItem>()
                 for (i in 0 until controller.mediaItemCount) {
-                    itemsInQueue.add(controller.getMediaItemAt(i).toSong())
+                    itemsInQueue.add(PlaylistItem(song = controller.getMediaItemAt(i).toSong()))
                 }
 
                 val currentSong = controller.currentMediaItem?.toSong()
@@ -216,9 +201,11 @@ class MusicViewModel
         // Find the index of the tapped song
 
         _uiState.update { it.copy(currentSong = song) }
+        val alreadyInQueue = _uiState.value.songsList.any { it.song.id == song.id }
 
-        if (!songList.contains(song)) {
-            _uiState.update { it.copy(songsList = songList + song) }
+        if (!alreadyInQueue) {
+            val newItem = PlaylistItem(song = song)
+            _uiState.update { it.copy(songsList = it.songsList + newItem) }
         }
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -250,12 +237,12 @@ class MusicViewModel
         currentLoadingPlaylistId = playlistId
 
         val controller = mediaController ?: return
-        val startIndex = songs.indexOfFirst { it.id == startSong.id }.coerceAtLeast(0)
+        controller.stop()
 
         // 1. Update UI State immediately
-        _uiState.update {
+        _uiState.update { it ->
             it.copy(
-                songsList = songs,
+                songsList = songs.map { song -> song.toPlaylistItem() },
                 currentSong = startSong
             )
         }
@@ -352,7 +339,7 @@ class MusicViewModel
             }
         }
 
-        // Play the selected song immediately
+    // Play the selected song immediately
         playSong(song)
 
         viewModelScope.launch {
@@ -363,7 +350,7 @@ class MusicViewModel
                         if (radioSong.id != song.id) {
                             val mediaItem = createPartialMediaItemFromSong(radioSong, context)
                             _uiState.update {
-                                it.copy(songsList = it.songsList + radioSong)
+                                it.copy(songsList = it.songsList + radioSong.toPlaylistItem())
                             }
                             // Update UI immediately for each song
                             withContext(Dispatchers.Main) {
@@ -377,7 +364,7 @@ class MusicViewModel
                 Log.e(tag, "Failed to load radio songs for ${song.id}")
             } finally {
                 val nextMediaItem =
-                    createMediaItemFromSong(_uiState.value.songsList[1], context)
+                    createMediaItemFromSong(_uiState.value.songsList[1].song, context)
                 withContext(Dispatchers.Main) {
                     mediaController?.replaceMediaItem(1, nextMediaItem)
                 }
@@ -391,7 +378,7 @@ class MusicViewModel
         val context = application.applicationContext
         viewModelScope.launch {
             try {
-                val mediaItem = createPartialMediaItemFromSong(song, context)
+                val mediaItem = createMediaItemFromSong(song, context)
                 val currentMediaIndex = mediaController?.currentMediaItemIndex ?: 0
                 val nextIndex = currentMediaIndex + 1
                 Log.i(
@@ -404,9 +391,9 @@ class MusicViewModel
                     val updatedList = currentState.songsList.toMutableList()
 
                     if (nextIndex <= updatedList.size) {
-                        updatedList.add(nextIndex, song)
+                        updatedList.add(nextIndex, song.toPlaylistItem())
                     } else {
-                        updatedList.add(song)
+                        updatedList.add(song.toPlaylistItem())
                     }
 
                     currentState.copy(songsList = updatedList)
@@ -423,11 +410,13 @@ class MusicViewModel
         Log.i(tag, "enqueue called with song ${song.title}")
         viewModelScope.launch {
             try {
-                val mediaItem = createMediaItemFromSong(song, context)
+                val mediaItem = if (_uiState.value.songsList.size < 2)
+                    createMediaItemFromSong(song, context)
+                    else createPartialMediaItemFromSong(song, context)
                 mediaController?.addMediaItem(mediaItem)
 
                 _uiState.update { currentState ->
-                    currentState.copy(songsList = currentState.songsList + song)
+                    currentState.copy(songsList = currentState.songsList + song.toPlaylistItem())
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -455,9 +444,9 @@ class MusicViewModel
                     val currentList = currentState.songsList.toMutableList()
 
                     if (nextIndex <= currentList.size) {
-                        currentList.addAll(nextIndex, songs)
+                        currentList.addAll(nextIndex, songs.map { it.toPlaylistItem() })
                     } else {
-                        currentList.addAll(nextIndex, songs)
+                        currentList.addAll(nextIndex, songs.map { it.toPlaylistItem() })
                     }
 
                     currentState.copy(songsList = currentList)
@@ -479,7 +468,7 @@ class MusicViewModel
                 mediaController?.addMediaItems(mediaItems)
 
                 _uiState.update { currentState ->
-                    currentState.copy(songsList = currentState.songsList + songs)
+                    currentState.copy(songsList = currentState.songsList + songs.map { it.toPlaylistItem() })
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -561,9 +550,7 @@ class MusicViewModel
         }
     }
 
-    fun skipToSong(song: Song) {
-        Log.i(tag, "skipToSong called with song ${song.title}")
-        val index = _uiState.value.songsList.indexOf(song)
+    fun skipToSong(index: Int) {
         Log.i(tag, "skipToSong index: $index")
         Log.i(tag, "mediaControllerCount: ${mediaController?.mediaItemCount}")
         mediaController?.seekTo(index, 0L)
@@ -680,4 +667,8 @@ class MusicViewModel
             MediaController.releaseFuture(it)
         }
     }
+}
+
+fun Song.toPlaylistItem(): PlaylistItem {
+    return PlaylistItem(song = this)
 }

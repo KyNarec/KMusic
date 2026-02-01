@@ -97,6 +97,7 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.ArtistDetailScreen
+import com.kynarec.kmusic.ui.LyricsScreen
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.SmartMessage
@@ -147,11 +148,16 @@ fun PlayerScreen(
     }
 
     LaunchedEffect(lyricsToggled) {
-        if (uiState.currentLyrics == null) SmartMessage("Loading Lyrics", PopupType.Info, false, context)
+        if (uiState.currentLyrics == null && lyricsToggled.value) SmartMessage("Loading Lyrics", PopupType.Info, false, context)
     }
 
     Scaffold(
-        Modifier.fillMaxSize(),
+        Modifier.fillMaxSize()
+//            .then(
+//                if (showQueueBottomSheet.value) Modifier.blur(32.dp)
+//                else Modifier
+//            )
+        ,
         topBar = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -187,6 +193,8 @@ fun PlayerScreen(
                 IconButton(
                     onClick = {
                         lyricsToggled.value = !lyricsToggled.value
+                        onClose()
+                        navController.navigate(LyricsScreen)
                     }
                 ) {
                     Icon(
@@ -565,11 +573,9 @@ fun PlayerScreen(
 
                 if (showQueueBottomSheet.value) {
                     QueueScreen(
-                        viewModel = viewModel,
                         onClose = { showQueueBottomSheet.value = false },
                         sheetState = sheetState,
                         showBottomSheet = showQueueBottomSheet,
-                        database = database,
                         navController = navController
                     )
                 }

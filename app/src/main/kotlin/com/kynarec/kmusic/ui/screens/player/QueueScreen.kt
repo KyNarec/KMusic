@@ -34,6 +34,8 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.player.QueueSongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import kotlin.uuid.ExperimentalUuidApi
@@ -44,10 +46,10 @@ import kotlin.uuid.ExperimentalUuidApi
 fun QueueScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: MusicViewModel,
+    viewModel: MusicViewModel = koinViewModel(),
     sheetState: SheetState,
     showBottomSheet: MutableState<Boolean>,
-    database: KmusicDatabase,
+    database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
     val scope = rememberCoroutineScope()
@@ -69,6 +71,8 @@ fun QueueScreen(
         if (initialDraggingIndex == null) {
             initialDraggingIndex = from.index
         }
+
+        hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
         localSongList = localSongList.toMutableList().apply {
             add(to.index, removeAt(from.index))
@@ -94,7 +98,7 @@ fun QueueScreen(
     }
 
     LaunchedEffect(uiState.currentSong) {
-        val playingIndex = songList.indexOfFirst { it.id == uiState.currentSong?.id }
+        val playingIndex = songList.indexOfFirst { it.song.id == uiState.currentSong?.id }
         if (playingIndex != -1) {
             lazyListState.animateScrollToItem(index = playingIndex)
         }
@@ -117,7 +121,7 @@ fun QueueScreen(
                 modifier = Modifier.fillMaxSize(),
                 state = lazyListState
             ) {
-                val songList = uiState.songsList
+
                 itemsIndexed(localSongList, key = { _, song -> song.id}) { index, song ->
                     ReorderableItem(reorderableLazyListState, key = song.id) { isDragging ->
                         val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
@@ -128,10 +132,10 @@ fun QueueScreen(
                                 .zIndex(if (isDragging) 1f else 0f)
                         ) {
                             QueueSongComponent(
-                                song,
-                                onClick = { viewModel.skipToSong(song) },
+                                song.song,
+                                onClick = { viewModel.skipToSong(index) },
                                 onLongClick = {
-                                    longClickSong = song
+                                    longClickSong = song.song
                                     showInfoSheet.value = true
                                 },
                                 isPlaying = song == uiState.currentSong,

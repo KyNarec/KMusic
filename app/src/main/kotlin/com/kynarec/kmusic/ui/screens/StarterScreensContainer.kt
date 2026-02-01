@@ -258,7 +258,6 @@ fun StarterScreensContainer(
                         onBarClick = {
                             showBottomSheet.value = true
                         },
-                        viewModel = musicViewModel,
                     )
                 }
 

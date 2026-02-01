@@ -108,7 +108,6 @@ fun ScreenWithContent(
                         onBarClick = {
                             showBottomSheet.value = true
                         },
-                        viewModel = musicViewModel,
                     )
                 }
 

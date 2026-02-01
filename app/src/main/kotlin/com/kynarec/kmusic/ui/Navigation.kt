@@ -34,6 +34,7 @@ import com.kynarec.kmusic.ui.screens.StarterScreensContainer
 import com.kynarec.kmusic.ui.screens.album.AlbumDetailScreen
 import com.kynarec.kmusic.ui.screens.album.AlbumListScreen
 import com.kynarec.kmusic.ui.screens.artist.ArtistDetailScreen
+import com.kynarec.kmusic.ui.screens.player.LyricsScreen
 import com.kynarec.kmusic.ui.screens.playlist.PlaylistOfflineDetailScreen
 import com.kynarec.kmusic.ui.screens.playlist.PlaylistOnlineDetailScreen
 import com.kynarec.kmusic.ui.screens.search.SearchResultScreen
@@ -331,6 +332,32 @@ fun Navigation(
                 )
             }
         }
+
+        composable<LyricsScreen>(
+            enterTransition = {
+                slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right
+                )
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right
+                )
+            }
+        ) {
+            Log.i("Navigation", "LyricsScreen")
+            LyricsScreen()
+        }
     }
 }
 @Serializable object StarterScreens
@@ -397,3 +424,6 @@ data class AlbumListScreen(
     val browseId: String,
     val browseParams: String
 )
+
+@Serializable
+data object LyricsScreen
