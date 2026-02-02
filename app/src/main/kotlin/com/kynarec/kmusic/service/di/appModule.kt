@@ -4,6 +4,7 @@ import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.service.update.PlatformUpdateManager
 import com.kynarec.kmusic.service.update.UpdateManager
+import com.kynarec.kmusic.ui.screens.player.PlayerViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
@@ -42,5 +43,9 @@ val appModule = module {
         UpdateViewModel(
             updateManager = get()
         )
+    }
+
+    viewModel {
+        PlayerViewModel()
     }
 }

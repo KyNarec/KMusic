@@ -1,6 +1,6 @@
 package com.kynarec.kmusic.ui.screens.player
 
-import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -10,17 +10,20 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -48,8 +51,10 @@ import com.mocharealm.accompanist.lyrics.core.model.SyncedLyrics
 import com.mocharealm.accompanist.lyrics.core.model.synced.SyncedLine
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LyricsScreen(
+    onDismiss: () -> Unit,
     musicViewModel: MusicViewModel = koinViewModel()
 ) {
     val uiState by musicViewModel.uiState.collectAsStateWithLifecycle()
@@ -58,21 +63,36 @@ fun LyricsScreen(
         uiState.currentLyrics?.toUiLyrics(uiState.currentDurationLong.toSeconds())
     }
 
-    LaunchedEffect( uiState.currentSong?.id) {
-        if (uiState.currentLyrics == null) {
-            uiState.currentSong?.let { song ->
-                val syncedLyrics = musicViewModel.getSyncedLyrics(song)
-                Log.i("LyricsScreen", "Synced Lyrics: ${syncedLyrics?.lines}")
-                Log.i("LyricsScreen", "Synced Lyrics: ${syncedLyrics?.title}")
-                syncedLyrics?.let { musicViewModel.setCurrentLyrics(it) }
-            }
-        }
+//    LaunchedEffect( uiState.currentSong?.id) {
+//        if (uiState.currentLyrics == null) {
+//            uiState.currentSong?.let { song ->
+//                val syncedLyrics = musicViewModel.getSyncedLyrics(song)
+//                Log.i("LyricsScreen", "Synced Lyrics: ${syncedLyrics?.lines}")
+//                Log.i("LyricsScreen", "Synced Lyrics: ${syncedLyrics?.title}")
+//                syncedLyrics?.let { musicViewModel.setCurrentLyrics(it) }
+//            }
+//        }
+//    }
+
+    BackHandler {
+        onDismiss()
     }
+
     Scaffold(
         Modifier.fillMaxSize()
     )
     { contentPadding ->
-        if (currentUiLyrics != null) {
+        if (uiState.isLoadingLyrics) {
+            Row(
+                Modifier.fillMaxWidth()
+                    .padding(top = 16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularWavyProgressIndicator()
+            }
+        }
+        if (currentUiLyrics != null && !uiState.isLoadingLyrics) {
             val lyricsState = rememberLyricsState(
                 uiLyrics = currentUiLyrics,
                 isPlaying = { uiState.isPlaying },
@@ -87,13 +107,14 @@ fun LyricsScreen(
             val lastLaneStyle = MaterialTheme.typography.titleLarge
 
             BoxWithConstraints(
-                Modifier.fillMaxWidth().padding(contentPadding),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(contentPadding),
                 contentAlignment = Alignment.Center
             ) {
                 Lyrics(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .align(Alignment.Center),
+                        .fillMaxSize(),
                     state = lyricsState,
                     textStyle = {
                         when {
@@ -105,17 +126,18 @@ fun LyricsScreen(
                     lineModifier = { idx ->
                         val line = currentUiLyrics.lines[idx]
 
-                        Modifier.appleMusicLane(
-                            state = lyricsState,
-                            idx = idx,
-                            isAnnotation = idx == currentUiLyrics.lines.lastIndex,
-                            constraints = constraints,
-                            singleArtist = currentUiLyrics.lines.all { it.alignment == Alignment.Start },
-                            onClick = {
-                                musicViewModel.seekTo(line.start.toLong())
-                                if (!uiState.isPlaying) musicViewModel.resume()
-                            }
-                        ).align(Alignment.Center)
+                        Modifier
+                            .appleMusicLane(
+                                state = lyricsState,
+                                idx = idx,
+                                isAnnotation = idx == currentUiLyrics.lines.lastIndex,
+                                constraints = constraints,
+                                singleArtist = currentUiLyrics.lines.all { it.alignment == Alignment.Start },
+                                onClick = {
+                                    musicViewModel.seekTo(line.start.toLong())
+                                    if (!uiState.isPlaying) musicViewModel.resume()
+                                }
+                            )
                     },
                     focusedColor = focusedColor,
                     unfocusedColor = unfocusedColor,
@@ -154,7 +176,7 @@ fun LyricsScreen(
     }
 }
 
-fun SyncedLyrics.toUiLyrics(duration : Int) : UiLyrics {
+fun SyncedLyrics.toUiLyrics(duration: Int): UiLyrics {
     return UiLyrics(
         duration = duration,
         lines = this.lines.map {
@@ -162,7 +184,7 @@ fun SyncedLyrics.toUiLyrics(duration : Int) : UiLyrics {
                 start = it.start,
                 end = it.end,
                 content = (it as SyncedLine).content,
-                alignment = Alignment.CenterHorizontally
+                alignment = Alignment.Start
             )
         }
     )
@@ -173,11 +195,11 @@ private val VerticalPadding = 6.dp
 
 private fun Modifier.appleMusicLane(
     state: LyricsState,
-    idx : Int,
-    isAnnotation : Boolean,
-    singleArtist : Boolean,
-    constraints : Constraints,
-    onClick : () -> Unit
+    idx: Int,
+    isAnnotation: Boolean,
+    singleArtist: Boolean,
+    constraints: Constraints,
+    onClick: () -> Unit
 ) = composed {
     val density = LocalDensity.current
 

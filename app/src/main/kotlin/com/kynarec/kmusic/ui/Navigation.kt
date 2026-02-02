@@ -356,7 +356,9 @@ fun Navigation(
             }
         ) {
             Log.i("Navigation", "LyricsScreen")
-            LyricsScreen()
+            LyricsScreen(
+                onDismiss = {}
+            )
         }
     }
 }

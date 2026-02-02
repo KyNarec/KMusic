@@ -9,14 +9,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
@@ -34,15 +40,19 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import kotlin.uuid.ExperimentalUuidApi
 
+@Deprecated("Use MusicPlayerSheet")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 @Composable
-fun QueueScreen(
+fun QueueSheet(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MusicViewModel = koinViewModel(),
+    sheetState: SheetState,
+    showBottomSheet: MutableState<Boolean>,
     database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
+    val scope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
 
     val showInfoSheet = remember { mutableStateOf(false) }
@@ -93,51 +103,62 @@ fun QueueScreen(
             lazyListState.animateScrollToItem(index = playingIndex)
         }
     }
+
     BackHandler {
         onClose()
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        state = lazyListState
+    ModalBottomSheet(
+        onDismissRequest = {
+            showBottomSheet.value = false
+        },
+        dragHandle = null,
+        shape = RectangleShape,
+        sheetState = sheetState,
+        containerColor = Color.Black.copy(alpha = 0.5f),
     ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                state = lazyListState
+            ) {
 
-        itemsIndexed(localSongList, key = { _, song -> song.id}) { index, song ->
-            ReorderableItem(reorderableLazyListState, key = song.id) { isDragging ->
-                val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
+                itemsIndexed(localSongList, key = { _, song -> song.id}) { index, song ->
+                    ReorderableItem(reorderableLazyListState, key = song.id) { isDragging ->
+                        val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
 
-                Box(
-                    modifier = Modifier
-                        .shadow(elevation)
-                        .zIndex(if (isDragging) 1f else 0f)
-                ) {
-                    QueueSongComponent(
-                        song.song,
-                        onClick = { viewModel.skipToSong(index) },
-                        onLongClick = {
-                            longClickSong = song.song
-                            showInfoSheet.value = true
-                        },
-                        isPlaying = song == uiState.currentSong,
-                        reorderableCollectionItemScope = this@ReorderableItem,
-                        onDragStarted = {
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        },
-                        onDragStopped = {
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        Box(
+                            modifier = Modifier
+                                .shadow(elevation)
+                                .zIndex(if (isDragging) 1f else 0f)
+                        ) {
+                            QueueSongComponent(
+                                song.song,
+                                onClick = { viewModel.skipToSong(index) },
+                                onLongClick = {
+                                    longClickSong = song.song
+                                    showInfoSheet.value = true
+                                },
+                                isPlaying = song == uiState.currentSong,
+                                reorderableCollectionItemScope = this@ReorderableItem,
+                                onDragStarted = {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                },
+                                onDragStopped = {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                }
+                            )
                         }
-                    )
+                    }
                 }
             }
+        if (showInfoSheet.value && longClickSong != null) {
+            SongOptionsBottomSheet(
+                song = longClickSong!!,
+                onDismiss = { showInfoSheet.value = false },
+                viewModel = viewModel,
+                database =  database,
+                navController = navController
+            )
         }
-    }
-    if (showInfoSheet.value && longClickSong != null) {
-        SongOptionsBottomSheet(
-            song = longClickSong!!,
-            onDismiss = { showInfoSheet.value = false },
-            viewModel = viewModel,
-            database =  database,
-            navController = navController
-        )
     }
 }

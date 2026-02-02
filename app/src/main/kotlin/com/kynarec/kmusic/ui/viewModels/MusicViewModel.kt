@@ -60,7 +60,8 @@ data class MusicUiState(
     val songsSortOption: SortOption = SortOption("All"),
     val searchParam: SortOption = SortOption("Song"),
     val timeLeftMillis: Long = 0,
-    val currentLyrics: SyncedLyrics? = null
+    val currentLyrics: SyncedLyrics? = null,
+    val isLoadingLyrics: Boolean = true,
 )
 
 /**
@@ -124,6 +125,14 @@ class MusicViewModel
 
     init {
         initializeController()
+        println("MusicViewModel initialized")
+        println("MusicViewModel, Random number: ${Random.nextInt()}")
+        val stackTrace = Thread.currentThread().stackTrace
+        // We print the first 10 elements to see the "chain of command"
+        Log.d("MusicViewModel", "Initialization Trace:")
+        stackTrace.take(15).forEach { element ->
+            Log.d("MusicViewModel", "  at ${element.className}.${element.methodName}")
+        }
     }
 
     private fun initializeController() {
@@ -653,6 +662,10 @@ class MusicViewModel
             e.printStackTrace()
             null
         }
+    }
+
+    fun setLoadingLyrics(loading: Boolean) {
+        _uiState.update { it.copy(isLoadingLyrics = loading) }
     }
 
     fun setCurrentLyrics(syncedLyrics: SyncedLyrics) {

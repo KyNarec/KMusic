@@ -29,6 +29,8 @@ import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import kotlinx.parcelize.Parcelize
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @Parcelize
 data class SortOption(
@@ -44,8 +46,8 @@ data class SortOption(
 @Composable
 fun SongsScreen(
     modifier: Modifier = Modifier,
-    viewModel: MusicViewModel,
-    database: KmusicDatabase,
+    viewModel: MusicViewModel = koinViewModel(),
+    database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
     val context = LocalContext.current

@@ -16,6 +16,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -28,7 +29,9 @@ import androidx.navigation.NavHostController
 import com.kynarec.kmusic.ui.components.MyNavigationRailComponent
 import com.kynarec.kmusic.ui.components.TopBarComponent
 import com.kynarec.kmusic.ui.components.player.PlayerControlBar
-import com.kynarec.kmusic.ui.screens.player.PlayerScreen
+import com.kynarec.kmusic.ui.screens.player.MusicPlayerSheet
+import com.kynarec.kmusic.ui.screens.player.PlayerSheetMode
+import com.kynarec.kmusic.ui.screens.player.PlayerViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -40,6 +43,7 @@ fun ScreenWithContent(
     currentRoute: String?,
     isSearchScreen: Boolean,
     musicViewModel: MusicViewModel = koinViewModel(),
+    playerViewModel: PlayerViewModel = koinViewModel(),
     hideVertNavElements: Boolean,
     isSettingsScreen: Boolean = false,
     content: @Composable () -> Unit,
@@ -113,6 +117,8 @@ fun ScreenWithContent(
 
             }
 
+            val playerViewModelState by playerViewModel.uiState.collectAsStateWithLifecycle()
+
             if (showBottomSheet.value) {
                 ModalBottomSheet(
                     onDismissRequest = {
@@ -120,9 +126,10 @@ fun ScreenWithContent(
                     },
                     dragHandle = null,
                     shape = RectangleShape,
-                    sheetState = sheetState
+                    sheetState = sheetState,
+                    sheetGesturesEnabled = playerViewModelState.currentPlayerState == PlayerSheetMode.MainPlayer
                 ) {
-                    PlayerScreen(
+                    MusicPlayerSheet(
                         onClose = {
                             scope.launch { sheetState.hide() }.invokeOnCompletion {
                                 if (!sheetState.isVisible) {
