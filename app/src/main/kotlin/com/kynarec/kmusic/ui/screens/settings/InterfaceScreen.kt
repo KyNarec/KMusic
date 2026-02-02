@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.PinDrop
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.runtime.Composable
@@ -16,14 +17,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kynarec.kmusic.enums.StartDestination
 import com.kynarec.kmusic.ui.components.settings.SettingComponentEnumChoice
+import com.kynarec.kmusic.ui.components.settings.SettingComponentSwitch
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
+import com.kynarec.kmusic.utils.Constants.DEFAULT_WAVY_LYRICS_IDLE_INDICATOR
+import com.kynarec.kmusic.utils.Constants.WAVY_LYRICS_IDLE_INDICATOR_KEY
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun InterfaceScreen(
-    prefs: SettingsViewModel,
-    musicViewModel: MusicViewModel
+    prefs: SettingsViewModel = koinViewModel(),
+    musicViewModel: MusicViewModel = koinViewModel()
 ) {
     val scope = rememberCoroutineScope()
 
@@ -38,7 +43,7 @@ fun InterfaceScreen(
             )
     ) {
         item {
-            ElevatedCard() {
+            ElevatedCard {
                 SettingComponentEnumChoice(
                     icon = Icons.Default.PinDrop,
                     title = "Start Destination",
@@ -49,6 +54,21 @@ fun InterfaceScreen(
                         scope.launch { prefs.putStartDestination(it) }
                     },
                     labelMapper = { it.label }
+                )
+            }
+        }
+        item {
+            Spacer(Modifier.height(16.dp))
+        }
+        item {
+            ElevatedCard {
+                SettingComponentSwitch(
+                    icon = Icons.Default.GraphicEq,
+                    title = "Wavy lyrics idle indicator",
+                    description = "Show a rhythmic wavy progress bar during instrumental breaks",
+                    prefs = prefs,
+                    switchId = WAVY_LYRICS_IDLE_INDICATOR_KEY,
+                    defaultValue = DEFAULT_WAVY_LYRICS_IDLE_INDICATOR
                 )
             }
         }

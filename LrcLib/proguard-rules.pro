@@ -1,0 +1,76 @@
+# Add project specific ProGuard rules here.
+# You can control the set of applied configuration files using the
+# proguardFiles setting in build.gradle.
+#
+# For more details, see
+#   http://developer.android.com/guide/developing/tools/proguard.html
+
+# If your project uses WebView with JS, uncomment the following
+# and specify the fully qualified class name to the JavaScript interface
+# class:
+#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
+#   public *;
+#}
+
+-dontwarn io.ktor.client.network.sockets.SocketTimeoutException
+-dontwarn io.ktor.client.network.sockets.TimeoutExceptionsCommonKt
+-dontwarn io.ktor.client.plugins.HttpTimeout$HttpTimeoutCapabilityConfiguration
+-dontwarn io.ktor.client.plugins.HttpTimeout$Plugin
+-dontwarn io.ktor.client.plugins.HttpTimeout
+-dontwarn io.ktor.util.InternalAPI
+-dontwarn io.ktor.utils.io.ByteReadChannelJVMKt
+-dontwarn io.ktor.utils.io.CoroutinesKt
+-dontwarn io.ktor.utils.io.core.ByteBuffersKt
+-dontwarn io.ktor.utils.io.core.BytePacketBuilder
+-dontwarn io.ktor.utils.io.core.ByteReadPacket$Companion
+-dontwarn io.ktor.utils.io.core.ByteReadPacket
+-dontwarn io.ktor.utils.io.core.CloseableJVMKt
+-dontwarn io.ktor.utils.io.core.Input
+-dontwarn io.ktor.utils.io.core.InputArraysKt
+-dontwarn io.ktor.utils.io.core.InputPrimitivesKt
+-dontwarn io.ktor.utils.io.core.Output
+-dontwarn io.ktor.utils.io.core.OutputPrimitivesKt
+-dontwarn io.ktor.utils.io.core.PreviewKt
+
+#-dontshrink
+-dontobfuscate
+#-dontoptimize
+#-repackageclasses 'defpackage'
+
+-keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
+
+-if @kotlinx.serialization.Serializable class **
+-keepclassmembers class <1> {
+    static <1>$Companion Companion;
+}
+
+-if @kotlinx.serialization.Serializable class ** {
+    static **$* *;
+}
+-keepclassmembers class <2>$<3> {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+-if @kotlinx.serialization.Serializable class ** {
+    public static ** INSTANCE;
+}
+-keepclassmembers class <1> {
+    public static <1> INSTANCE;
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+-keep public class * extends android.app.Activity
+-keep public class * extends android.app.Service
+
+-keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+
+-keep class com.kynarec.lrclib.LrcLib
+-keep class com.kynarec.lrclib.LyricsRepository
+-keep class com.kynarec.lrclib.model.Lyrics
+
+-keepclassmembers class com.kynarec.lrclib.** {
+    <fields>;
+    <methods>;
+}

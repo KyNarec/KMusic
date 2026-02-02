@@ -1,0 +1,278 @@
+package com.kynarec.kmusic.ui.screens.player
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Queue
+import androidx.compose.material.icons.filled.Radio
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
+import coil.imageLoader
+import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.ui.components.MarqueeBox
+import com.kynarec.kmusic.ui.components.player.SleepTimerDialog
+import com.kynarec.kmusic.ui.components.playlist.AddToPlaylistDialog
+import com.kynarec.kmusic.ui.components.song.BottomSheetItem
+import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.utils.SmartMessage
+import com.kynarec.kmusic.utils.shareUrl
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun PlayerOptionsScreen(
+    song: Song,
+    onDismiss: () -> Unit,
+    onInformation: () -> Unit = {},
+    viewModel: MusicViewModel = koinViewModel(),
+    database: KmusicDatabase = koinInject(),
+    navController: NavHostController,
+    isInPlaylistDetailScreen: Boolean = false,
+    playlistIdLong: Long? = null,
+    playlistIdString: String? = null
+) {
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val sleepTimerTimeLeft = uiState.timeLeftMillis
+    var showSleepTimerDialog by remember { mutableStateOf(false) }
+
+    val dbSong by database.songDao()
+        .getSongFlowById(song.id)
+        .collectAsStateWithLifecycle(null)
+
+    var showAddToPlaylistDialog by remember { mutableStateOf(false) }
+
+    BackHandler {
+        onDismiss()
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.maybeAddSongToDB(song)
+    }
+    if (dbSong == null) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CircularWavyProgressIndicator()
+        }
+        return
+    } else {
+        val isLiked = dbSong!!.isLiked
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp)
+        ) {
+            // Song Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Album Art
+                AsyncImage(
+                    model = dbSong!!.thumbnail,
+                    contentDescription = "Album art",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(8.dp)),
+                    imageLoader = LocalContext.current.imageLoader
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Song Info
+                Column(
+                    modifier = Modifier.weight(1f).padding(end = 8.dp)
+                ) {
+                    MarqueeBox(
+                        text = dbSong!!.title,
+                        fontSize = 18.sp,
+                        maxLines = 1,
+                        //overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    MarqueeBox(
+                        text = dbSong!!.artists.joinToString(", ") { it.name },
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        //overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Duration and Share
+                Column(
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Text(
+                        text = dbSong!!.duration,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Share",
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clickable {
+                                shareUrl(
+                                    context,
+                                    url = "https://music.youtube.com/watch?v=${dbSong!!.id}"
+                                )
+                            },
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Action Items
+            BottomSheetItem(
+                icon = Icons.Default.Info,
+                text = "Information",
+                onClick = {
+                    onInformation()
+                    onDismiss()
+                }
+            )
+
+            BottomSheetItem(
+                icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                text = if (isLiked) "Remove from favorites" else "Add to favorites",
+                onClick = {
+                    viewModel.toggleFavoriteSong(dbSong!!)
+                }
+            )
+
+            BottomSheetItem(
+                icon = Icons.Default.Radio,
+                text = "Start radio",
+                onClick = {
+                    viewModel.playSongByIdWithRadio(dbSong!!)
+                    onDismiss()
+                }
+            )
+
+            BottomSheetItem(
+                icon = Icons.Default.SkipNext,
+                text = "Play next",
+                onClick = {
+                    viewModel.playNext(dbSong!!)
+                    SmartMessage("Playing ${dbSong!!.title} next", context = context)
+                    onDismiss()
+                }
+            )
+
+            BottomSheetItem(
+                icon = Icons.Default.Queue,
+                text = "Enqueue",
+                onClick = {
+                    viewModel.enqueueSong(dbSong!!)
+                    SmartMessage("Added ${dbSong!!.title} to queue", context = context)
+                    onDismiss()
+                }
+            )
+
+
+            BottomSheetItem(
+                icon = Icons.AutoMirrored.Filled.PlaylistAdd,
+                text = "Add to playlist",
+                onClick = {
+                    showAddToPlaylistDialog = true
+//                        onDismiss()
+                }
+            )
+
+            if (isInPlaylistDetailScreen && playlistIdLong != null) {
+                BottomSheetItem(
+                    icon = Icons.Default.Delete,
+                    text = "Delete from playlist",
+                    onClick = {
+                        scope.launch {
+                            database.playlistDao().removeSongFromPlaylist(playlistIdLong, dbSong!!.id)
+                        }
+                        onDismiss()
+                    }
+                )
+            }
+
+            if ((uiState.currentSong?.id ?: "") == dbSong!!.id) {
+                BottomSheetItem(
+                    icon = Icons.Default.Bedtime,
+                    text = if (sleepTimerTimeLeft > 0) "Timer: ${sleepTimerTimeLeft / 1000 / 60}m remaining" else "Sleep Timer",
+                    onClick = { showSleepTimerDialog = true }
+                )
+            }
+        }
+    }
+    if (showAddToPlaylistDialog) {
+        AddToPlaylistDialog(
+            song = dbSong!!,
+            database = database,
+            onDismissRequest = { showAddToPlaylistDialog = false },
+            navController = navController
+        )
+    }
+
+    if (showSleepTimerDialog) {
+        SleepTimerDialog(
+            onDismiss = { showSleepTimerDialog = false },
+            onTimerSelected = { minutes ->
+                viewModel.startSleepTimer(minutes)
+                showSleepTimerDialog = false
+                onDismiss() // Close bottom sheet
+            }
+        )
+    }
+}

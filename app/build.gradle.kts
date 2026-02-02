@@ -62,13 +62,13 @@ android {
     }
     
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
         compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
         }
     }
     
@@ -89,6 +89,8 @@ android {
 
 
 dependencies {
+    implementation(project(":LrcLib"))
+    implementation(project(":KLyrics"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity)
@@ -147,7 +149,7 @@ dependencies {
     // wavy seekbar
     implementation(libs.wavy.slider)
 
-    implementation(libs.okhttp)
+//    implementation(libs.okhttp)
     implementation(libs.json)
 
     implementation(libs.ksafe)
@@ -157,4 +159,16 @@ dependencies {
     implementation(libs.filekit.dialogs)
 
     implementation(libs.reorderable)
+
+    // Koin
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.compose)
+    implementation(libs.koin.compose.viewmodel)
+
+    // lyrics
+    implementation(libs.lyrics.core)
+    implementation(libs.lyrics.ui)
 }

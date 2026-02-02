@@ -6,14 +6,14 @@ import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.kynarec.kmusic.data.db.KmusicDatabase
-import eu.anifantakis.lib.ksafe.KSafe
-import kotlin.getValue
+import com.kynarec.kmusic.service.di.appModule
+import com.kynarec.kmusic.service.di.lrcLibModule
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.core.context.GlobalContext.startKoin
 
 class KMusic : Application(), ImageLoaderFactory {
     lateinit var database: KmusicDatabase
-        private set
-
-    lateinit var ksafe: KSafe
         private set
 
     companion object {
@@ -41,6 +41,11 @@ class KMusic : Application(), ImageLoaderFactory {
         super.onCreate()
         instance = this
         database = KmusicDatabase.getDatabase(this)
-        ksafe = KSafe(applicationContext)
+
+        startKoin {
+            androidLogger()
+            androidContext(this@KMusic)
+            modules(lrcLibModule, appModule) // and appModule in the future
+        }
     }
 }

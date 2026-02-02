@@ -1,7 +1,6 @@
 package com.kynarec.kmusic.ui.viewModels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import com.kynarec.kmusic.enums.StartDestination
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.utils.Constants.DARK_MODE_KEY
@@ -9,9 +8,11 @@ import com.kynarec.kmusic.utils.Constants.DEFAULT_DARK_MODE
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DYNAMIC_COLORS
 import com.kynarec.kmusic.utils.Constants.DEFAULT_START_DESTINATION
 import com.kynarec.kmusic.utils.Constants.DEFAULT_TRANSITION_EFFECT
+import com.kynarec.kmusic.utils.Constants.DEFAULT_WAVY_LYRICS_IDLE_INDICATOR
 import com.kynarec.kmusic.utils.Constants.DYNAMIC_COLORS_KEY
 import com.kynarec.kmusic.utils.Constants.START_DESTINATION_KEY
 import com.kynarec.kmusic.utils.Constants.TRANSITION_EFFECT_KEY
+import com.kynarec.kmusic.utils.Constants.WAVY_LYRICS_IDLE_INDICATOR_KEY
 import eu.anifantakis.lib.ksafe.KSafe
 import eu.anifantakis.lib.ksafe.compose.mutableStateOf
 
@@ -33,6 +34,7 @@ class SettingsViewModel(
     val darkModeFLow = ksafe.getFlow(DARK_MODE_KEY, DEFAULT_DARK_MODE)
     val dynamicColorsFlow = ksafe.getFlow(DYNAMIC_COLORS_KEY, DEFAULT_DYNAMIC_COLORS)
 
+    var wavyLyricsIdleIndicatorFlow = ksafe.getFlow(WAVY_LYRICS_IDLE_INDICATOR_KEY, DEFAULT_WAVY_LYRICS_IDLE_INDICATOR)
 
 
     suspend fun putTransitionEffect(value: TransitionEffect) {
@@ -57,29 +59,4 @@ class SettingsViewModel(
         ksafe.put(key, value)
     }
 
-
-    /**
-     * Factory for creating the ViewModel with dependencies.
-     */
-    class Factory(
-        private val ksafe: KSafe,
-    ) : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return SettingsViewModel(ksafe) as T
-            }
-            throw IllegalArgumentException("Unknown ViewModel class")
-        }
-    }
 }
-
-
-//object SettingsPreferences {
-//    private val prefs get() = (KMusic.instance).ksafe
-//
-//    var transitionEffect by prefs(
-//        key = "transition_effect",
-//        defaultValue = TransitionEffect.Fade
-//    )
-//}

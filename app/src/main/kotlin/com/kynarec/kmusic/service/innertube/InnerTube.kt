@@ -125,7 +125,7 @@ class InnerTube(
 
     suspend fun getYoutubeMusicSearchSuggestion(query: String): String {
 
-        val url = "https://youtubei.googleapis.com/youtubei/v1/music/get_search_suggestions"
+        val url = "https://music.youtube.com/youtubei/v1/music/get_search_suggestions"
 
         val requestBody = SearchSuggestion(
             input = query,
@@ -374,7 +374,7 @@ class InnerTube(
     suspend fun player(
         id: String,
     ): String {
-        val url = "https://youtubei.googleapis.com/youtubei/v1/player"
+        val url = "https://music.youtube.com/youtubei/v1/player"
 
         val requestBody = PlayerRequest(
             videoId = id,
@@ -422,7 +422,7 @@ class InnerTube(
         params: String?,
         continuation: String?
     ): String {
-        val url = "https://youtubei.googleapis.com/youtubei/v1/next"
+        val url = "https://music.youtube.com/youtubei/v1/next"
         // JSON body from your screenshot
         val json = JSONObject().apply {
             put("videoId", videoId)
@@ -499,7 +499,7 @@ class InnerTube(
         continuation: String?,
     ): String {
 
-        val url = "https://youtubei.googleapis.com/youtubei/v1/next"
+        val url = "https://music.youtube.com/youtubei/v1/next"
 
         val json = Json { ignoreUnknownKeys = true; encodeDefaults = false }
 
@@ -570,7 +570,7 @@ class InnerTube(
         params: String?,
         continuation: String? = null,
     ): String {
-        val url = "https://youtubei.googleapis.com/youtubei/v1/browse"
+        val url = "https://music.youtube.com/youtubei/v1/browse"
 
         val requestBody = BrowseRequest(
             browseId = browseId,

@@ -70,14 +70,16 @@ import io.github.vinceglb.filekit.readString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @ExperimentalMaterial3ExpressiveApi
 @Composable
 fun PlaylistsScreen(
     modifier: Modifier = Modifier,
     navController: NavHostController,
-    database: KmusicDatabase,
-    viewModel: MusicViewModel
+    database: KmusicDatabase = koinInject(),
+    viewModel: MusicViewModel = koinViewModel()
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current

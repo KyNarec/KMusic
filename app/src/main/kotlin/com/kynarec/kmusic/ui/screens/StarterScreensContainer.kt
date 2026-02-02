@@ -43,7 +43,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.enums.StartDestination
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.ui.components.MyNavigationRailComponent
@@ -52,21 +51,24 @@ import com.kynarec.kmusic.ui.components.player.PlayerControlBar
 import com.kynarec.kmusic.ui.screens.album.AlbumsScreen
 import com.kynarec.kmusic.ui.screens.artist.ArtistsScreen
 import com.kynarec.kmusic.ui.screens.home.HomeScreen
-import com.kynarec.kmusic.ui.screens.player.PlayerScreen
+import com.kynarec.kmusic.ui.screens.player.MusicPlayerSheet
+import com.kynarec.kmusic.ui.screens.player.PlayerSheetMode
+import com.kynarec.kmusic.ui.screens.player.PlayerViewModel
 import com.kynarec.kmusic.ui.screens.playlist.PlaylistsScreen
 import com.kynarec.kmusic.ui.screens.song.SongsScreen
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun StarterScreensContainer(
     rootNavController: NavHostController,
-    musicViewModel: MusicViewModel,
-    database: KmusicDatabase,
-    settingsViewModel: SettingsViewModel
+    musicViewModel: MusicViewModel = koinViewModel(),
+    settingsViewModel: SettingsViewModel = koinViewModel(),
+    playerViewModel: PlayerViewModel = koinViewModel()
 ) {
     val childNavController = rememberNavController()
     val navBackStackEntry by childNavController.currentBackStackEntryAsState()
@@ -210,28 +212,24 @@ fun StarterScreensContainer(
                         composable<SongsScreen> {
                             SongsScreen(
                                 viewModel = musicViewModel,
-                                database = database,
                                 navController = rootNavController
                             )
                         }
                         composable<ArtistsScreen> {
                             ArtistsScreen(
                                 viewModel = musicViewModel,
-                                database = database,
                                 navController = rootNavController
                             )
                         }
                         composable<AlbumsScreen> {
                             AlbumsScreen(
                                 viewModel = musicViewModel,
-                                database = database,
                                 navController = rootNavController
                             )
                         }
                         composable<PlaylistsScreen> {
                             PlaylistsScreen(
                                 navController = rootNavController,
-                                database = database,
                                 viewModel = musicViewModel
                             )
                         }
@@ -256,11 +254,12 @@ fun StarterScreensContainer(
                         onBarClick = {
                             showBottomSheet.value = true
                         },
-                        viewModel = musicViewModel,
                     )
                 }
 
             }
+
+            val playerViewModelState by playerViewModel.uiState.collectAsStateWithLifecycle()
 
             if (showBottomSheet.value) {
                 ModalBottomSheet(
@@ -269,9 +268,10 @@ fun StarterScreensContainer(
                     },
                     dragHandle = null,
                     shape = RectangleShape,
-                    sheetState = sheetState
+                    sheetState = sheetState,
+                    sheetGesturesEnabled = playerViewModelState.currentPlayerState == PlayerSheetMode.MainPlayer
                 ) {
-                    PlayerScreen(
+                    MusicPlayerSheet(
                         onClose = {
                             scope.launch { sheetState.hide() }.invokeOnCompletion {
                                 if (!sheetState.isVisible) {
@@ -279,8 +279,6 @@ fun StarterScreensContainer(
                                 }
                             }
                         },
-                        viewModel = musicViewModel,
-                        database = database,
                         navController = rootNavController
                     )
                 }

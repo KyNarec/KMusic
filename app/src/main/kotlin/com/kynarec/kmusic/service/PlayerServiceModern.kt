@@ -28,7 +28,6 @@ import androidx.media3.session.SessionError
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
 import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.MainActivity
@@ -48,7 +47,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.concurrent.Executor
 
 @UnstableApi
 class PlayerServiceModern : MediaLibraryService() {
@@ -83,54 +81,90 @@ class PlayerServiceModern : MediaLibraryService() {
     private var playbackStartTime = 0L
 
     private val playerListener = object : Player.Listener {
-        // Called when the player transitions to a new song or the playlist ends
+        /**
+         * Called when the player transitions to a new song or the playlist ends
+         */
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            super.onMediaItemTransition(mediaItem, reason)
-            Log.i("PlayerService", "onMediaItemTransition called with reason: $reason")
+//            super.onMediaItemTransition(mediaItem, reason)
+            when (reason) {
+                Player.MEDIA_ITEM_TRANSITION_REASON_AUTO ->
+                    Log.i("PlayerService", "MEDIA_ITEM_TRANSITION_REASON_AUTO (Playback has automatically transitioned to the next media item)")
+                Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED ->
+                    Log.i("PlayerService", "MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED (The current media item has changed because of a change in the playlist)")
+                Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT ->
+                    Log.i("PlayerService", "MEDIA_ITEM_TRANSITION_REASON_REPEAT (The media item has been repeated)")
+                Player.MEDIA_ITEM_TRANSITION_REASON_SEEK ->
+                    Log.i("PlayerService", "MEDIA_ITEM_TRANSITION_REASON_SEEK (A seek to another media item has occurred)")
+            }
+            Log.i("PlayerService", "mediaItem?.localConfiguration?.uri.toString() ${mediaItem?.localConfiguration?.uri.toString()}")
             saveCurrentPlaybackTime()
             val mediaItem = mediaItem
+            val currentIndex = player?.currentMediaItemIndex ?: -1
 
             val indexAtBegging = player?.currentMediaItemIndex
-            if (mediaItem?.localConfiguration?.uri.toString().isEmpty()) {
-                Log.i("PlayerService", "mediaItem is empty")
+            when (mediaItem?.localConfiguration?.uri.toString()) {
+                "EMPTY" -> {
+                    Log.i("PlayerService", "mediaItem is empty")
 
-                player?.stop()
+                    player?.stop()
 
-                CoroutineScope(Dispatchers.IO).launch {
-                    var fullMediaItem = mediaItem?.createFullMediaItem() ?: MediaItem.EMPTY
-                    if (fullMediaItem != MediaItem.EMPTY && indexAtBegging == withContext(
-                            Dispatchers.Main
-                        ) { player?.currentMediaItemIndex }
-                    )
+                    serviceScope.launch {
+                        val fullMediaItem = mediaItem?.createFullMediaItem() ?: MediaItem.EMPTY
+
                         withContext(Dispatchers.Main) {
-                            Log.i("PlayerService", "Replacing media item")
-                            player?.replaceMediaItem(
-                                player?.currentMediaItemIndex ?: 0,
-                                fullMediaItem
-                            )
-                            player?.prepare()
-                            player?.play()
-                        } else {
-                        Log.i("PlayerService", "fullMediaItem is empty or song was skipped")
+                            if (fullMediaItem != MediaItem.EMPTY && currentIndex == player?.currentMediaItemIndex) {
+                                player?.replaceMediaItem(currentIndex, fullMediaItem)
+                                player?.prepare()
+                                player?.play()
+                            }
+                        }
                     }
+                    return
                 }
-                return
+
+                "NA" -> {
+                    Log.e("PlayerService", "mediaItem URI cannot be fetched")
+                    SmartMessage("Fetching error", PopupType.Error, false, this@PlayerServiceModern)
+                    player?.seekToNextMediaItem()
+                    return
+                }
+
+                else -> {
+                    accumulatedPlayTime = 0L
+                    playbackStartTime = System.currentTimeMillis()
+                    currentSongId = mediaItem?.mediaId
+                    Log.i("PlayerService", "Playing: ${mediaItem?.mediaId}")                }
             }
 
-            if (mediaItem?.localConfiguration?.uri.toString() == "NA") {
-                Log.i("PlayerService", "mediaItem uri cannot be fetched")
-                SmartMessage("Fetching error", PopupType.Error, false, this@PlayerServiceModern)
-                player?.seekToNextMediaItem()
-                if (player?.isPlaying == false) player?.play()
-            } else {
-                accumulatedPlayTime = 0L
-                playbackStartTime = System.currentTimeMillis()
-                Log.i("PlayerService", "Transitioned to new media item: ${mediaItem?.mediaId}")
-                currentSongId = mediaItem?.mediaId
+            val playlistSize = player?.mediaItemCount ?: 0
+            val neighbors = listOf(currentIndex - 1, currentIndex + 1)
+
+            serviceScope.launch {
+                neighbors.forEach { index ->
+                    if (index in 0 until playlistSize) {
+                        // Get the item currently at that index
+                        val neighborItem = withContext(Dispatchers.Main) { player?.getMediaItemAt(index) }
+
+                        if (neighborItem?.localConfiguration?.uri.toString() == "EMPTY") {
+                            Log.i("PlayerService", "Pre-fetching neighbor at index $index")
+                            val fullNeighbor = neighborItem?.createFullMediaItem()
+
+                            withContext(Dispatchers.Main) {
+                                // Re-verify index and item identity before replacing
+                                if (index < (player?.mediaItemCount ?: 0) &&
+                                    player?.getMediaItemAt(index)?.mediaId == neighborItem?.mediaId) {
+                                    player?.replaceMediaItem(index, fullNeighbor!!)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        // Called when play/pause state changes
+        /**
+         * Called when play/pause state changes
+         */
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
             if (isPlaying) {
@@ -144,20 +178,35 @@ class PlayerServiceModern : MediaLibraryService() {
             }
         }
 
-        // Called when the player encounters an error
+        /**
+         * Called when the player encounters an error
+         */
         override fun onPlayerError(error: PlaybackException) {
-            super.onPlayerError(error)
             val exoPlaybackException = error as ExoPlaybackException
             when (exoPlaybackException.message) {
-                "Source error" -> SmartMessage("Source Error", PopupType.Error, false, this@PlayerServiceModern)
-                else -> SmartMessage("Unknown playback error", PopupType.Error, false, this@PlayerServiceModern)
+                "Source error" -> {
+                    SmartMessage("Source Error", PopupType.Error, false, this@PlayerServiceModern)
+//                    player?.seekToNextMediaItem()
+//                    player?.prepare()
+//                    player?.play()
+                }
+                else -> {
+                    SmartMessage(
+                        "Unknown playback error",
+                        PopupType.Error,
+                        false,
+                        this@PlayerServiceModern
+                    )
+                    player?.seekToNextMediaItem()
+//                    player?.prepare()
+//                    player?.play()
+                }
             }
             Log.e("PlayerService", "Player Error: ", error)
-            // Here you could stop the service, show a toast, or try to recover.
+            super.onPlayerError(error)
         }
     }
 
-    private val executor: Executor = MoreExecutors.directExecutor()
 
     private inner class MediaLibrarySessionCallback : MediaLibrarySession.Callback {
         override fun onAddMediaItems(
@@ -439,7 +488,6 @@ class PlayerServiceModern : MediaLibraryService() {
 
     private fun saveCurrentPlaybackTime() {
         Log.i("PlayerService", "Saving current playback time")
-        Log.i("PlayerService", "currentSongId = $currentSongId")
 
         val songId = currentSongId ?: return
 
@@ -471,7 +519,7 @@ class PlayerServiceModern : MediaLibraryService() {
                     )
                     songDao.updateSong(updatedSong)
 
-                    Log.i("PlayerService", "Updated song in database by $totalTimeToAdd to ${song.totalPlayTimeMs + totalTimeToAdd}")
+                    Log.i("PlayerService", "Updated song $songId in database by $totalTimeToAdd to ${song.totalPlayTimeMs + totalTimeToAdd}")
 
                     // Reset trackers after successful save
                     accumulatedPlayTime = 0

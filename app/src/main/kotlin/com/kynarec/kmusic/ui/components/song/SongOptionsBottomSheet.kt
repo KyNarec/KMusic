@@ -59,6 +59,8 @@ import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.shareUrl
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(
     ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class
@@ -69,8 +71,8 @@ fun SongOptionsBottomSheet(
     onDismiss: () -> Unit,
     onInformation: () -> Unit = {},
     onAddToPlaylist: () -> Unit = {},
-    viewModel: MusicViewModel,
-    database: KmusicDatabase,
+    viewModel: MusicViewModel = koinViewModel(),
+    database: KmusicDatabase = koinInject(),
     navController: NavHostController,
     isInPlaylistDetailScreen: Boolean = false,
     playlistIdLong: Long? = null,
