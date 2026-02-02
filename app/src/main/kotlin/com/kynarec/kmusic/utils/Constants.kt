@@ -31,5 +31,7 @@ object Constants {
     var DEFAULT_DARK_MODE = false
     const val DYNAMIC_COLORS_KEY = "dynamicColors"
     const val DEFAULT_DYNAMIC_COLORS = false
+    const val WAVY_LYRICS_IDLE_INDICATOR_KEY = "lyricsIdleIndicator"
+    val DEFAULT_WAVY_LYRICS_IDLE_INDICATOR = true
 }
 
