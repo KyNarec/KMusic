@@ -93,13 +93,13 @@
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 
--dontwarn com.kynarec.klyrics.AutoscrollMode
--dontwarn com.kynarec.klyrics.LyricsDefaults
--dontwarn com.kynarec.klyrics.LyricsLine$Default
--dontwarn com.kynarec.klyrics.LyricsLine
--dontwarn com.kynarec.klyrics.LyricsState
--dontwarn com.kynarec.klyrics.LyricsViewKt
--dontwarn com.kynarec.klyrics.UiLyrics
--dontwarn com.kynarec.lrclib.LrcLib
--dontwarn com.kynarec.lrclib.LyricsRepository
--dontwarn com.kynarec.lrclib.model.Lyrics
+#-dontwarn com.kynarec.klyrics.AutoscrollMode
+#-dontwarn com.kynarec.klyrics.LyricsDefaults
+#-dontwarn com.kynarec.klyrics.LyricsLine$Default
+#-dontwarn com.kynarec.klyrics.LyricsLine
+#-dontwarn com.kynarec.klyrics.LyricsState
+#-dontwarn com.kynarec.klyrics.LyricsViewKt
+#-dontwarn com.kynarec.klyrics.UiLyrics
+#-dontwarn com.kynarec.lrclib.LrcLib
+#-dontwarn com.kynarec.lrclib.LyricsRepository
+#-dontwarn com.kynarec.lrclib.model.Lyrics

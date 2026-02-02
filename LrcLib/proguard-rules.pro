@@ -65,3 +65,12 @@
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+
+-keep class com.kynarec.lrclib.LrcLib
+-keep class com.kynarec.lrclib.LyricsRepository
+-keep class com.kynarec.lrclib.model.Lyrics
+
+-keepclassmembers class com.kynarec.lrclib.** {
+    <fields>;
+    <methods>;
+}

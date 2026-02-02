@@ -73,3 +73,48 @@
 #-keepattributes RuntimeVisibleAnnotations,AnnotationDefault
 #-keepattributes SourceFile,LineNumberTable
 #-renamesourcefileattribute SourceFile
+
+# 1. Keep the package and all its classes
+-keep class com.kynarec.klyrics.** { *; }
+
+# 2. Keep the names of all members (fields/methods) to prevent breakage
+# in state restoration and data class copy() methods
+-keepclassmembers class com.kynarec.klyrics.** {
+    <fields>;
+    <methods>;
+}
+
+# 3. Specifically keep the LyricsLine sealed interface and its implementations
+# because the UI logic relies on the specific types (WordSynced, Default, Unsynced)
+-keep interface com.kynarec.klyrics.LyricsLine { *; }
+-keep class com.kynarec.klyrics.LyricsLine$* { *; }
+
+# 4. Keep the Enum for AutoscrollMode so it doesn't get obfuscated
+-keepclassmembers enum com.kynarec.klyrics.AutoscrollMode {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+# 5. Keep Compose-specific annotations used in your file
+-keepattributes RuntimeVisibleAnnotations
+-keepattributes AnnotationDefault
+-keepattributes Signature
+
+# Keep @Stable and @Immutable classes to ensure Compose compiler optimizations aren't stripped
+-keep @androidx.compose.runtime.Stable class *
+-keep @androidx.compose.runtime.Immutable class *
+
+# Prevent R8 from over-optimizing/renaming the actual Composable functions
+-keepclassmembers class com.kynarec.klyrics.** {
+    @androidx.compose.runtime.Composable <methods>;
+    @androidx.compose.runtime.ReadOnlyComposable <methods>;
+}
+
+# Keep the synthetic lambda classes that the Compose compiler creates
+# This helps resolve those "Failed to tokenize" warnings
+-keep class com.kynarec.klyrics.**$* { *; }
+
+# Keep specific types used in your LyricsViewKt function parameters
+-keep class com.kynarec.klyrics.LyricsState { *; }
+-keep class com.kynarec.klyrics.AutoscrollMode { *; }
+-keep class com.kynarec.klyrics.UiLyrics { *; }
