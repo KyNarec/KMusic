@@ -23,12 +23,12 @@ import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.utils.Constants.DEFAULT_WAVY_LYRICS_IDLE_INDICATOR
 import com.kynarec.kmusic.utils.Constants.WAVY_LYRICS_IDLE_INDICATOR_KEY
 import kotlinx.coroutines.launch
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @Composable
 fun InterfaceScreen(
-    prefs: SettingsViewModel = koinViewModel(),
-    musicViewModel: MusicViewModel = koinViewModel()
+    prefs: SettingsViewModel = koinActivityViewModel(),
+    musicViewModel: MusicViewModel = koinActivityViewModel()
 ) {
     val scope = rememberCoroutineScope()
 

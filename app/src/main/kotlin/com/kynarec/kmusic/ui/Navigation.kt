@@ -46,13 +46,13 @@ import com.kynarec.kmusic.ui.screens.settings.SettingsScreen
 import com.kynarec.kmusic.ui.screens.song.SongListScreen
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import kotlinx.serialization.Serializable
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun Navigation(
     navController: NavHostController,
-    settingsViewModel: SettingsViewModel = koinViewModel(),
+    settingsViewModel: SettingsViewModel = koinActivityViewModel(),
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route

@@ -21,15 +21,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.ui.components.player.PlayerControlBar
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun MusicPlayerSheet(
     onClose: () -> Unit,
     navController: NavHostController,
-    musicViewModel: MusicViewModel = koinViewModel(),
-    playerViewModel: PlayerViewModel = koinViewModel()
+    musicViewModel: MusicViewModel = koinActivityViewModel(),
+    playerViewModel: PlayerViewModel = koinActivityViewModel()
 ) {
     val uiState by musicViewModel.uiState.collectAsStateWithLifecycle()
     val playerUiState by playerViewModel.uiState.collectAsStateWithLifecycle()

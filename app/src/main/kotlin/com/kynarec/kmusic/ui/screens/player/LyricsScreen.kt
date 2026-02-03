@@ -64,14 +64,14 @@ import com.kynarec.kmusic.utils.Constants.DEFAULT_WAVY_LYRICS_IDLE_INDICATOR
 import com.kynarec.kmusic.utils.toSeconds
 import com.mocharealm.accompanist.lyrics.core.model.SyncedLyrics
 import com.mocharealm.accompanist.lyrics.core.model.synced.SyncedLine
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LyricsScreen(
     onDismiss: () -> Unit,
-    musicViewModel: MusicViewModel = koinViewModel(),
-    settingsViewModel: SettingsViewModel = koinViewModel()
+    musicViewModel: MusicViewModel = koinActivityViewModel(),
+    settingsViewModel: SettingsViewModel = koinActivityViewModel()
 ) {
     val uiState by musicViewModel.uiState.collectAsStateWithLifecycle()
     val wavyLyricsIdleIndicator by settingsViewModel.wavyLyricsIdleIndicatorFlow.collectAsStateWithLifecycle(DEFAULT_WAVY_LYRICS_IDLE_INDICATOR)

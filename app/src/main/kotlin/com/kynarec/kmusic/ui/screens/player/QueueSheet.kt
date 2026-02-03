@@ -34,8 +34,8 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.player.QueueSongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinActivityViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import kotlin.uuid.ExperimentalUuidApi
@@ -46,7 +46,7 @@ import kotlin.uuid.ExperimentalUuidApi
 fun QueueSheet(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: MusicViewModel = koinViewModel(),
+    viewModel: MusicViewModel = koinActivityViewModel(),
     sheetState: SheetState,
     showBottomSheet: MutableState<Boolean>,
     database: KmusicDatabase = koinInject(),

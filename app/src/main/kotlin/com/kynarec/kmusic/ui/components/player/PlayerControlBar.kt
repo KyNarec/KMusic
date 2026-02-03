@@ -49,13 +49,13 @@ import com.kynarec.kmusic.R
 import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.Constants.THUMBNAIL_ROUNDNESS
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PlayerControlBar(
     onBarClick: () -> Unit,
-    viewModel: MusicViewModel = koinViewModel()
+    viewModel: MusicViewModel = koinActivityViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 

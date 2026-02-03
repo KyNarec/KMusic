@@ -38,15 +38,15 @@ import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 
 @Composable
 fun SettingsScreen(
     navController: NavHostController,
-    musicViewModel: MusicViewModel = koinViewModel(),
+    musicViewModel: MusicViewModel = koinActivityViewModel(),
     updateManager: UpdateManager = koinInject(),
-    updateViewModel: UpdateViewModel = koinViewModel(),
+    updateViewModel: UpdateViewModel = koinActivityViewModel(),
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current

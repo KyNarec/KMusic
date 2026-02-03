@@ -38,13 +38,13 @@ import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 fun PlaylistOfflineDetailScreen(
     playlistId: Long,
-    viewModel: MusicViewModel = koinViewModel(),
+    viewModel: MusicViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {

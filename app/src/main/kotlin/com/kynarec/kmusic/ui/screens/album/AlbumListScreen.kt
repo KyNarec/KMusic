@@ -26,7 +26,7 @@ import com.kynarec.kmusic.service.innertube.browseAlbums
 import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.components.album.AlbumComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -35,7 +35,7 @@ fun AlbumListScreen(
     browseId: String,
     browseParams: String,
     navController: NavHostController,
-    viewModel: MusicViewModel = koinViewModel(),
+    viewModel: MusicViewModel = koinActivityViewModel(),
 ) {
     var albums by remember { mutableStateOf(emptyList<AlbumPreview>()) }
     var isLoading by remember { mutableStateOf(true) }

@@ -71,16 +71,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @ExperimentalMaterial3ExpressiveApi
 @Composable
 fun PlaylistsScreen(
     modifier: Modifier = Modifier,
-    navController: NavHostController,
+    viewModel: MusicViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
-    viewModel: MusicViewModel = koinViewModel()
-) {
+    navController: NavHostController,
+    ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
