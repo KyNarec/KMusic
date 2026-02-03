@@ -211,25 +211,21 @@ fun StarterScreensContainer(
 
                         composable<SongsScreen> {
                             SongsScreen(
-                                viewModel = musicViewModel,
                                 navController = rootNavController
                             )
                         }
                         composable<ArtistsScreen> {
                             ArtistsScreen(
-                                viewModel = musicViewModel,
                                 navController = rootNavController
                             )
                         }
                         composable<AlbumsScreen> {
                             AlbumsScreen(
-                                viewModel = musicViewModel,
                                 navController = rootNavController
                             )
                         }
                         composable<PlaylistsScreen> {
                             PlaylistsScreen(
-                                viewModel = musicViewModel,
                                 navController = rootNavController
                             )
                         }
