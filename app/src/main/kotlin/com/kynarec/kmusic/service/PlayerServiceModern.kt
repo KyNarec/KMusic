@@ -186,9 +186,9 @@ class PlayerServiceModern : MediaLibraryService() {
             when (exoPlaybackException.message) {
                 "Source error" -> {
                     SmartMessage("Source Error", PopupType.Error, false, this@PlayerServiceModern)
-//                    player?.seekToNextMediaItem()
-//                    player?.prepare()
-//                    player?.play()
+                    player?.seekToNextMediaItem()
+                    player?.prepare()
+                    player?.play()
                 }
                 else -> {
                     SmartMessage(
@@ -198,8 +198,8 @@ class PlayerServiceModern : MediaLibraryService() {
                         this@PlayerServiceModern
                     )
                     player?.seekToNextMediaItem()
-//                    player?.prepare()
-//                    player?.play()
+                    player?.prepare()
+                    player?.play()
                 }
             }
             Log.e("PlayerService", "Player Error: ", error)
