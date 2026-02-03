@@ -19,7 +19,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Queue
+import androidx.compose.material.icons.filled.LowPriority
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SkipNext
@@ -224,7 +224,7 @@ fun SongOptionsBottomSheet(
                 )
 
                 BottomSheetItem(
-                    icon = Icons.Default.Queue,
+                    icon = Icons.Default.LowPriority,
                     text = "Enqueue",
                     onClick = {
                         viewModel.enqueueSong(dbSong!!)

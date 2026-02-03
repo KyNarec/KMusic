@@ -294,6 +294,7 @@ fun AlbumDetailScreen(
     if (showAlbumOptionsBottomSheet.value) {
         AlbumOptionsBottomSheet(
             albumId = albumId,
+            albumSongs = songs,
             onDismiss = { showAlbumOptionsBottomSheet.value = false },
             viewModel = viewModel,
             database = database,

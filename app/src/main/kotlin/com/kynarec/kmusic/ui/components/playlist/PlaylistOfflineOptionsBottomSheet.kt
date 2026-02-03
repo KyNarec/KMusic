@@ -14,7 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.filled.Queue
+import androidx.compose.material.icons.filled.LowPriority
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -179,7 +179,7 @@ fun PlaylistOfflineOptionsBottomSheet(
                 )
 
                 BottomSheetItem(
-                    icon = Icons.Default.Queue,
+                    icon = Icons.Default.LowPriority,
                     text = "Enqueue",
                     onClick = {
                         viewModel.enqueueSongList(songs)
