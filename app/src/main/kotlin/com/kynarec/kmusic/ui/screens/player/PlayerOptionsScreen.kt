@@ -20,11 +20,13 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Queue
+import androidx.compose.material.icons.filled.LowPriority
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -108,151 +110,217 @@ fun PlayerOptionsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
+                .padding(horizontal = 8.dp)
         ) {
             // Song Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Album Art
-                AsyncImage(
-                    model = dbSong!!.thumbnail,
-                    contentDescription = "Album art",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(64.dp)
-                        .aspectRatio(1f)
-                        .clip(RoundedCornerShape(8.dp)),
-                    imageLoader = LocalContext.current.imageLoader
+            ElevatedCard(
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
                 )
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // Song Info
-                Column(
-                    modifier = Modifier.weight(1f).padding(end = 8.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    MarqueeBox(
-                        text = dbSong!!.title,
-                        fontSize = 18.sp,
-                        maxLines = 1,
-                        //overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    MarqueeBox(
-                        text = dbSong!!.artists.joinToString(", ") { it.name },
-                        fontSize = 14.sp,
-                        maxLines = 1,
-                        //overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // Duration and Share
-                Column(
-                    horizontalAlignment = Alignment.End
-                ) {
-                    Text(
-                        text = dbSong!!.duration,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = "Share",
+                    // Album Art
+                    AsyncImage(
+                        model = dbSong!!.thumbnail,
+                        contentDescription = "Album art",
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier
-                            .size(24.dp)
-                            .clickable {
-                                shareUrl(
-                                    context,
-                                    url = "https://music.youtube.com/watch?v=${dbSong!!.id}"
-                                )
-                            },
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            .size(64.dp)
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(8.dp)),
+                        imageLoader = LocalContext.current.imageLoader
                     )
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    // Song Info
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 8.dp)
+                    ) {
+                        MarqueeBox(
+                            text = dbSong!!.title,
+                            fontSize = 18.sp,
+                            maxLines = 1,
+                            //overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        MarqueeBox(
+                            text = dbSong!!.artists.joinToString(", ") { it.name },
+                            fontSize = 14.sp,
+                            maxLines = 1,
+                            //overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    // Duration and Share
+                    Column(
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Text(
+                            text = dbSong!!.duration,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Share",
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clickable {
+                                    shareUrl(
+                                        context,
+                                        url = "https://music.youtube.com/watch?v=${dbSong!!.id}"
+                                    )
+                                },
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Action Items
-            BottomSheetItem(
-                icon = Icons.Default.Info,
-                text = "Information",
-                onClick = {
-                    onInformation()
-                    onDismiss()
-                }
-            )
-
-            BottomSheetItem(
-                icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                text = if (isLiked) "Remove from favorites" else "Add to favorites",
-                onClick = {
-                    viewModel.toggleFavoriteSong(dbSong!!)
-                }
-            )
-
-            BottomSheetItem(
-                icon = Icons.Default.Radio,
-                text = "Start radio",
-                onClick = {
-                    viewModel.playSongByIdWithRadio(dbSong!!)
-                    onDismiss()
-                }
-            )
-
-            BottomSheetItem(
-                icon = Icons.Default.SkipNext,
-                text = "Play next",
-                onClick = {
-                    viewModel.playNext(dbSong!!)
-                    SmartMessage("Playing ${dbSong!!.title} next", context = context)
-                    onDismiss()
-                }
-            )
-
-            BottomSheetItem(
-                icon = Icons.Default.Queue,
-                text = "Enqueue",
-                onClick = {
-                    viewModel.enqueueSong(dbSong!!)
-                    SmartMessage("Added ${dbSong!!.title} to queue", context = context)
-                    onDismiss()
-                }
-            )
-
-
-            BottomSheetItem(
-                icon = Icons.AutoMirrored.Filled.PlaylistAdd,
-                text = "Add to playlist",
-                onClick = {
-                    showAddToPlaylistDialog = true
-//                        onDismiss()
-                }
-            )
-
-            if (isInPlaylistDetailScreen && playlistIdLong != null) {
+            ElevatedCard(
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
                 BottomSheetItem(
-                    icon = Icons.Default.Delete,
-                    text = "Delete from playlist",
+                    icon = Icons.Default.Info,
+                    text = "Information",
                     onClick = {
-                        scope.launch {
-                            database.playlistDao().removeSongFromPlaylist(playlistIdLong, dbSong!!.id)
-                        }
+                        onInformation()
                         onDismiss()
                     }
                 )
             }
+            Spacer(modifier = Modifier.height(6.dp))
+            // Action Items
+
+            ElevatedCard(
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+
+                BottomSheetItem(
+                    icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    text = if (isLiked) "Remove from favorites" else "Add to favorites",
+                    onClick = {
+                        viewModel.toggleFavoriteSong(dbSong!!)
+                    }
+                )
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+
+            ElevatedCard(
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                BottomSheetItem(
+                    icon = Icons.Default.Radio,
+                    text = "Start radio",
+                    onClick = {
+                        viewModel.playSongByIdWithRadio(dbSong!!)
+                        onDismiss()
+                    }
+                )
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+
+            ElevatedCard(
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                BottomSheetItem(
+                    icon = Icons.Default.SkipNext,
+                    text = "Play next",
+                    onClick = {
+                        viewModel.playNext(dbSong!!)
+                        SmartMessage("Playing ${dbSong!!.title} next", context = context)
+                        onDismiss()
+                    }
+                )
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+
+
+            ElevatedCard(
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                BottomSheetItem(
+                    icon = Icons.Default.LowPriority,
+                    text = "Enqueue",
+                    onClick = {
+                        viewModel.enqueueSong(dbSong!!)
+                        SmartMessage("Added ${dbSong!!.title} to queue", context = context)
+                        onDismiss()
+                    }
+                )
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+
+            ElevatedCard(
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                BottomSheetItem(
+                    icon = Icons.AutoMirrored.Filled.PlaylistAdd,
+                    text = "Add to playlist",
+                    onClick = {
+                        showAddToPlaylistDialog = true
+//                        onDismiss()
+                    }
+                )
+            }
+
+            if (isInPlaylistDetailScreen && playlistIdLong != null) {
+                Spacer(modifier = Modifier.height(6.dp))
+                ElevatedCard(
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    BottomSheetItem(
+                        icon = Icons.Default.Delete,
+                        text = "Delete from playlist",
+                        onClick = {
+                            scope.launch {
+                                database.playlistDao()
+                                    .removeSongFromPlaylist(playlistIdLong, dbSong!!.id)
+                            }
+                            onDismiss()
+                        }
+                    )
+                }
+            }
 
             if ((uiState.currentSong?.id ?: "") == dbSong!!.id) {
-                BottomSheetItem(
-                    icon = Icons.Default.Bedtime,
-                    text = if (sleepTimerTimeLeft > 0) "Timer: ${sleepTimerTimeLeft / 1000 / 60}m remaining" else "Sleep Timer",
-                    onClick = { showSleepTimerDialog = true }
-                )
+                Spacer(modifier = Modifier.height(6.dp))
+                ElevatedCard(
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    BottomSheetItem(
+                        icon = Icons.Default.Bedtime,
+                        text = if (sleepTimerTimeLeft > 0) "Timer: ${sleepTimerTimeLeft / 1000 / 60}m remaining" else "Sleep Timer",
+                        onClick = { showSleepTimerDialog = true }
+                    )
+                }
             }
         }
     }

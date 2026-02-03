@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.LowPriority
+import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -23,13 +25,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.song.BottomSheetItem
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.utils.SmartMessage
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AlbumOptionsBottomSheet(
     albumId: String,
+    albumSongs: List<Song>,
     onDismiss: () -> Unit,
     viewModel: MusicViewModel,
     database: KmusicDatabase,
@@ -73,6 +78,25 @@ fun AlbumOptionsBottomSheet(
 //                        navController.navigate(PlaylistsScreen)
                         viewModel.toggleFavoriteAlbum(album!!)
 //                        onDismiss()
+                    }
+                )
+                BottomSheetItem(
+                    icon = Icons.Default.SkipNext,
+                    text = "Play next",
+                    onClick = {
+                        viewModel.playNextList(albumSongs)
+                        SmartMessage("Playing ${album?.title} next", context = context)
+                        onDismiss()
+                    }
+                )
+
+                BottomSheetItem(
+                    icon = Icons.Default.LowPriority,
+                    text = "Enqueue",
+                    onClick = {
+                        viewModel.enqueueSongList(albumSongs)
+                        SmartMessage("Added ${album?.title} to queue", context = context)
+                        onDismiss()
                     }
                 )
             }
