@@ -63,7 +63,7 @@ import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(
     UnstableApi::class, ExperimentalMaterial3ExpressiveApi::class
@@ -71,7 +71,7 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun SearchResultScreen(
     query: String,
-    viewModel: MusicViewModel = koinViewModel(),
+    viewModel: MusicViewModel = koinActivityViewModel(),
     navController: NavHostController,
     database: KmusicDatabase = koinInject()
 ) {

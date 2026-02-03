@@ -14,18 +14,16 @@ import com.kynarec.kmusic.ui.theme.AppTheme
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DARK_MODE
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DYNAMIC_COLORS
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(
-    settingsViewModel: SettingsViewModel = koinViewModel()
-) {
+fun MainScreen() {
 
     DEFAULT_DARK_MODE = isSystemInDarkTheme()
     val navController = rememberNavController()
 
-
+    val settingsViewModel: SettingsViewModel = koinActivityViewModel()
     val darkTheme by settingsViewModel.darkModeFLow.collectAsStateWithLifecycle(DEFAULT_DARK_MODE)
 
     val dynamicColors by settingsViewModel.dynamicColorsFlow.collectAsStateWithLifecycle(DEFAULT_DYNAMIC_COLORS)

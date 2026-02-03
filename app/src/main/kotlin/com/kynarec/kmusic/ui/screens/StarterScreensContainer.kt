@@ -60,15 +60,15 @@ import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun StarterScreensContainer(
     rootNavController: NavHostController,
-    musicViewModel: MusicViewModel = koinViewModel(),
-    settingsViewModel: SettingsViewModel = koinViewModel(),
-    playerViewModel: PlayerViewModel = koinViewModel()
+    musicViewModel: MusicViewModel = koinActivityViewModel(),
+    settingsViewModel: SettingsViewModel = koinActivityViewModel(),
+    playerViewModel: PlayerViewModel = koinActivityViewModel()
 ) {
     val childNavController = rememberNavController()
     val navBackStackEntry by childNavController.currentBackStackEntryAsState()
@@ -229,8 +229,8 @@ fun StarterScreensContainer(
                         }
                         composable<PlaylistsScreen> {
                             PlaylistsScreen(
-                                navController = rootNavController,
-                                viewModel = musicViewModel
+                                viewModel = musicViewModel,
+                                navController = rootNavController
                             )
                         }
                     }

@@ -34,7 +34,7 @@ import com.kynarec.kmusic.ui.screens.player.PlayerSheetMode
 import com.kynarec.kmusic.ui.screens.player.PlayerViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import kotlinx.coroutines.launch
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,8 +42,8 @@ fun ScreenWithContent(
     navController: NavHostController,
     currentRoute: String?,
     isSearchScreen: Boolean,
-    musicViewModel: MusicViewModel = koinViewModel(),
-    playerViewModel: PlayerViewModel = koinViewModel(),
+    musicViewModel: MusicViewModel = koinActivityViewModel(),
+    playerViewModel: PlayerViewModel = koinActivityViewModel(),
     hideVertNavElements: Boolean,
     isSettingsScreen: Boolean = false,
     content: @Composable () -> Unit,

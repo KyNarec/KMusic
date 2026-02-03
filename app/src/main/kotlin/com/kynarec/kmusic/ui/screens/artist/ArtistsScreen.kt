@@ -25,14 +25,14 @@ import com.kynarec.kmusic.ui.ArtistDetailScreen
 import com.kynarec.kmusic.ui.components.artist.ArtistComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ArtistsScreen(
     modifier: Modifier = Modifier,
     database: KmusicDatabase = koinInject(),
-    viewModel: MusicViewModel = koinViewModel(),
+    viewModel: MusicViewModel = koinActivityViewModel(),
     navController: NavHostController
 ) {
     val artists by database.artistDao().getFavouritesArtistsFlow().collectAsStateWithLifecycle(null)

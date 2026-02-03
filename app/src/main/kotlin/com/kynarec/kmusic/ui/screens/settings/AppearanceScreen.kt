@@ -26,13 +26,13 @@ import com.kynarec.kmusic.utils.Constants.DEFAULT_DARK_MODE
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DYNAMIC_COLORS
 import com.kynarec.kmusic.utils.Constants.DYNAMIC_COLORS_KEY
 import kotlinx.coroutines.launch
-import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 
 @Composable
 fun AppearanceScreen(
-    prefs: SettingsViewModel = koinViewModel(),
-    musicViewModel: MusicViewModel = koinViewModel()
+    prefs: SettingsViewModel = koinActivityViewModel(),
+    musicViewModel: MusicViewModel = koinActivityViewModel()
 
 ) {
     val scope = rememberCoroutineScope()
