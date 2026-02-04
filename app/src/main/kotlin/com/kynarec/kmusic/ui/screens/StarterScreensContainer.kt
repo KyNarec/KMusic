@@ -53,10 +53,10 @@ import com.kynarec.kmusic.ui.screens.artist.ArtistsScreen
 import com.kynarec.kmusic.ui.screens.home.HomeScreen
 import com.kynarec.kmusic.ui.screens.player.MusicPlayerSheet
 import com.kynarec.kmusic.ui.screens.player.PlayerSheetMode
-import com.kynarec.kmusic.ui.screens.player.PlayerViewModel
 import com.kynarec.kmusic.ui.screens.playlist.PlaylistsScreen
 import com.kynarec.kmusic.ui.screens.song.SongsScreen
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable

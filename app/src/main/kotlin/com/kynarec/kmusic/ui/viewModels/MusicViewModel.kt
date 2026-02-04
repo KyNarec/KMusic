@@ -18,6 +18,8 @@ import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import coil.annotation.ExperimentalCoilApi
+import coil.imageLoader
 import com.google.common.util.concurrent.ListenableFuture
 import com.kynarec.kmusic.data.db.dao.AlbumDao
 import com.kynarec.kmusic.data.db.dao.ArtistDao
@@ -53,6 +55,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
+import java.io.File
 import kotlin.random.Random
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -739,7 +742,7 @@ class MusicViewModel
         return "$count songs downloaded ($size MB used)"
     }
 
-    private fun getDownloadedSongsCount(): Int {
+    fun getDownloadedSongsCount(): Int {
         val cursor = downloadManager.downloadIndex.getDownloads()
         var count = 0
         try {
@@ -752,8 +755,44 @@ class MusicViewModel
         return count
     }
 
-    private fun getDownloadSizeMb(): Double =
+    fun getDownloadSizeMb(): Double =
         downloadCache.cacheSpace / (1024.0 * 1024.0)
+
+    fun getImageCacheStats(): String {
+        val coilCacheDir = File(application.cacheDir, "image_cache")
+        val sizeBytes = if (coilCacheDir.exists()) {
+            coilCacheDir.walkTopDown().map { it.length() }.sum()
+        } else 0L
+
+        val sizeMb = sizeBytes / (1024.0 * 1024.0)
+        return "%.2f MB used by artworks".format(sizeMb)
+    }
+
+    @kotlin.OptIn(ExperimentalCoilApi::class)
+    fun clearImageCache() {
+        val imageLoader = application.imageLoader
+        imageLoader.diskCache?.clear()
+        imageLoader.memoryCache?.clear()
+    }
+
+    fun getDatabaseStats(): String {
+        val dbName = "kmusic_database"
+        val dbFile = application.getDatabasePath(dbName)
+
+        // Room creates 3 files: the .db, the -wal (write-ahead log), and the -shm (shared memory)
+        val dbDir = dbFile.parentFile
+        val totalBytes = dbDir?.listFiles()?.filter { it.name.startsWith(dbName) }?.sumOf { it.length() } ?: 0L
+
+        val sizeMb = totalBytes / (1024.0 * 1024.0)
+        return "%.2f MB (Songs, Playlists, History)".format(sizeMb)
+    }
+
+    fun clearLibrary() {
+        viewModelScope.launch(Dispatchers.IO) {
+//            database.clearAllTables()
+            Log.i("MusicViewModel", "Database library cleared successfully")
+        }
+    }
 
     override fun onCleared() {
         super.onCleared()

@@ -41,6 +41,7 @@ import com.kynarec.kmusic.ui.screens.search.SearchResultScreen
 import com.kynarec.kmusic.ui.screens.search.SearchScreen
 import com.kynarec.kmusic.ui.screens.settings.AboutScreen
 import com.kynarec.kmusic.ui.screens.settings.AppearanceScreen
+import com.kynarec.kmusic.ui.screens.settings.DataScreen
 import com.kynarec.kmusic.ui.screens.settings.InterfaceScreen
 import com.kynarec.kmusic.ui.screens.settings.SettingsScreen
 import com.kynarec.kmusic.ui.screens.song.SongListScreen
@@ -249,6 +250,18 @@ fun Navigation(
                 }
             }
 
+            composable<Settings.DataScreen> {
+                ScreenWithContent(
+                    navController = navController,
+                    currentRoute = currentRoute,
+                    isSearchScreen = false,
+                    hideVertNavElements = true,
+                    isSettingsScreen = true
+                ) {
+                    DataScreen()
+                }
+            }
+
             composable<Settings.AboutScreen> {
                 ScreenWithContent(
                     navController = navController,
@@ -402,6 +415,9 @@ sealed class Settings {
 
     @Serializable
     object AboutScreen : Settings()
+
+    @Serializable
+    object DataScreen : Settings()
 }
 
 

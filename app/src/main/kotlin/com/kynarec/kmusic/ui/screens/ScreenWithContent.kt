@@ -31,8 +31,8 @@ import com.kynarec.kmusic.ui.components.TopBarComponent
 import com.kynarec.kmusic.ui.components.player.PlayerControlBar
 import com.kynarec.kmusic.ui.screens.player.MusicPlayerSheet
 import com.kynarec.kmusic.ui.screens.player.PlayerSheetMode
-import com.kynarec.kmusic.ui.screens.player.PlayerViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinActivityViewModel
 
