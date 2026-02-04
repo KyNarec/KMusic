@@ -27,7 +27,9 @@ val appModule = module {
             playlistDao = get(),
             albumDao = get(),
             artistDao = get(),
-            lyricsRepository = get() // This comes from LrcLib module
+            lyricsRepository = get(), // This comes from LrcLib module
+            downloadManager = get(),
+            downloadCache = get()
         )
     }
 

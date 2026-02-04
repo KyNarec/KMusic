@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.ComponentName
 import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
@@ -11,6 +12,10 @@ import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.cache.SimpleCache
+import androidx.media3.exoplayer.offline.Download
+import androidx.media3.exoplayer.offline.DownloadManager
+import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
@@ -22,8 +27,10 @@ import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.Artist
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.service.DownloadService
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.service.innertube.getRadioFlow
+import com.kynarec.kmusic.service.innertube.playSongById
 import com.kynarec.kmusic.ui.screens.song.SortOption
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
@@ -80,7 +87,9 @@ class MusicViewModel
     private val playlistDao: PlaylistDao,
     private val albumDao: AlbumDao,
     private val artistDao: ArtistDao,
-    private val lyricsRepository: LyricsRepository
+    private val lyricsRepository: LyricsRepository,
+    private val downloadManager: DownloadManager,
+    private val downloadCache: SimpleCache
 ) : ViewModel() {
     private val tag = "MusicViewModel"
 
@@ -133,6 +142,8 @@ class MusicViewModel
         stackTrace.take(15).forEach { element ->
             Log.d("MusicViewModel", "  at ${element.className}.${element.methodName}")
         }
+        Log.d("MusicViewModel", "----------------------------------------")
+        Log.d("MusicViewModel", getDownloadStats())
     }
 
     private fun initializeController() {
@@ -671,6 +682,78 @@ class MusicViewModel
     fun setCurrentLyrics(syncedLyrics: SyncedLyrics) {
         _uiState.update { it.copy(currentLyrics = syncedLyrics) }
     }
+
+    fun addDownload(song: Song) {
+        val context = application.applicationContext
+        viewModelScope.launch {
+            val uri = playSongById(song.id)
+            if (uri == "NA" || uri.isEmpty()) return@launch
+            val downloadRequest = DownloadRequest.Builder(
+                song.id,
+                uri.toUri()
+            )
+                .setCustomCacheKey(song.id)
+                .setData(song.title.toByteArray(Charsets.UTF_8))
+                .build()
+
+            androidx.media3.exoplayer.offline.DownloadService.sendAddDownload(
+                context,
+                DownloadService::class.java,
+                downloadRequest,
+                /* foreground = */ false
+            )
+            Log.i("MusicViewModel", "Sent request to add download: ${song.id}")
+
+        }
+    }
+
+    fun removeDownload(song: Song) {
+        val context = application.applicationContext
+        androidx.media3.exoplayer.offline.DownloadService.sendRemoveDownload(
+            context,
+            DownloadService::class.java,
+            song.id,
+            /* foreground = */ false
+        )
+        Log.i("MusicViewModel", "Sent request to remove download: ${song.id}")
+    }
+
+    fun removeAllDownloads() {
+        val context = application.applicationContext
+        androidx.media3.exoplayer.offline.DownloadService.sendRemoveAllDownloads(
+            context,
+            DownloadService::class.java,
+            /* foreground = */ false
+        )
+        Log.i("MusicViewModel", "Sent request to remove ALL downloads")
+    }
+
+    fun isSongDownloaded(songId: String): Boolean {
+        val download = downloadManager.downloadIndex.getDownload(songId)
+        return download != null && download.state == Download.STATE_COMPLETED
+    }
+
+    fun getDownloadStats(): String {
+        val count = getDownloadedSongsCount()
+        val size = "%.2f".format(getDownloadSizeMb())
+        return "$count songs downloaded ($size MB used)"
+    }
+
+    private fun getDownloadedSongsCount(): Int {
+        val cursor = downloadManager.downloadIndex.getDownloads()
+        var count = 0
+        try {
+            while (cursor.moveToNext()) {
+                if (cursor.download.state == Download.STATE_COMPLETED) count++
+            }
+        } finally {
+            cursor.close()
+        }
+        return count
+    }
+
+    private fun getDownloadSizeMb(): Double =
+        downloadCache.cacheSpace / (1024.0 * 1024.0)
 
     override fun onCleared() {
         super.onCleared()

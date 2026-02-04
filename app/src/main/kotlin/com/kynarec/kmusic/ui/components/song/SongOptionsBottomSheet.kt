@@ -41,15 +41,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.imageLoader
+import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.MarqueeBox
@@ -195,6 +198,32 @@ fun SongOptionsBottomSheet(
                         onDismiss()
                     }
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                val isDownloaded = remember(song.id) { viewModel.isSongDownloaded(song.id) }
+                if (isDownloaded) {
+                    BottomSheetItem(
+                        icon = painterResource(R.drawable.rounded_download_done_24),
+                        text = "Downloaded",
+                        onClick = {
+//                            viewModel.addDownload(song)
+                            onDismiss()
+                        }
+                    )
+                } else {
+                    BottomSheetItem(
+                        icon = painterResource(R.drawable.rounded_download_24),
+                        text = "Download",
+                        onClick = {
+                            viewModel.addDownload(song)
+                            onDismiss()
+                        }
+                    )
+                }
+
+
+                Spacer(modifier = Modifier.height(8.dp))
+
 
                 BottomSheetItem(
                     icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
@@ -318,3 +347,34 @@ fun BottomSheetItem(
         )
     }
 }
+@Composable
+fun BottomSheetItem(
+    icon: Painter,
+    text: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        Icon(
+            painter = icon,
+            contentDescription = text,
+            modifier = Modifier.size(24.dp),
+            tint = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.width(24.dp))
+
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
