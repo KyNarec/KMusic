@@ -18,6 +18,7 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.DownloadService
 import com.kynarec.kmusic.service.innertube.playSongById
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,31 +36,67 @@ class DataViewModel (
     private val _uiState = MutableStateFlow(DataUiState())
     val uiState: StateFlow<DataUiState> = _uiState.asStateFlow()
 
+    private val _downloadingSongs = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val downloadingSongs: StateFlow<Map<String, Int>> = _downloadingSongs.asStateFlow()
+
+    private val _completedDownloadIds = MutableStateFlow<Set<String>>(emptySet())
+    val completedDownloadIds: StateFlow<Set<String>> = _completedDownloadIds.asStateFlow()
+
     init {
+        observeDownloads()
         updateStats()
     }
 
     fun updateStats() {
         Log.i("DataViewModel", downloadCache.cacheSpace.toString())
-//        viewModelScope.launch(Dispatchers.IO) {
-            val dbName = "kmusic_database"
-            val dbFile = application.getDatabasePath(dbName)
-            val dbDir = dbFile.parentFile
-            val dbBytes = dbDir?.listFiles()?.filter { it.name.startsWith(dbName) }?.sumOf { it.length() } ?: 0L
-            val coilCacheDir = File(application.cacheDir, "image_cache")
-            val imgBytes = if (coilCacheDir.exists()) {
-                coilCacheDir.walkTopDown().map { it.length() }.sum()
-            } else 0L
+        val dbName = "kmusic_database"
+        val dbFile = application.getDatabasePath(dbName)
+        val dbDir = dbFile.parentFile
+        val dbBytes =
+            dbDir?.listFiles()?.filter { it.name.startsWith(dbName) }?.sumOf { it.length() } ?: 0L
+        val coilCacheDir = File(application.cacheDir, "image_cache")
+        val imgBytes = if (coilCacheDir.exists()) {
+            coilCacheDir.walkTopDown().map { it.length() }.sum()
+        } else 0L
 
-            val downloadsCount = getDownloadedSongsCount()
-            val downloadsBytes = getDownloadSize()
-            _uiState.value = DataUiState(
-                downloadsCount = downloadsCount,
-                downloadsBytes = downloadsBytes,
-                imageBytes = imgBytes,
-                databaseBytes = dbBytes
-            )
-//        }
+        val downloadsCount = getDownloadedSongsCount()
+        val downloadsBytes = getDownloadSize()
+        _uiState.value = DataUiState(
+            downloadsCount = downloadsCount,
+            downloadsBytes = downloadsBytes,
+            imageBytes = imgBytes,
+            databaseBytes = dbBytes
+        )
+    }
+
+    private fun observeDownloads() {
+        viewModelScope.launch(Dispatchers.IO) {
+            while (true) {
+                val downloading = mutableMapOf<String, Int>()
+                val completed = mutableSetOf<String>()
+
+                val cursor = downloadManager.downloadIndex.getDownloads()
+                try {
+                    while (cursor.moveToNext()) {
+                        val download = cursor.download
+                        when (download.state) {
+                            Download.STATE_COMPLETED -> completed.add(download.request.id)
+                            Download.STATE_DOWNLOADING, Download.STATE_QUEUED, Download.STATE_RESTARTING -> {
+                                downloading[download.request.id] = download.percentDownloaded.toInt()
+                            }
+                            else -> completed.remove(download.request.id)
+                        }
+                    }
+                } finally {
+                    cursor.close()
+                }
+
+                _downloadingSongs.value = downloading
+                _completedDownloadIds.value = completed
+
+                delay(if (downloading.isEmpty()) 1000 else 500)
+            }
+        }
     }
 
     fun addDownload(song: Song) {
@@ -115,12 +152,6 @@ class DataViewModel (
         return download != null && download.state == Download.STATE_COMPLETED
     }
 
-    fun getDownloadStats(): String {
-        val count = getDownloadedSongsCount()
-        val size = "%.2f".format(getDownloadSizeMb())
-        return "$count songs downloaded ($size MB used)"
-    }
-
     fun getDownloadedSongsCount(): Int {
         val cursor = downloadManager.downloadIndex.getDownloads()
         var count = 0
@@ -135,43 +166,19 @@ class DataViewModel (
     }
     fun clearEntireDownloadCache() {
         viewModelScope.launch(Dispatchers.IO) {
-            // SimpleCache stores data by 'keys'
             val allKeys = downloadCache.keys
 
             allKeys.forEach { key ->
-                // This physically deletes the files for each key
                 downloadCache.removeResource(key)
             }
-
-            // Also clear the DownloadManager's database so the UI
-            // doesn't think songs are still downloaded
             downloadManager.removeAllDownloads()
             updateStats()
             Log.i("MusicViewModel", "Cache is now completely empty.")
         }
     }
 
-    fun getDownloadedSongsCountFormatted(): String {
-        val count = getDownloadedSongsCount()
-        val songText = if (count == 1) "song" else "songs"
-        return "$count $songText"
-    }
-
-    fun getDownloadSizeMb(): Double =
-        downloadCache.cacheSpace / (1024.0 * 1024.0)
-
     fun getDownloadSize(): Long =
         downloadCache.cacheSpace
-
-    fun getImageCacheStats(): String {
-        val coilCacheDir = File(application.cacheDir, "image_cache")
-        val sizeBytes = if (coilCacheDir.exists()) {
-            coilCacheDir.walkTopDown().map { it.length() }.sum()
-        } else 0L
-
-        val sizeMb = sizeBytes / (1024.0 * 1024.0)
-        return "%.2f MB used by artworks".format(sizeMb)
-    }
 
     @kotlin.OptIn(ExperimentalCoilApi::class)
     fun clearImageCache() {
@@ -179,18 +186,6 @@ class DataViewModel (
         imageLoader.diskCache?.clear()
         imageLoader.memoryCache?.clear()
         updateStats()
-    }
-
-    fun getDatabaseStats(): String {
-        val dbName = "kmusic_database"
-        val dbFile = application.getDatabasePath(dbName)
-
-        // Room creates 3 files: the .db, the -wal (write-ahead log), and the -shm (shared memory)
-        val dbDir = dbFile.parentFile
-        val totalBytes = dbDir?.listFiles()?.filter { it.name.startsWith(dbName) }?.sumOf { it.length() } ?: 0L
-
-        val sizeMb = totalBytes / (1024.0 * 1024.0)
-        return "%.2f MB (Songs, Playlists, History)".format(sizeMb)
     }
 
     fun clearDatabase() {

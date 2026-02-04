@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,36 +16,52 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Equalizer
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.imageLoader
+import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.MarqueeBox
+import com.kynarec.kmusic.ui.viewModels.DataViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SongComponent(
     song: Song,
     onClick: () -> Unit,
     onLongClick: () ->  Unit = {},
-    isPlaying: Boolean = false
+    isPlaying: Boolean = false,
+    dataViewModel: DataViewModel = koinActivityViewModel()
 ) {
     val title = song.title
     val artist = song.artists.joinToString(", ") { it.name }
     val duration = song.duration
     val imageUrl = song.thumbnail
+
+    val downloadingSongs by dataViewModel.downloadingSongs.collectAsStateWithLifecycle()
+    val completedIds by dataViewModel.completedDownloadIds.collectAsStateWithLifecycle()
+    val isDownloading = downloadingSongs.containsKey(song.id)
+    val isDownloaded = completedIds.contains(song.id)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -96,14 +113,45 @@ fun SongComponent(
             modifier = Modifier
                 .fillMaxHeight()
                 .padding(end = 16.dp, start = 8.dp),
-            verticalArrangement = Arrangement.Bottom,
+            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.End
         ) {
-            if (isPlaying) {
-                Icon(
-                    Icons.Default.Equalizer,
-                    contentDescription = "Equalizer",
-                )
+            Box(contentAlignment = Alignment.Center) {
+                when {
+                    isDownloading -> {
+                        IconButton(onClick = {  },
+                            modifier = Modifier.size(ButtonDefaults.LargeIconSize),
+
+                            shape = IconButtonDefaults.smallSquareShape ) {
+                            Icon(
+                                painter = painterResource(R.drawable.rounded_downloading_24),
+                                contentDescription = "Downloading",
+                            )
+                        }
+                    }
+                    isDownloaded -> {
+                        IconButton(onClick = { dataViewModel.removeDownload(song) },
+                            modifier = Modifier.size(ButtonDefaults.LargeIconSize),
+
+                            shape = IconButtonDefaults.smallSquareShape ) {
+                            Icon(
+                                painter = painterResource(R.drawable.rounded_download_done_24),
+                                contentDescription = "Downloaded",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    else -> {
+                        IconButton(onClick = { dataViewModel.addDownload(song) },
+                            modifier = Modifier.size(ButtonDefaults.LargeIconSize),
+                            shape = IconButtonDefaults.smallSquareShape ) {
+                            Icon(
+                                painter = painterResource(R.drawable.rounded_download_24),
+                                contentDescription = "Download"
+                            )
+                        }
+                    }
+                }
             }
             Spacer(modifier = Modifier.weight(1f))
 

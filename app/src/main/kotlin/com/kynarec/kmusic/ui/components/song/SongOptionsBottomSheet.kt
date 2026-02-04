@@ -58,6 +58,7 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.player.SleepTimerDialog
 import com.kynarec.kmusic.ui.components.playlist.AddToPlaylistDialog
+import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.shareUrl
@@ -75,6 +76,7 @@ fun SongOptionsBottomSheet(
     onInformation: () -> Unit = {},
     onAddToPlaylist: () -> Unit = {},
     viewModel: MusicViewModel = koinActivityViewModel(),
+    dataViewModel: DataViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController,
     isInPlaylistDetailScreen: Boolean = false,
@@ -92,6 +94,11 @@ fun SongOptionsBottomSheet(
     val dbSong by database.songDao()
         .getSongFlowById(song.id)
         .collectAsStateWithLifecycle(null)
+
+    val downloadingSongs by dataViewModel.downloadingSongs.collectAsStateWithLifecycle()
+    val completedIds by dataViewModel.completedDownloadIds.collectAsStateWithLifecycle()
+    val isDownloading = downloadingSongs.containsKey(song.id)
+    val isDownloaded = completedIds.contains(song.id)
 
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
 
@@ -200,27 +207,35 @@ fun SongOptionsBottomSheet(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                val isDownloaded = remember(song.id) { viewModel.isSongDownloaded(song.id) }
-                if (isDownloaded) {
-                    BottomSheetItem(
-                        icon = painterResource(R.drawable.rounded_download_done_24),
-                        text = "Downloaded",
-                        onClick = {
-//                            viewModel.addDownload(song)
-                            onDismiss()
-                        }
-                    )
-                } else {
-                    BottomSheetItem(
-                        icon = painterResource(R.drawable.rounded_download_24),
-                        text = "Download",
-                        onClick = {
-                            viewModel.addDownload(song)
-                            onDismiss()
-                        }
-                    )
+                when {
+                    isDownloading -> {
+                        BottomSheetItem(
+                            icon = painterResource(R.drawable.rounded_downloading_24),
+                            text = "Downloading",
+                            onClick = {
+//                                dataViewModel.addDownload(song)
+                            }
+                        )
+                    }
+                    isDownloaded -> {
+                        BottomSheetItem(
+                            icon = painterResource(R.drawable.rounded_download_done_24),
+                            text = "Downloaded",
+                            onClick = {
+                                dataViewModel.removeDownload(song)
+                            }
+                        )
+                    }
+                    else -> {
+                        BottomSheetItem(
+                            icon = painterResource(R.drawable.rounded_download_24),
+                            text = "Download",
+                            onClick = {
+                                dataViewModel.addDownload(song)
+                            }
+                        )
+                    }
                 }
-
 
                 Spacer(modifier = Modifier.height(8.dp))
 
