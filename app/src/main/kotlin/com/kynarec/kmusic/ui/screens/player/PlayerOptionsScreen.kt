@@ -43,18 +43,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.imageLoader
+import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.player.SleepTimerDialog
 import com.kynarec.kmusic.ui.components.playlist.AddToPlaylistDialog
 import com.kynarec.kmusic.ui.components.song.BottomSheetItem
+import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.shareUrl
@@ -69,6 +72,7 @@ fun PlayerOptionsScreen(
     onDismiss: () -> Unit,
     onInformation: () -> Unit = {},
     viewModel: MusicViewModel = koinActivityViewModel(),
+    dataViewModel: DataViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController,
     isInPlaylistDetailScreen: Boolean = false,
@@ -87,6 +91,11 @@ fun PlayerOptionsScreen(
         .collectAsStateWithLifecycle(null)
 
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
+
+    val downloadingSongs by dataViewModel.downloadingSongs.collectAsStateWithLifecycle()
+    val completedIds by dataViewModel.completedDownloadIds.collectAsStateWithLifecycle()
+    val isDownloading = downloadingSongs.containsKey(song.id)
+    val isDownloaded = completedIds.contains(song.id)
 
     BackHandler {
         onDismiss()
@@ -202,8 +211,40 @@ fun PlayerOptionsScreen(
                     }
                 )
             }
+
             Spacer(modifier = Modifier.height(6.dp))
-            // Action Items
+
+            ElevatedCard(
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                when {
+                    isDownloading -> {
+                        BottomSheetItem(
+                            icon = painterResource(R.drawable.rounded_downloading_24),
+                            text = "Downloading",
+                            onClick = {}
+                        )
+                    }
+                    isDownloaded -> {
+                        BottomSheetItem(
+                            icon = painterResource(R.drawable.rounded_download_done_24),
+                            text = "Downloaded",
+                            onClick = { dataViewModel.removeDownload(song) }
+                        )
+                    }
+                    else -> {
+                        BottomSheetItem(
+                            icon = painterResource(R.drawable.rounded_download_24),
+                            text = "Download",
+                            onClick = { dataViewModel.addDownload(song) }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
 
             ElevatedCard(
                 colors = CardDefaults.elevatedCardColors(

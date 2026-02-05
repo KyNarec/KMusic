@@ -27,6 +27,7 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.SortSection
 import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
+import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import kotlinx.parcelize.Parcelize
 import org.koin.compose.koinInject
@@ -47,6 +48,7 @@ data class SortOption(
 fun SongsScreen(
     modifier: Modifier = Modifier,
     viewModel: MusicViewModel = koinActivityViewModel(),
+    dataViewModel: DataViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
@@ -58,20 +60,26 @@ fun SongsScreen(
     val showBottomSheet = remember { mutableStateOf(false) }
     var longClickSong by remember { mutableStateOf<Song?>(null) }
 
+    val completedIds by dataViewModel.completedDownloadIds.collectAsStateWithLifecycle()
+
     val sortOptions = listOf(
         SortOption("All"),
         SortOption("Favorites"),
         SortOption("Listened"),
+        SortOption("Downloads"),
     )
     val selectedSortOption = viewModel.uiState.collectAsStateWithLifecycle().value.songsSortOption
 
+    val allSongs = database.songDao().getAllSongsFlow().collectAsStateWithLifecycle(emptyList())
+
     val sortedSongs = when (selectedSortOption.text) {
-        "All" -> database.songDao().getAllSongsFlow().collectAsStateWithLifecycle(emptyList())
+        "All" -> allSongs
         "Favorites" -> database.songDao().getFavouritesSongFlow()
             .collectAsStateWithLifecycle(emptyList())
 
         "Listened to" -> database.songDao().getSongsFlowWithPlaytime()
             .collectAsStateWithLifecycle(emptyList())
+        "Downloads" -> allSongs
 
         else -> {
             database.songDao().getSongsFlowWithPlaytime().collectAsStateWithLifecycle(emptyList())
@@ -153,6 +161,30 @@ fun SongsScreen(
                         items(
                             sortedSongs.value,
                             key = { song -> song.id }
+                        ) { song ->
+                            val song = song
+                            val onSongClick = remember(song.id) {
+                                {
+                                    viewModel.playPlaylist(sortedSongs.value, song)
+                                }
+                            }
+
+                            SongComponent(
+                                song = song,
+                                onClick = onSongClick,
+                                onLongClick = {
+                                    longClickSong = song
+                                    showBottomSheet.value = true
+                                }
+                            )
+                        }
+                    }
+                }
+                "Downloads" -> {
+                    LazyColumn(
+                        contentPadding = PaddingValues(bottom = bottomPadding)
+                    ) {
+                        items(sortedSongs.value.filter { it.id in completedIds }
                         ) { song ->
                             val song = song
                             val onSongClick = remember(song.id) {

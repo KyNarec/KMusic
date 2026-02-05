@@ -4,8 +4,9 @@ import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.service.update.PlatformUpdateManager
 import com.kynarec.kmusic.service.update.UpdateManager
-import com.kynarec.kmusic.ui.screens.player.PlayerViewModel
+import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
 import eu.anifantakis.lib.ksafe.KSafe
@@ -27,7 +28,9 @@ val appModule = module {
             playlistDao = get(),
             albumDao = get(),
             artistDao = get(),
-            lyricsRepository = get() // This comes from LrcLib module
+            lyricsRepository = get(), // This comes from LrcLib module
+            downloadManager = get(),
+            downloadCache = get()
         )
     }
 
@@ -47,5 +50,14 @@ val appModule = module {
 
     viewModel {
         PlayerViewModel()
+    }
+
+    viewModel {
+        DataViewModel(
+            application = androidApplication(),
+            downloadManager = get(),
+            downloadCache = get(),
+            database = get()
+        )
     }
 }

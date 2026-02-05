@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import androidx.annotation.OptIn
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.material3.LocalTextStyle
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.util.UnstableApi
 import androidx.room.withTransaction
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
@@ -115,6 +117,7 @@ suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = w
 }
 
 // This function is for creating browsable items. It should not contain the playback URI.
+@OptIn(UnstableApi::class)
 fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
     // This is a browsable item, it only needs the MediaId and Metadata.
     val extras = Bundle().apply {
@@ -128,6 +131,7 @@ fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
     return MediaItem.Builder()
         .setMediaId(song.id)
         .setUri("EMPTY")
+        .setCustomCacheKey(song.id)
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setTitle(song.title)
@@ -141,10 +145,12 @@ fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
         .build()
 }
 
+@OptIn(UnstableApi::class)
 suspend fun MediaItem.createFullMediaItem(): MediaItem {
     val uri = playSongById(this.mediaId)
     return this.buildUpon()
         .setUri(uri)
+        .setCustomCacheKey(this.mediaId)
         .build()
 }
 

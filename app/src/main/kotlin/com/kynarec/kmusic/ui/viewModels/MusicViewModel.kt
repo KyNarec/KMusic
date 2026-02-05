@@ -11,6 +11,8 @@ import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.cache.SimpleCache
+import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
@@ -80,7 +82,9 @@ class MusicViewModel
     private val playlistDao: PlaylistDao,
     private val albumDao: AlbumDao,
     private val artistDao: ArtistDao,
-    private val lyricsRepository: LyricsRepository
+    private val lyricsRepository: LyricsRepository,
+    private val downloadManager: DownloadManager,
+    private val downloadCache: SimpleCache
 ) : ViewModel() {
     private val tag = "MusicViewModel"
 

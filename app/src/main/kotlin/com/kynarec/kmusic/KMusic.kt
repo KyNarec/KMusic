@@ -1,6 +1,8 @@
 package com.kynarec.kmusic
 
 import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
@@ -8,6 +10,7 @@ import coil.memory.MemoryCache
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.service.di.appModule
 import com.kynarec.kmusic.service.di.lrcLibModule
+import com.kynarec.kmusic.service.di.mediaModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
@@ -45,7 +48,20 @@ class KMusic : Application(), ImageLoaderFactory {
         startKoin {
             androidLogger()
             androidContext(this@KMusic)
-            modules(lrcLibModule, appModule) // and appModule in the future
+            modules(lrcLibModule, appModule, mediaModule)
         }
+    }
+
+    private fun createDownloadNotificationChannel() {
+        val channelId = "download_channel"
+        val channelName = "Song Downloads"
+        val importance = NotificationManager.IMPORTANCE_LOW // Low so it doesn't "beep" every % update
+
+        val channel = NotificationChannel(channelId, channelName, importance).apply {
+            description = "Shows progress of downloaded songs"
+        }
+
+        val notificationManager = getSystemService(NotificationManager::class.java)
+        notificationManager.createNotificationChannel(channel)
     }
 }

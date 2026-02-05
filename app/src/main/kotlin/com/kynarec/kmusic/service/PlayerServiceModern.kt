@@ -10,14 +10,16 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.database.StandaloneDatabaseProvider
-import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.cache.CacheDataSource
-import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
+import androidx.media3.datasource.cache.CacheKeyFactory
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.offline.Download
+import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.upstream.DefaultAllocator
 import androidx.media3.session.DefaultMediaNotificationProvider
@@ -46,10 +48,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 @UnstableApi
-class PlayerServiceModern : MediaLibraryService() {
+class PlayerServiceModern : MediaLibraryService(), KoinComponent {
+    private val downloadManager: DownloadManager by inject() // Inject this!
+    private val downloadCache: SimpleCache by inject()
+    private val httpDataSourceFactory: DefaultHttpDataSource.Factory by inject()
     private val tag = "PlayerServiceModern"
     private var player: ExoPlayer? = null
     private var mediaLibrarySession: MediaLibrarySession? = null
@@ -98,18 +104,49 @@ class PlayerServiceModern : MediaLibraryService() {
             }
             Log.i("PlayerService", "mediaItem?.localConfiguration?.uri.toString() ${mediaItem?.localConfiguration?.uri.toString()}")
             saveCurrentPlaybackTime()
+
             val mediaItem = mediaItem
             val currentIndex = player?.currentMediaItemIndex ?: -1
+            val songId = mediaItem?.mediaId ?: return
 
-            val indexAtBegging = player?.currentMediaItemIndex
-            when (mediaItem?.localConfiguration?.uri.toString()) {
+            val download = downloadManager.downloadIndex.getDownload(songId)
+            val isDownloaded = download != null && download.state == Download.STATE_COMPLETED
+
+            if (isDownloaded) {
+                Log.i("PlayerService", "Song $songId is downloaded. Ensuring local playback.")
+                if (downloadCache.getCachedSpans(songId).isNotEmpty()) {
+                    Log.w(
+                        "PlayerService",
+                        "Download record exists and cache is notEmpty for $songId"
+                    )
+                } else {
+                    Log.w("PlayerService", "Download record exists but cache is empty for $songId. Playing online.")
+                }
+
+                // Check if the current MediaItem already has the custom cache key set
+                if (mediaItem.localConfiguration?.customCacheKey != songId) {
+                    val offlineMediaItem = mediaItem.buildUpon()
+                        .setCustomCacheKey(songId) // This maps the item to the cache index
+                        .build()
+
+                    serviceScope.launch(Dispatchers.Main) {
+                        Log.i("PlayerService", "Replacing MediaItem with cached version for $songId")
+                        player?.replaceMediaItem(currentIndex, offlineMediaItem)
+                        // player.prepare() is usually handled automatically,
+                        // but you can call it if the player is in an IDLE state.
+                    }
+                    return
+                }
+            }
+
+            when (mediaItem.localConfiguration?.uri.toString()) {
                 "EMPTY" -> {
                     Log.i("PlayerService", "mediaItem is empty")
 
                     player?.stop()
 
                     serviceScope.launch {
-                        val fullMediaItem = mediaItem?.createFullMediaItem() ?: MediaItem.EMPTY
+                        val fullMediaItem = mediaItem.createFullMediaItem()
 
                         withContext(Dispatchers.Main) {
                             if (fullMediaItem != MediaItem.EMPTY && currentIndex == player?.currentMediaItemIndex) {
@@ -132,8 +169,8 @@ class PlayerServiceModern : MediaLibraryService() {
                 else -> {
                     accumulatedPlayTime = 0L
                     playbackStartTime = System.currentTimeMillis()
-                    currentSongId = mediaItem?.mediaId
-                    Log.i("PlayerService", "Playing: ${mediaItem?.mediaId}")                }
+                    currentSongId = mediaItem.mediaId
+                    Log.i("PlayerService", "Playing: ${mediaItem.mediaId}")                }
             }
 
             val playlistSize = player?.mediaItemCount ?: 0
@@ -220,6 +257,7 @@ class PlayerServiceModern : MediaLibraryService() {
                 {
                     item.buildUpon()
                         .setUri(item.mediaId) // Set the URI to the ID temporarily or a dummy value
+                        .setCustomCacheKey(item.mediaId)
                         .build()
                 } else {
                     item
@@ -374,10 +412,6 @@ class PlayerServiceModern : MediaLibraryService() {
 
 
     companion object {
-        private const val CACHE_DIR = "kmusic_cache"
-        private const val MAX_CACHE_SIZE_BYTES = 100 * 1024 * 1024L // 100MB
-        private var cache: SimpleCache? = null
-
         // New constants for sorting functionality
         const val ROOT_ID = "root_id"
         const val ALL_SONGS_ID = "all_songs"
@@ -386,15 +420,9 @@ class PlayerServiceModern : MediaLibraryService() {
         const val SORT_BY_ARTIST_ID = "sort_by_artist"
     }
 
-    // Function to initialize the cache
-    @Synchronized
-    private fun getCache(): SimpleCache {
-        if (cache == null) {
-            val cacheDirectory = File(this.cacheDir, CACHE_DIR)
-            val evictor = LeastRecentlyUsedCacheEvictor(MAX_CACHE_SIZE_BYTES)
-            cache = SimpleCache(cacheDirectory, evictor, StandaloneDatabaseProvider(this))
-        }
-        return cache!!
+    val cacheKeyFactory = CacheKeyFactory { dataSpec ->
+        // Media3 will check dataSpec.key (which is set by setCustomCacheKey) first
+        dataSpec.key ?: dataSpec.uri.toString()
     }
 
     override fun onCreate() {
@@ -408,15 +436,24 @@ class PlayerServiceModern : MediaLibraryService() {
             notificationProvider.setSmallIcon(R.drawable.ic_launcher_foreground_scaled)
             setMediaNotificationProvider(notificationProvider)
 
-            val cacheDataSourceFactory = CacheDataSource.Factory()
-                .setCache(getCache())
-                .setUpstreamDataSourceFactory(DefaultDataSource.Factory(this))
+            val cacheDataSourceFactory: DataSource.Factory =
+                CacheDataSource.Factory()
+                    .setCache(downloadCache)
+                    .setUpstreamDataSourceFactory(httpDataSourceFactory)
+                    .setCacheWriteDataSinkFactory(null) // Disable writing.
+//
+//            val cacheDataSourceFactory = CacheDataSource.Factory()
+//                .setCache(downloadCache)
+//                .setUpstreamDataSourceFactory(httpDataSourceFactory)
+//                .setCacheWriteDataSinkFactory(null)
+//                .setCacheKeyFactory(cacheKeyFactory)
+//                .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR) // Fallback to upstream if cache fails
 
             val mediaSourceFactory = DefaultMediaSourceFactory(this)
                 .setDataSourceFactory(cacheDataSourceFactory)
 
             player = ExoPlayer.Builder(this)
-                .setMediaSourceFactory(mediaSourceFactory) // used for cashing
+                .setMediaSourceFactory(mediaSourceFactory) // used for cashing and download
                 .setAudioAttributes(
                     AudioAttributes.DEFAULT, true
                 )
@@ -455,9 +492,6 @@ class PlayerServiceModern : MediaLibraryService() {
 
     override fun onDestroy() {
         serviceScope.cancel()
-
-        cache?.release()
-        cache = null
 
         mediaLibrarySession?.run {
             player?.release()

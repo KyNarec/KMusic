@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Interests
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material.icons.rounded.Update
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -97,6 +98,22 @@ fun SettingsScreen(
                         Modifier.fillMaxWidth()
                     ) {
                         SettingsFolder(
+                            title = { Text("Data") },
+                            icon = { Icon(Icons.Rounded.Storage, null) },
+                            onClick = { navController.navigate(Settings.DataScreen) }
+                        )
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                item {
+                    ElevatedCard(
+                        Modifier.fillMaxWidth()
+                    ) {
+                        SettingsFolder(
                             title = { Text("Check Updates") },
                             icon = { Icon(Icons.Rounded.Update, null) },
                             onClick = {
@@ -124,7 +141,6 @@ fun SettingsScreen(
                         )
                     }
                 }
-
             }
             Spacer(Modifier.weight(1f))
             Row(
