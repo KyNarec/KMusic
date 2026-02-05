@@ -150,11 +150,11 @@ fun SearchScreen(
                             println("Search query: $searchQuery")
                             keyboardController?.hide()
                             focusManager.clearFocus()
+                            navController.navigate(SearchResultScreen(searchQuery.text.trim()))
                             scope.launch {
                                 searchQueryDao.deleteQuery(searchQuery.text.trim())
                                 searchQueryDao.insertQuery(SearchQuery(query = searchQuery.text.trim()))
                             }
-                            navController.navigate(SearchResultScreen(searchQuery.text.trim()))
                         }
                     ),
                     colors = TextFieldDefaults.colors(
@@ -195,11 +195,11 @@ fun SearchScreen(
                         .clickable {
                             keyboardController?.hide()
                             focusManager.clearFocus()
+                            navController.navigate(SearchResultScreen(searchSuggestions[index].trim()))
                             scope.launch {
-                                searchQueryDao.deleteQuery(searchSuggestions[index])
-                                searchQueryDao.insertQuery(SearchQuery(query = searchSuggestions[index]))
+                                searchQueryDao.deleteQuery(searchSuggestions[index].trim())
+                                searchQueryDao.insertQuery(SearchQuery(query = searchSuggestions[index].trim()))
                             }
-                            navController.navigate(SearchResultScreen(searchSuggestions[index]))
                         },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -247,11 +247,11 @@ fun SearchScreen(
                             .clickable {
                                 keyboardController?.hide()
                                 focusManager.clearFocus()
+                                navController.navigate(SearchResultScreen(searchQueries[index].query.trim()))
                                 scope.launch {
-                                    searchQueryDao.deleteQuery(searchQuery.text)
-                                    searchQueryDao.insertQuery(SearchQuery(query = searchQuery.text))
+                                    searchQueryDao.deleteQuery(searchQueries[index].query.trim())
+                                    searchQueryDao.insertQuery(SearchQuery(query = searchQueries[index].query.trim()))
                                 }
-                                navController.navigate(SearchResultScreen(searchQueries[index].query))
                             },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
