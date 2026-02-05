@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -47,12 +48,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.imageLoader
+import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.innertube.getAlbumAndSongs
 import com.kynarec.kmusic.ui.components.album.AlbumOptionsBottomSheet
 import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
+import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import kotlinx.coroutines.Dispatchers
@@ -67,6 +70,7 @@ fun AlbumDetailScreen(
     modifier: Modifier = Modifier,
     albumId: String,
     viewModel: MusicViewModel = koinActivityViewModel(),
+    dataViewModel: DataViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
@@ -86,7 +90,11 @@ fun AlbumDetailScreen(
     var readMore by remember { mutableStateOf(false) }
 
     val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val downloadingSongs by dataViewModel.downloadingSongs.collectAsStateWithLifecycle()
+    val completedIds by dataViewModel.completedDownloadIds.collectAsStateWithLifecycle()
 
+    val allDownloaded = if (songs.isNotEmpty()) songs.all { it.id in completedIds } else false
+    val isAnyDownloading = songs.any { it.id in downloadingSongs }
 
     LaunchedEffect(Unit) {
         if (albumFLow == null) {
@@ -97,7 +105,7 @@ fun AlbumDetailScreen(
                         songs = songs + it
                     }
                     Log.i("AlbumDetailScreen", "upserting album")
-                    withContext(Dispatchers.IO){
+                    withContext(Dispatchers.IO) {
                         database.albumDao().upsertAlbum(albumWithSongs.album)
                     }
                     Log.i("AlbumDetailScreen", "upserting album done")
@@ -118,7 +126,8 @@ fun AlbumDetailScreen(
                 AsyncImage(
                     model = albumFLow?.thumbnailUrl,
                     contentDescription = null,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .aspectRatio(1f)
                         .clip(RoundedCornerShape(8.dp)),
                     imageLoader = LocalContext.current.imageLoader
@@ -224,6 +233,48 @@ fun AlbumDetailScreen(
                 )
 
                 Spacer(Modifier.weight(1f))
+                when {
+                    isAnyDownloading -> {
+                        IconButton(
+                            onClick = {
+
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.rounded_downloading_24),
+                                contentDescription = "Downloaded"
+                            )
+                        }
+                    }
+
+                    allDownloaded -> {
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    dataViewModel.removeDownloads(songs)
+                                }
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.rounded_download_done_24),
+                                contentDescription = "Downloaded"
+                            )
+                        }
+                    }
+
+                    else -> {
+                        IconButton(
+                            onClick = {
+                                dataViewModel.addDownloads(songs)
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.rounded_download_24),
+                                contentDescription = "Download"
+                            )
+                        }
+                    }
+                }
 
                 IconButton(
                     onClick = {
@@ -248,7 +299,7 @@ fun AlbumDetailScreen(
                 }
             }
         }
-        if (isLoading){
+        if (isLoading) {
             item {
                 Row(
                     Modifier
@@ -256,7 +307,7 @@ fun AlbumDetailScreen(
                         .padding(8.dp),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                        CircularWavyProgressIndicator()
+                    CircularWavyProgressIndicator()
                 }
             }
         } else {

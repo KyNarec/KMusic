@@ -29,9 +29,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.innertube.PlaylistWithSongsAndIndices
@@ -39,6 +41,7 @@ import com.kynarec.kmusic.service.innertube.getPlaylistAndSongs
 import com.kynarec.kmusic.ui.components.playlist.PlaylistOnlineOptionsBottomSheet
 import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
+import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -51,6 +54,7 @@ fun PlaylistOnlineDetailScreen(
     playlistId: String,
     thumbnail: String,
     viewModel: MusicViewModel = koinActivityViewModel(),
+    dataViewModel: DataViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
@@ -67,6 +71,12 @@ fun PlaylistOnlineDetailScreen(
 
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
+
+    val downloadingSongs by dataViewModel.downloadingSongs.collectAsStateWithLifecycle()
+    val completedIds by dataViewModel.completedDownloadIds.collectAsStateWithLifecycle()
+
+    val allDownloaded = if (songs.isNotEmpty()) songs.all { it.id in completedIds } else false
+    val isAnyDownloading = songs.any { it.id in downloadingSongs }
 
     LaunchedEffect(Unit) {
         val playlistWithSongsAndIndices = getPlaylistAndSongs(playlistId)
@@ -96,6 +106,54 @@ fun PlaylistOnlineDetailScreen(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                when {
+                    isAnyDownloading -> {
+                        item {
+                            IconButton(
+                                onClick = {
+
+                                }
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.rounded_downloading_24),
+                                    contentDescription = "Downloaded"
+                                )
+                            }
+                        }
+                    }
+
+                    allDownloaded -> {
+                        item {
+                            IconButton(
+                                onClick = {
+                                    scope.launch {
+                                        dataViewModel.removeDownloads(songs)
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.rounded_download_done_24),
+                                    contentDescription = "Downloaded"
+                                )
+                            }
+                        }
+                    }
+
+                    else -> {
+                        item {
+                            IconButton(
+                                onClick = {
+                                    dataViewModel.addDownloads(songs)
+                                }
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.rounded_download_24),
+                                    contentDescription = "Download"
+                                )
+                            }
+                        }
+                    }
+                }
                 item {
                     IconButton(
                         onClick = {

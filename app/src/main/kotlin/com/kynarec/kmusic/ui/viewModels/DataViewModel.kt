@@ -124,6 +124,35 @@ class DataViewModel (
         updateStats()
     }
 
+    fun addDownloads(songs: List<Song>) {
+        val context = application.applicationContext
+        viewModelScope.launch {
+            songs.forEach { song ->
+                if (_completedDownloadIds.value.any { it == song.id }) return@launch
+
+                val uri = playSongById(song.id)
+                if (uri == "NA" || uri.isEmpty()) return@launch
+                val downloadRequest = DownloadRequest.Builder(
+                    song.id,
+                    uri.toUri()
+                )
+                    .setCustomCacheKey(song.id)
+                    .setData(song.title.toByteArray(Charsets.UTF_8))
+                    .build()
+
+                androidx.media3.exoplayer.offline.DownloadService.sendAddDownload(
+                    context,
+                    DownloadService::class.java,
+                    downloadRequest,
+                    /* foreground = */ false
+                )
+                Log.i("MusicViewModel", "Sent request to add download: ${song.id}")
+            }
+
+        }
+        updateStats()
+    }
+
     fun removeDownload(song: Song) {
         val context = application.applicationContext
         androidx.media3.exoplayer.offline.DownloadService.sendRemoveDownload(
@@ -133,6 +162,20 @@ class DataViewModel (
             /* foreground = */ false
         )
         Log.i("MusicViewModel", "Sent request to remove download: ${song.id}")
+        updateStats()
+    }
+
+    fun removeDownloads(songs: List<Song>) {
+        val context = application.applicationContext
+        songs.forEach { song ->
+            androidx.media3.exoplayer.offline.DownloadService.sendRemoveDownload(
+                context,
+                DownloadService::class.java,
+                song.id,
+                /* foreground = */ false
+            )
+            Log.i("MusicViewModel", "Sent request to remove download: ${song.id}")
+        }
         updateStats()
     }
 
