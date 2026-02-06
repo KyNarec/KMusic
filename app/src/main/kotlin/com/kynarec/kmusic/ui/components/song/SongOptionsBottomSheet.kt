@@ -13,16 +13,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.LowPriority
-import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.LowPriority
+import androidx.compose.material.icons.rounded.Radio
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -241,7 +241,7 @@ fun SongOptionsBottomSheet(
 
 
                 BottomSheetItem(
-                    icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    icon = if (isLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                     text = if (isLiked) "Remove from favorites" else "Add to favorites",
                     onClick = {
                         viewModel.toggleFavoriteSong(dbSong!!)
@@ -249,7 +249,7 @@ fun SongOptionsBottomSheet(
                 )
 
                 BottomSheetItem(
-                    icon = Icons.Default.Radio,
+                    icon = Icons.Rounded.Radio,
                     text = "Start radio",
                     onClick = {
                         viewModel.playSongByIdWithRadio(dbSong!!)
@@ -258,7 +258,7 @@ fun SongOptionsBottomSheet(
                 )
 
                 BottomSheetItem(
-                    icon = Icons.Default.SkipNext,
+                    icon = Icons.Rounded.SkipNext,
                     text = "Play next",
                     onClick = {
                         viewModel.playNext(dbSong!!)
@@ -268,7 +268,7 @@ fun SongOptionsBottomSheet(
                 )
 
                 BottomSheetItem(
-                    icon = Icons.Default.LowPriority,
+                    icon = Icons.Rounded.LowPriority,
                     text = "Enqueue",
                     onClick = {
                         viewModel.enqueueSong(dbSong!!)
@@ -279,7 +279,7 @@ fun SongOptionsBottomSheet(
 
 
                 BottomSheetItem(
-                    icon = Icons.AutoMirrored.Filled.PlaylistAdd,
+                    icon = Icons.AutoMirrored.Rounded.PlaylistAdd,
                     text = "Add to playlist",
                     onClick = {
                         showAddToPlaylistDialog = true

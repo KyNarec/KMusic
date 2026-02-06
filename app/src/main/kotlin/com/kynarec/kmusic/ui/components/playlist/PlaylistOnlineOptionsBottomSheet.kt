@@ -15,8 +15,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BookmarkAdd
 import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.filled.LowPriority
-import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.rounded.LowPriority
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -158,7 +158,7 @@ fun PlaylistOnlineOptionsBottomSheet(
             )
 
             BottomSheetItem(
-                icon = Icons.Default.SkipNext,
+                icon = Icons.Rounded.SkipNext,
                 text = "Play next",
                 onClick = {
                     viewModel.playNextList(songs)
@@ -168,7 +168,7 @@ fun PlaylistOnlineOptionsBottomSheet(
             )
 
             BottomSheetItem(
-                icon = Icons.Default.LowPriority,
+                icon = Icons.Rounded.LowPriority,
                 text = "Enqueue",
                 onClick = {
                     viewModel.enqueueSongList(songs)

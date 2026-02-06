@@ -12,7 +12,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -145,7 +145,7 @@ fun PlaylistOfflineDetailScreen(
                     }
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Shuffle,
+                        imageVector = Icons.Rounded.Shuffle,
                         contentDescription = "Shuffle"
                     )
                 }

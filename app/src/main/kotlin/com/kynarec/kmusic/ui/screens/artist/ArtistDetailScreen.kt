@@ -22,7 +22,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -251,7 +251,7 @@ fun ArtistDetailScreen(
                     }
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Shuffle,
+                        imageVector = Icons.Rounded.Shuffle,
                         contentDescription = "Shuffle"
                     )
                 }
