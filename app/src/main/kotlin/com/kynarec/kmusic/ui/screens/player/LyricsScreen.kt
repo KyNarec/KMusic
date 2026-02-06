@@ -25,13 +25,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -77,6 +80,9 @@ fun LyricsScreen(
     val wavyLyricsIdleIndicator by settingsViewModel.wavyLyricsIdleIndicatorFlow.collectAsStateWithLifecycle(DEFAULT_WAVY_LYRICS_IDLE_INDICATOR)
 
     val currentUiLyrics = remember(uiState.currentSong?.id, uiState.currentLyrics) {
+        uiState.currentLyrics?.toUiLyrics(uiState.currentDurationLong.toSeconds())?.lines?.forEach {
+            println("LyricsScreen $it")
+        }
         uiState.currentLyrics?.toUiLyrics(uiState.currentDurationLong.toSeconds())
     }
 
@@ -111,8 +117,6 @@ fun LyricsScreen(
             val unfocusedColor =
                 lerp(LocalContentColor.current, MaterialTheme.colorScheme.background, .5f)
 
-            val lastLaneStyle = MaterialTheme.typography.titleLarge
-
             BoxWithConstraints(
                 Modifier
                     .fillMaxWidth()
@@ -124,11 +128,7 @@ fun LyricsScreen(
                         .fillMaxSize(),
                     state = lyricsState,
                     textStyle = {
-                        when {
-                            it == currentUiLyrics.lines.lastIndex -> lastLaneStyle
-                            currentUiLyrics.lines[it].alignment == Alignment.End -> LyricsDefaults.TextStyleEndAligned
-                            else -> LyricsDefaults.TextStyle
-                        }
+                        LyricsDefaults.TextStyle
                     },
                     lineModifier = { idx ->
                         val line = currentUiLyrics.lines[idx]
@@ -172,6 +172,23 @@ fun LyricsScreen(
                             )
                     }
                 )
+            }
+        } else if(currentUiLyrics == null && !uiState.isLoadingLyrics) {
+            ElevatedCard(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+            ) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Unable to load lyrics", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onErrorContainer)
+                }
             }
         }
     }
