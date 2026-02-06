@@ -11,7 +11,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,7 +22,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
-import kotlinx.coroutines.launch
 
 @Composable
 fun SettingComponentSwitch(
@@ -34,12 +32,12 @@ fun SettingComponentSwitch(
     switchId: String,
     defaultValue: Boolean
 ) {
-    var checked by remember { mutableStateOf(true) }
+    var checked by remember { mutableStateOf(prefs.getBoolean(switchId, defaultValue)) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        checked = prefs.getBoolean(switchId, defaultValue)
-    }
+//    LaunchedEffect(Unit) {
+//        checked = prefs.getBoolean(switchId, defaultValue)
+//    }
 
     Row(
         modifier = Modifier
@@ -78,9 +76,63 @@ fun SettingComponentSwitch(
             checked = checked,
             onCheckedChange = {
                 checked = it
-                scope.launch {
-                    prefs.putBoolean(switchId, it)
-                }
+                prefs.putBoolean(switchId, it)
+            },
+            modifier = Modifier.padding(8.dp)
+        )
+    }
+}
+
+@Composable
+fun SettingComponentSwitch(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    prefs: SettingsViewModel,
+    checkedDefault: () -> Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+
+) {
+    var checked by remember { mutableStateOf(checkedDefault()) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Icon(
+            icon,
+            contentDescription = title,
+            modifier = Modifier
+                .size(48.dp)
+                .padding(8.dp)
+        )
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = Int.MAX_VALUE,
+                overflow = TextOverflow.Visible
+            )
+        }
+
+        Switch(
+            checked = checked,
+            onCheckedChange = {
+                checked = it
+                onCheckedChange(it)
             },
             modifier = Modifier.padding(8.dp)
         )

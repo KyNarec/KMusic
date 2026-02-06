@@ -24,14 +24,21 @@ object Constants {
     const val MARQUEE_DELAY = 1000L
     const val TRANSITION_EFFECT_KEY = "transitionEffect"
     val DEFAULT_TRANSITION_EFFECT = TransitionEffect.Fade
+
     const val START_DESTINATION_KEY = "startDestination"
     val DEFAULT_START_DESTINATION = StartDestination.HomeScreen
+
     const val DARK_MODE_KEY = "darkMode"
     // is changed to isSystemInDarkTheme() in mainScreen
     var DEFAULT_DARK_MODE = false
+
     const val DYNAMIC_COLORS_KEY = "dynamicColors"
     const val DEFAULT_DYNAMIC_COLORS = false
+
     const val WAVY_LYRICS_IDLE_INDICATOR_KEY = "lyricsIdleIndicator"
-    val DEFAULT_WAVY_LYRICS_IDLE_INDICATOR = true
+    const val DEFAULT_WAVY_LYRICS_IDLE_INDICATOR = true
+
+    const val COLORED_DOWNLOAD_INDICATOR_KEY = "coloredDownloadIndicator"
+    const val DEFAULT_COLORED_DOWNLOAD_INDICATOR = true
 }
 
