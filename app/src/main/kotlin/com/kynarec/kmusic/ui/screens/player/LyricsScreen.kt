@@ -117,6 +117,8 @@ fun LyricsScreen(
             val unfocusedColor =
                 lerp(LocalContentColor.current, MaterialTheme.colorScheme.background, .5f)
 
+            val lastLaneStyle = MaterialTheme.typography.titleLarge
+
             BoxWithConstraints(
                 Modifier
                     .fillMaxWidth()
@@ -128,7 +130,11 @@ fun LyricsScreen(
                         .fillMaxSize(),
                     state = lyricsState,
                     textStyle = {
-                        LyricsDefaults.TextStyle
+                        when {
+                            it == currentUiLyrics.lines.lastIndex -> lastLaneStyle
+                            currentUiLyrics.lines[it].alignment == Alignment.End -> LyricsDefaults.TextStyleEndAligned
+                            else -> LyricsDefaults.TextStyle
+                        }
                     },
                     lineModifier = { idx ->
                         val line = currentUiLyrics.lines[idx]
@@ -205,6 +211,12 @@ fun SyncedLyrics.toUiLyrics(duration: Int): UiLyrics {
                 alignment = Alignment.Start
             )
         }
+                + LyricsLine.Default(
+            start = this.lines.last().end,
+            end = duration * 1000,
+            content = "Source: LrcLib",
+            alignment = Alignment.Start
+        )
     )
 }
 
