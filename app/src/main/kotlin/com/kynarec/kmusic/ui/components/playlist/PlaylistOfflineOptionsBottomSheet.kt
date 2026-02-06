@@ -14,8 +14,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.filled.LowPriority
-import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.rounded.CloudSync
+import androidx.compose.material.icons.rounded.LowPriority
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -40,22 +41,27 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.room.withTransaction
 import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
 import com.kynarec.kmusic.enums.PopupType
+import com.kynarec.kmusic.service.innertube.getPlaylistAndSongs
 import com.kynarec.kmusic.ui.StarterScreens
 import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.song.BottomSheetItem
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PlaylistOfflineOptionsBottomSheet(
     playlistId: Long,
     onDismiss: () -> Unit,
-    viewModel: MusicViewModel,
-    database: KmusicDatabase,
+    viewModel: MusicViewModel = koinActivityViewModel(),
+    database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -161,15 +167,7 @@ fun PlaylistOfflineOptionsBottomSheet(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 BottomSheetItem(
-                    icon = Icons.Default.Edit,
-                    text = "Rename",
-                    onClick = {
-                        editTitleDialog = true
-                    }
-                )
-
-                BottomSheetItem(
-                    icon = Icons.Default.SkipNext,
+                    icon = Icons.Rounded.SkipNext,
                     text = "Play next",
                     onClick = {
                         viewModel.playNextList(songs)
@@ -179,12 +177,42 @@ fun PlaylistOfflineOptionsBottomSheet(
                 )
 
                 BottomSheetItem(
-                    icon = Icons.Default.LowPriority,
+                    icon = Icons.Rounded.LowPriority,
                     text = "Enqueue",
                     onClick = {
                         viewModel.enqueueSongList(songs)
                         SmartMessage("Added ${playlist!!.name} to queue", context = context)
                         onDismiss()
+                    }
+                )
+
+                BottomSheetItem(
+                    icon = Icons.Default.Edit,
+                    text = "Rename",
+                    onClick = {
+                        editTitleDialog = true
+                    }
+                )
+
+                BottomSheetItem(
+                    icon = Icons.Rounded.CloudSync,
+                    text = "Sync",
+                    onClick = {
+                        scope.launch {
+                            val playlistAndSongs = getPlaylistAndSongs(playlist?.browseId ?: return@launch)
+                            if (playlistAndSongs?.songs != null)
+                            playlistAndSongs.songs.forEachIndexed { index, song ->
+                                database.withTransaction {
+                                    database.songDao().upsertSong(song)
+                                    database.playlistDao().insertSongToPlaylist(SongPlaylistMap(
+                                        songId = song.id,
+                                        playlistId = playlist!!.id,
+                                        position = index
+                                    ))
+                                }
+                            }
+                            onDismiss()
+                        }
                     }
                 )
 

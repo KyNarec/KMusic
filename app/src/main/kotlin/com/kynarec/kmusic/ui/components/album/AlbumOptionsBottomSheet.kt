@@ -6,10 +6,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.LowPriority
-import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.LowPriority
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -71,7 +71,7 @@ fun AlbumOptionsBottomSheet(
                     .padding(bottom = 32.dp)
             ) {
                 BottomSheetItem(
-                    icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    icon = if (isLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                     text = if (isLiked) "Remove from favorites" else "Add to favorites",
                     onClick = {
 //                        viewModel.deletePlaylist(playlist!!)
@@ -81,7 +81,7 @@ fun AlbumOptionsBottomSheet(
                     }
                 )
                 BottomSheetItem(
-                    icon = Icons.Default.SkipNext,
+                    icon = Icons.Rounded.SkipNext,
                     text = "Play next",
                     onClick = {
                         viewModel.playNextList(albumSongs)
@@ -91,7 +91,7 @@ fun AlbumOptionsBottomSheet(
                 )
 
                 BottomSheetItem(
-                    icon = Icons.Default.LowPriority,
+                    icon = Icons.Rounded.LowPriority,
                     text = "Enqueue",
                     onClick = {
                         viewModel.enqueueSongList(albumSongs)
