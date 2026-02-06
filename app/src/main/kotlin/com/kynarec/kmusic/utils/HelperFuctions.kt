@@ -131,7 +131,6 @@ fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
     return MediaItem.Builder()
         .setMediaId(song.id)
         .setUri("EMPTY")
-        .setCustomCacheKey(song.id)
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setTitle(song.title)
@@ -150,7 +149,6 @@ suspend fun MediaItem.createFullMediaItem(): MediaItem {
     val uri = playSongById(this.mediaId)
     return this.buildUpon()
         .setUri(uri)
-        .setCustomCacheKey(this.mediaId)
         .build()
 }
 
