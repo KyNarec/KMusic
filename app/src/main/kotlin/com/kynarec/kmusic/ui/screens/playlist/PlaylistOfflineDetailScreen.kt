@@ -1,14 +1,14 @@
 package com.kynarec.kmusic.ui.screens.playlist
 
 import android.util.Log
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -34,6 +34,7 @@ import androidx.navigation.NavHostController
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.playlist.PlaylistOfflineOptionsBottomSheet
 import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
@@ -84,14 +85,18 @@ fun PlaylistOfflineDetailScreen(
     Column(
         Modifier.fillMaxSize()
     ) {
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
+        Row(
+            Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            MarqueeBox(
+                text = playlist?.name ?: "",
+                boxModifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp),
+            )
             when {
                 isAnyDownloading -> {
-                    item {
                         IconButton(
                             onClick = {
 
@@ -102,11 +107,9 @@ fun PlaylistOfflineDetailScreen(
                                 contentDescription = "Downloaded"
                             )
                         }
-                    }
                 }
 
                 allDownloaded -> {
-                    item {
                         IconButton(
                             onClick = {
                                 scope.launch {
@@ -119,11 +122,9 @@ fun PlaylistOfflineDetailScreen(
                                 contentDescription = "Downloaded"
                             )
                         }
-                    }
                 }
 
                 else -> {
-                    item {
                         IconButton(
                             onClick = {
                                 dataViewModel.addDownloads(songs)
@@ -134,11 +135,9 @@ fun PlaylistOfflineDetailScreen(
                                 contentDescription = "Download"
                             )
                         }
-                    }
                 }
             }
 
-            item {
                 IconButton(
                     onClick = {
                         viewModel.playShuffledPlaylist(songs)
@@ -149,8 +148,6 @@ fun PlaylistOfflineDetailScreen(
                         contentDescription = "Shuffle"
                     )
                 }
-            }
-            item {
                 IconButton(
                     onClick = {
                         showPlaylistOptionsBottomSheet.value = true
@@ -161,7 +158,16 @@ fun PlaylistOfflineDetailScreen(
                         contentDescription = "More Options"
                     )
                 }
-            }
+
+//            LazyRow(
+//                modifier = Modifier.fillMaxWidth(),
+//                horizontalArrangement = Arrangement.Start,
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//
+//
+//            }
+
         }
         LazyColumn(
             Modifier.fillMaxWidth()
