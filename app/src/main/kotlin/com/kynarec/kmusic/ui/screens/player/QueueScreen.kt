@@ -105,7 +105,7 @@ fun QueueScreen(
         itemsIndexed(localSongList, key = { _, song -> song.id}) { index, song ->
             ReorderableItem(reorderableLazyListState, key = song.id) { isDragging ->
                 val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
-
+                val isPlaying = song.id == uiState.songsList.get(viewModel.getCurrentPlayingIndex()).id
                 Box(
                     modifier = Modifier
                         .shadow(elevation)
@@ -118,7 +118,7 @@ fun QueueScreen(
                             longClickSong = song.song
                             showInfoSheet.value = true
                         },
-                        isPlaying = song == uiState.currentSong,
+                        isPlaying = isPlaying,
                         reorderableCollectionItemScope = this@ReorderableItem,
                         onDragStarted = {
                             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)

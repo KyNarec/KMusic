@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Equalizer
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -55,10 +56,8 @@ fun QueueSongComponent(
     val imageUrl = song.thumbnail
 
     ElevatedCard(
-        Modifier.then(
-            if (isPlaying) Modifier.background(MaterialTheme.colorScheme.secondaryContainer)
-            else Modifier
-        ),
+        colors = if (isPlaying) CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+        else CardDefaults.elevatedCardColors()
     ) {
         Box(
             modifier = with(reorderableCollectionItemScope) {

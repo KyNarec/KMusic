@@ -489,6 +489,10 @@ class MusicViewModel
         }
     }
 
+    fun getCurrentPlayingIndex(): Int {
+        return mediaController?.currentMediaItemIndex ?: 0
+    }
+
     fun moveSong(fromIndex: Int, toIndex: Int) {
         Log.i(tag, "moveSong called with fromIndex: $fromIndex, toIndex: $toIndex")
         _uiState.update { currentState ->
