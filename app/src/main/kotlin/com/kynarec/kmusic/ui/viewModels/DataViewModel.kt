@@ -128,10 +128,10 @@ class DataViewModel (
         val context = application.applicationContext
         viewModelScope.launch {
             songs.forEach { song ->
-                if (_completedDownloadIds.value.any { it == song.id }) return@launch
+                if (_completedDownloadIds.value.any { it == song.id }) return@forEach
 
                 val uri = playSongById(song.id)
-                if (uri == "NA" || uri.isEmpty()) return@launch
+                if (uri == "NA" || uri.isEmpty()) return@forEach
                 val downloadRequest = DownloadRequest.Builder(
                     song.id,
                     uri.toUri()
