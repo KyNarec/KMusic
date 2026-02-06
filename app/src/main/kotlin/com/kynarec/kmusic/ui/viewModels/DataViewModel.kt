@@ -104,6 +104,14 @@ class DataViewModel (
         viewModelScope.launch {
             val uri = playSongById(song.id)
             if (uri == "NA" || uri.isEmpty()) return@launch
+
+            val imageRequest = coil.request.ImageRequest.Builder(context)
+                .data(song.thumbnail)
+                .size(600, 600)
+                .precision(coil.size.Precision.EXACT)
+                .build()
+            context.imageLoader.enqueue(imageRequest)
+
             val downloadRequest = DownloadRequest.Builder(
                 song.id,
                 uri.toUri()
@@ -132,6 +140,14 @@ class DataViewModel (
 
                 val uri = playSongById(song.id)
                 if (uri == "NA" || uri.isEmpty()) return@forEach
+
+                val imageRequest = coil.request.ImageRequest.Builder(context)
+                    .data(song.thumbnail)
+                    .size(600, 600)
+                    .precision(coil.size.Precision.EXACT)
+                    .build()
+                context.imageLoader.enqueue(imageRequest)
+
                 val downloadRequest = DownloadRequest.Builder(
                     song.id,
                     uri.toUri()

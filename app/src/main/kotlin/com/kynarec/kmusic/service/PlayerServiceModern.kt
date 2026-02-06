@@ -2,6 +2,8 @@ package com.kynarec.kmusic.service
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -27,6 +29,8 @@ import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionError
+import coil.imageLoader
+import coil.request.ImageRequest
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -50,6 +54,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import java.io.ByteArrayOutputStream
 
 @UnstableApi
 class PlayerServiceModern : MediaLibraryService(), KoinComponent {
@@ -125,15 +130,35 @@ class PlayerServiceModern : MediaLibraryService(), KoinComponent {
 
                 // Check if the current MediaItem already has the custom cache key set
                 if (mediaItem.localConfiguration?.customCacheKey != songId) {
-                    val offlineMediaItem = mediaItem.buildUpon()
-                        .setCustomCacheKey(songId) // This maps the item to the cache index
-                        .build()
+                    Log.i(tag, "No customCacheKey found")
+                    val context = this@PlayerServiceModern
+                    serviceScope.launch(Dispatchers.IO) {
+                        val request = ImageRequest.Builder(context)
+                            .data(mediaItem.mediaMetadata.artworkUri)
+                            .allowHardware(false)
+                            .build()
 
-                    serviceScope.launch(Dispatchers.Main) {
-                        Log.i("PlayerService", "Replacing MediaItem with cached version for $songId")
-                        player?.replaceMediaItem(currentIndex, offlineMediaItem)
-                        // player.prepare() is usually handled automatically,
-                        // but you can call it if the player is in an IDLE state.
+                        val result = context.imageLoader.execute(request)
+                        val bitmap = (result.drawable as? BitmapDrawable)?.bitmap
+                        val artworkData = bitmap?.let {
+                            val outputStream = ByteArrayOutputStream()
+                            it.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                            outputStream.toByteArray()
+                        }
+                        val offlineMediaItem = MediaItem.Builder()
+                            .setMediaId(mediaItem.mediaId)
+                            .setUri(mediaItem.localConfiguration?.uri.toString())
+                            .setMediaMetadata(MediaMetadata.Builder()
+                                .setTitle(mediaItem.mediaMetadata.title)
+                                .setArtist(mediaItem.mediaMetadata.artist)
+                                .setArtworkData(artworkData, MediaMetadata.PICTURE_TYPE_FRONT_COVER)                                .build())
+                            .setCustomCacheKey(songId)
+                            .build()
+
+                        withContext(Dispatchers.Main) {
+                            Log.i("PlayerService", "Replacing MediaItem with cached version for $songId")
+                            player?.replaceMediaItem(currentIndex, offlineMediaItem)
+                        }
                     }
                     return
                 }
