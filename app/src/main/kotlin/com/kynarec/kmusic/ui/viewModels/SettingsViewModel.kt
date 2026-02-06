@@ -3,7 +3,9 @@ package com.kynarec.kmusic.ui.viewModels
 import androidx.lifecycle.ViewModel
 import com.kynarec.kmusic.enums.StartDestination
 import com.kynarec.kmusic.enums.TransitionEffect
+import com.kynarec.kmusic.utils.Constants.COLORED_DOWNLOAD_INDICATOR_KEY
 import com.kynarec.kmusic.utils.Constants.DARK_MODE_KEY
+import com.kynarec.kmusic.utils.Constants.DEFAULT_COLORED_DOWNLOAD_INDICATOR
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DARK_MODE
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DYNAMIC_COLORS
 import com.kynarec.kmusic.utils.Constants.DEFAULT_START_DESTINATION
@@ -20,13 +22,13 @@ class SettingsViewModel(
     val ksafe: KSafe,
 ): ViewModel() {
 
-    var transitionEffect by ksafe.mutableStateOf(DEFAULT_TRANSITION_EFFECT, TRANSITION_EFFECT_KEY)
+    val transitionEffect by ksafe.mutableStateOf(DEFAULT_TRANSITION_EFFECT, TRANSITION_EFFECT_KEY)
 //    val transitionEffectFlow: StateFlow<TransitionEffect> = snapshotFlow { transitionEffect }
 //        .stateIn(viewModelScope, SharingStarted.Eagerly, transitionEffect)
     val transitionEffectFlow = ksafe.getFlow(TRANSITION_EFFECT_KEY, DEFAULT_TRANSITION_EFFECT)
 
 
-    var startDestination by ksafe.mutableStateOf(DEFAULT_START_DESTINATION, START_DESTINATION_KEY)
+    val startDestination by ksafe.mutableStateOf(DEFAULT_START_DESTINATION, START_DESTINATION_KEY)
     val startDestinationFlow = ksafe.getFlow(START_DESTINATION_KEY, DEFAULT_START_DESTINATION)
 
 
@@ -34,29 +36,23 @@ class SettingsViewModel(
     val darkModeFLow = ksafe.getFlow(DARK_MODE_KEY, DEFAULT_DARK_MODE)
     val dynamicColorsFlow = ksafe.getFlow(DYNAMIC_COLORS_KEY, DEFAULT_DYNAMIC_COLORS)
 
-    var wavyLyricsIdleIndicatorFlow = ksafe.getFlow(WAVY_LYRICS_IDLE_INDICATOR_KEY, DEFAULT_WAVY_LYRICS_IDLE_INDICATOR)
+    val wavyLyricsIdleIndicatorFlow = ksafe.getFlow(WAVY_LYRICS_IDLE_INDICATOR_KEY, DEFAULT_WAVY_LYRICS_IDLE_INDICATOR)
+    var coloredDownloadIndicator by ksafe.mutableStateOf(DEFAULT_COLORED_DOWNLOAD_INDICATOR, key = COLORED_DOWNLOAD_INDICATOR_KEY)
 
-
-    suspend fun putTransitionEffect(value: TransitionEffect) {
-        ksafe.put(TRANSITION_EFFECT_KEY, value)
-    }
-    suspend fun getTransitionEffect(): TransitionEffect {
-        return ksafe.get(TRANSITION_EFFECT_KEY, DEFAULT_TRANSITION_EFFECT)
+    fun putTransitionEffect(value: TransitionEffect) {
+        ksafe.putDirect(TRANSITION_EFFECT_KEY, value)
     }
 
-    suspend fun putStartDestination(value: StartDestination) {
-        ksafe.put(START_DESTINATION_KEY, value)
-    }
-    suspend fun getStartDestination(): StartDestination {
-        return ksafe.get(START_DESTINATION_KEY, DEFAULT_START_DESTINATION)
+    fun putStartDestination(value: StartDestination) {
+        ksafe.putDirect(START_DESTINATION_KEY, value)
     }
 
-    suspend fun getBoolean(key: String, default: Boolean): Boolean {
-        return ksafe.get(key, default)
+    fun getBoolean(key: String, default: Boolean): Boolean {
+        return ksafe.getDirect(key, default)
     }
 
-    suspend fun putBoolean(key: String, value: Boolean) {
-        ksafe.put(key, value)
+    fun putBoolean(key: String, value: Boolean) {
+        ksafe.putDirect(key, value)
     }
 
 }

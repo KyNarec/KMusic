@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Animation
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FormatColorFill
 import androidx.compose.material3.ElevatedCard
@@ -25,7 +24,6 @@ import com.kynarec.kmusic.utils.Constants.DARK_MODE_KEY
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DARK_MODE
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DYNAMIC_COLORS
 import com.kynarec.kmusic.utils.Constants.DYNAMIC_COLORS_KEY
-import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinActivityViewModel
 
 
@@ -77,13 +75,13 @@ fun AppearanceScreen(
         item {
             ElevatedCard() {
                 SettingComponentEnumChoice(
-                    icon = Icons.Default.Animation,
+                    icon = Icons.Default.FormatColorFill,
                     title = "Screen Transition Effect",
                     description = "Choose how screens transition in the app",
                     enumValues = TransitionEffect.entries, // Now correctly seen as List<TransitionEffect>
                     selected = transitionEffectFlow,
                     onValueSelected = {
-                        scope.launch { prefs.putTransitionEffect(it) }
+                        prefs.putTransitionEffect(it)
                     },
                     labelMapper = { it.label }
                 )

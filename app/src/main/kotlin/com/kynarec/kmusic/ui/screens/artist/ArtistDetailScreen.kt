@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.MoreVert
@@ -38,6 +39,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -135,14 +137,14 @@ fun ArtistDetailScreen(
         item {
             Box(
                 Modifier.fillMaxWidth()
+                    .padding(8.dp)
             ) {
                 AsyncImage(
                     model = artistFlow?.thumbnailUrl,
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxWidth()
-//                        .aspectRatio(1f)
-//                        .clip(RoundedCornerShape(8.dp)),
+                        .clip(RoundedCornerShape(8.dp))
                     ,
                     imageLoader = LocalContext.current.imageLoader,
                     contentScale = ContentScale.FillWidth
@@ -208,8 +210,9 @@ fun ArtistDetailScreen(
                             .weight(1f)
                             .animateContentSize(
                                 animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioLowBouncy,
-                                    stiffness = Spring.StiffnessLow
+                                    dampingRatio = Spring.DampingRatioNoBouncy,
+//                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = Spring.StiffnessVeryLow
                                 )
                             )
                             .clickable {

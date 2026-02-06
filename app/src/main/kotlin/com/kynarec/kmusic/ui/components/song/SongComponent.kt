@@ -21,6 +21,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
+import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -50,7 +52,8 @@ fun SongComponent(
     onClick: () -> Unit,
     onLongClick: () ->  Unit = {},
     isPlaying: Boolean = false,
-    dataViewModel: DataViewModel = koinActivityViewModel()
+    dataViewModel: DataViewModel = koinActivityViewModel(),
+    settingsViewModel: SettingsViewModel = koinActivityViewModel()
 ) {
     val title = song.title
     val artist = song.artists.joinToString(", ") { it.name }
@@ -62,6 +65,7 @@ fun SongComponent(
     val isDownloading = downloadingSongs.containsKey(song.id)
     val isDownloaded = completedIds.contains(song.id)
 
+    val coloredDownloadIndicator = settingsViewModel.coloredDownloadIndicator
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -137,7 +141,7 @@ fun SongComponent(
                             Icon(
                                 painter = painterResource(R.drawable.rounded_download_done_24),
                                 contentDescription = "Downloaded",
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = if (coloredDownloadIndicator) MaterialTheme.colorScheme.primary else LocalContentColor.current
                             )
                         }
                     }

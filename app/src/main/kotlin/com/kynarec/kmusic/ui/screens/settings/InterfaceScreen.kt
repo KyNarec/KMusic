@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FormatColorFill
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.PinDrop
 import androidx.compose.material3.ElevatedCard
@@ -22,7 +23,6 @@ import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.utils.Constants.DEFAULT_WAVY_LYRICS_IDLE_INDICATOR
 import com.kynarec.kmusic.utils.Constants.WAVY_LYRICS_IDLE_INDICATOR_KEY
-import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinActivityViewModel
 
 @Composable
@@ -51,7 +51,7 @@ fun InterfaceScreen(
                     enumValues = StartDestination.entries,
                     selected = startDestinationFlow,
                     onValueSelected = {
-                        scope.launch { prefs.putStartDestination(it) }
+                       prefs.putStartDestination(it)
                     },
                     labelMapper = { it.label }
                 )
@@ -69,6 +69,21 @@ fun InterfaceScreen(
                     prefs = prefs,
                     switchId = WAVY_LYRICS_IDLE_INDICATOR_KEY,
                     defaultValue = DEFAULT_WAVY_LYRICS_IDLE_INDICATOR
+                )
+            }
+        }
+        item {
+            Spacer(Modifier.height(16.dp))
+        }
+        item {
+            ElevatedCard {
+                SettingComponentSwitch(
+                    icon = Icons.Default.FormatColorFill,
+                    title = "Colored download indicator",
+                    description = "Show a colored indicator when song is downloaded",
+                    prefs = prefs,
+                    checkedDefault = { prefs.coloredDownloadIndicator },
+                    onCheckedChange = { prefs.coloredDownloadIndicator = it}
                 )
             }
         }

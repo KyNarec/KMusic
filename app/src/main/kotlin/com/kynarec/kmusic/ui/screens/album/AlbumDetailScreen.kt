@@ -122,6 +122,7 @@ fun AlbumDetailScreen(
         item {
             Box(
                 Modifier.fillMaxWidth()
+                    .padding(horizontal = 8.dp)
             ) {
                 AsyncImage(
                     model = albumFLow?.thumbnailUrl,
@@ -192,8 +193,9 @@ fun AlbumDetailScreen(
                             .weight(1f)
                             .animateContentSize(
                                 animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioLowBouncy,
-                                    stiffness = Spring.StiffnessLow
+                                    dampingRatio = Spring.DampingRatioNoBouncy,
+//                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = Spring.StiffnessVeryLow
                                 )
                             )
                             .clickable {
