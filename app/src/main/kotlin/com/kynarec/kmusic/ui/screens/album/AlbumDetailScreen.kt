@@ -26,6 +26,7 @@ import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,6 +58,7 @@ import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -71,11 +73,14 @@ fun AlbumDetailScreen(
     albumId: String,
     viewModel: MusicViewModel = koinActivityViewModel(),
     dataViewModel: DataViewModel = koinActivityViewModel(),
+    settingsViewModel: SettingsViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    val coloredDownloadIndicator = settingsViewModel.coloredDownloadIndicator
 
     val albumFLow by database.albumDao().getAlbumByIdFlow(albumId).collectAsStateWithLifecycle(null)
 
@@ -259,7 +264,8 @@ fun AlbumDetailScreen(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.rounded_download_done_24),
-                                contentDescription = "Downloaded"
+                                contentDescription = "Downloaded",
+                                tint = if (coloredDownloadIndicator) MaterialTheme.colorScheme.primary else LocalContentColor.current
                             )
                         }
                     }
