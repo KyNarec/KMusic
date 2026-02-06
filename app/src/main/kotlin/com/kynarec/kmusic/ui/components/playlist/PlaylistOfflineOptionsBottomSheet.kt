@@ -131,7 +131,8 @@ fun PlaylistOfflineOptionsBottomSheet(
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(Modifier.width(100.dp)
+                    Box(Modifier
+                        .width(100.dp)
                         .height(100.dp)
                     ) {
                         TwoByTwoImageGrid(songsThumbnailList)
@@ -194,27 +195,32 @@ fun PlaylistOfflineOptionsBottomSheet(
                     }
                 )
 
-                BottomSheetItem(
-                    icon = Icons.Rounded.CloudSync,
-                    text = "Sync",
-                    onClick = {
-                        scope.launch {
-                            val playlistAndSongs = getPlaylistAndSongs(playlist?.browseId ?: return@launch)
-                            if (playlistAndSongs?.songs != null)
-                            playlistAndSongs.songs.forEachIndexed { index, song ->
-                                database.withTransaction {
-                                    database.songDao().upsertSong(song)
-                                    database.playlistDao().insertSongToPlaylist(SongPlaylistMap(
-                                        songId = song.id,
-                                        playlistId = playlist!!.id,
-                                        position = index
-                                    ))
-                                }
+                if (playlist!!.isYoutubePlaylist) {
+                    BottomSheetItem(
+                        icon = Icons.Rounded.CloudSync,
+                        text = "Sync",
+                        onClick = {
+                            scope.launch {
+                                val playlistAndSongs =
+                                    getPlaylistAndSongs(playlist?.browseId ?: return@launch)
+                                if (playlistAndSongs?.songs != null)
+                                    playlistAndSongs.songs.forEachIndexed { index, song ->
+                                        database.withTransaction {
+                                            database.songDao().upsertSong(song)
+                                            database.playlistDao().insertSongToPlaylist(
+                                                SongPlaylistMap(
+                                                    songId = song.id,
+                                                    playlistId = playlist!!.id,
+                                                    position = index
+                                                )
+                                            )
+                                        }
+                                    }
+                                onDismiss()
                             }
-                            onDismiss()
                         }
-                    }
-                )
+                    )
+                }
 
                 BottomSheetItem(
                     icon = Icons.Default.Delete,
