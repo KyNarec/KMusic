@@ -49,7 +49,7 @@ class DataViewModel (
 
     fun updateStats() {
         Log.i("DataViewModel", downloadCache.cacheSpace.toString())
-        val dbName = "kmusic_database"
+        val dbName = "kmusic"
         val dbFile = application.getDatabasePath(dbName)
         val dbDir = dbFile.parentFile
         val dbBytes =
