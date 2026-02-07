@@ -59,11 +59,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.addOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -77,6 +83,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextMotion
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -535,5 +542,66 @@ fun PlayerScreen(
             Spacer(modifier = Modifier.weight(1f))
 
         }
+    }
+}
+
+/**
+ * Code from https://medium.com/@yuriyskul/different-approaches-to-create-android-style-shadows-with-transparent-containers-in-jetpack-compose-e299a215557e
+ */
+fun Modifier.multiLayersShadow(
+    elevation: Dp,
+    transparencyMultiplier: Float = 0.1f,
+    color: Color = Color.Black,
+    layers: Int = 20,
+    shape: Shape = RoundedCornerShape(8.dp)
+): Modifier = this.drawWithCache {
+
+    // Set the shadow size based on the elevation
+    val shadowSize =
+        elevation.toPx() * 1.2f  // tweak the multiplier for proper shadow size
+    val layerSize = shadowSize / layers
+
+    // Create the outline based on the shape and size
+    val outline = shape.createOutline(size, layoutDirection, this)
+    val path = Path().apply { addOutline(outline) }
+
+    onDrawWithContent {
+        // Draw each shadow layer with decreasing opacity and expanding size
+        repeat(layers) { layer ->
+            val layerAlpha = 1f - (1 / layers.toFloat()) * layer
+            val reducedLayerAlpha = layerAlpha * transparencyMultiplier
+
+            // Adjust the scale factor based on the layer
+            val scaleFactorX = 1f + (layer * layerSize) / size.width
+            val scaleFactorY = 1f + (layer * layerSize) / size.height
+
+            drawIntoCanvas { canvas ->
+                // Save the current state of the canvas
+                canvas.save()
+
+                // Move the canvas to the center
+                val centerX = size.width / 2
+                val centerY = size.height / 2
+                canvas.translate(centerX, centerY)
+
+                // Apply scale transformation, scaling differently in X and Y directions
+                canvas.scale(scaleFactorX, scaleFactorY)
+
+                // Translate back to the original position
+                canvas.translate(-centerX, -centerY)
+
+                // Draw the outline using the path and apply transparency for the shadow effect
+                drawPath(
+                    path = path,
+                    color = color.copy(alpha = reducedLayerAlpha),
+                    style = Stroke(width = layerSize)  // Set stroke width for each layer
+                )
+
+                // Restore the canvas to its original state
+                canvas.restore()
+            }
+        }
+
+        drawContent()
     }
 }
