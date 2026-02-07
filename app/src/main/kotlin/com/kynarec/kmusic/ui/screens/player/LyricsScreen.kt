@@ -80,9 +80,9 @@ fun LyricsScreen(
     val wavyLyricsIdleIndicator by settingsViewModel.wavyLyricsIdleIndicatorFlow.collectAsStateWithLifecycle(DEFAULT_WAVY_LYRICS_IDLE_INDICATOR)
 
     val currentUiLyrics = remember(uiState.currentSong?.id, uiState.currentLyrics) {
-        uiState.currentLyrics?.toUiLyrics(uiState.currentDurationLong.toSeconds())?.lines?.forEach {
-            println("LyricsScreen $it")
-        }
+//        uiState.currentLyrics?.toUiLyrics(uiState.currentDurationLong.toSeconds())?.lines?.forEach {
+//            println("LyricsScreen $it")
+//        }
         uiState.currentLyrics?.toUiLyrics(uiState.currentDurationLong.toSeconds())
     }
 
