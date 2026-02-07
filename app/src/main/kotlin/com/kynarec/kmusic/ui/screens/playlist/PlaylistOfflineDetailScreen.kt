@@ -97,9 +97,10 @@ fun PlaylistOfflineDetailScreen(
         ) {
             MarqueeBox(
                 text = playlist?.name ?: "",
+                style = MaterialTheme.typography.titleLarge,
                 boxModifier = Modifier
                     .weight(1f)
-                    .padding(end = 8.dp),
+                    .padding(horizontal = 16.dp),
             )
             when {
                 isAnyDownloading -> {
