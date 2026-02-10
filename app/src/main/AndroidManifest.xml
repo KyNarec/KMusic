@@ -28,7 +28,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:name=".KMusic"
-        android:theme="@style/Theme.KMusic.AppBase"
+        android:theme="@style/Theme.KMusic"
         android:enableOnBackInvokedCallback="true">
 
         <activity
