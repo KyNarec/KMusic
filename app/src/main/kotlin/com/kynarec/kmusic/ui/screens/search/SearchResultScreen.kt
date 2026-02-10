@@ -57,6 +57,7 @@ import com.kynarec.kmusic.ui.components.album.AlbumComponent
 import com.kynarec.kmusic.ui.components.artist.ArtistComponent
 import com.kynarec.kmusic.ui.components.playlist.PlaylistComponent
 import com.kynarec.kmusic.ui.components.song.SongComponent
+import com.kynarec.kmusic.ui.components.song.SongComponentSkeleton
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.screens.song.SortOption
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
@@ -233,13 +234,21 @@ fun SearchResultScreen(
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 if (isLoading) {
-                                    Box(
-                                        contentAlignment = Alignment.TopCenter,
-                                        modifier = Modifier.fillMaxSize()
+                                    LazyColumn(
+                                        Modifier.fillMaxSize()
                                             .padding(vertical = 8.dp)
                                     ) {
-                                        CircularWavyProgressIndicator()
+                                        items(30) {
+                                            SongComponentSkeleton()
+                                        }
                                     }
+//                                    Box(
+//                                        contentAlignment = Alignment.TopCenter,
+//                                        modifier = Modifier.fillMaxSize()
+//                                            .padding(vertical = 8.dp)
+//                                    ) {
+//                                        CircularWavyProgressIndicator()
+//                                    }
                                 } else {
                                     LazyColumn {
                                         items(
