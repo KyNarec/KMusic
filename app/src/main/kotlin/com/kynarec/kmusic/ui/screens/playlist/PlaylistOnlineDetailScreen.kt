@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -18,6 +18,7 @@ import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,6 +39,7 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.innertube.PlaylistWithSongsAndIndices
 import com.kynarec.kmusic.service.innertube.getPlaylistAndSongs
+import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.playlist.PlaylistOnlineOptionsBottomSheet
 import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
@@ -101,82 +103,78 @@ fun PlaylistOnlineDetailScreen(
         Column(
             Modifier.fillMaxSize()
         ) {
-            LazyRow(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                MarqueeBox(
+                    text = playlist.first().playlist.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    boxModifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp),
+                )
                 when {
                     isAnyDownloading -> {
-                        item {
-                            IconButton(
-                                onClick = {
+                        IconButton(
+                            onClick = {
 
-                                }
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.rounded_downloading_24),
-                                    contentDescription = "Downloaded"
-                                )
                             }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.rounded_downloading_24),
+                                contentDescription = "Downloaded"
+                            )
                         }
                     }
 
                     allDownloaded -> {
-                        item {
-                            IconButton(
-                                onClick = {
-                                    scope.launch {
-                                        dataViewModel.removeDownloads(songs)
-                                    }
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    dataViewModel.removeDownloads(songs)
                                 }
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.rounded_download_done_24),
-                                    contentDescription = "Downloaded"
-                                )
                             }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.rounded_download_done_24),
+                                contentDescription = "Downloaded"
+                            )
                         }
                     }
 
                     else -> {
-                        item {
-                            IconButton(
-                                onClick = {
-                                    dataViewModel.addDownloads(songs)
-                                }
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.rounded_download_24),
-                                    contentDescription = "Download"
-                                )
+                        IconButton(
+                            onClick = {
+                                dataViewModel.addDownloads(songs)
                             }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.rounded_download_24),
+                                contentDescription = "Download"
+                            )
                         }
                     }
                 }
-                item {
-                    IconButton(
-                        onClick = {
-                            viewModel.playShuffledPlaylist(songs)
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Shuffle,
-                            contentDescription = "Shuffle"
-                        )
+                IconButton(
+                    onClick = {
+                        viewModel.playShuffledPlaylist(songs)
                     }
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Shuffle,
+                        contentDescription = "Shuffle"
+                    )
                 }
-                item {
-                    IconButton(
-                        onClick = {
-                            showPlaylistOptionsBottomSheet.value = true
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More Options"
-                        )
+                IconButton(
+                    onClick = {
+                        showPlaylistOptionsBottomSheet.value = true
                     }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "More Options"
+                    )
                 }
             }
             LazyColumn(
