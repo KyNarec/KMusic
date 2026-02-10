@@ -1,7 +1,9 @@
 package com.kynarec.kmusic.ui.theme
 
 import android.os.Build
-import android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
@@ -10,11 +12,10 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 
 /**
  * Theme generated in figma with Material Theme Builder plugin
@@ -266,20 +267,20 @@ fun KMusicTheme(
     dynamicColor: Boolean = true,
     content: @Composable() () -> Unit
 ) {
-    val view = LocalView.current
+    val context = LocalContext.current
 
-    LaunchedEffect(darkTheme) {
-        if (darkTheme) {
-            view.windowInsetsController?.setSystemBarsAppearance(
-                0,
-                APPEARANCE_LIGHT_STATUS_BARS,
-            )
-        } else {
-            view.windowInsetsController?.setSystemBarsAppearance(
-                APPEARANCE_LIGHT_STATUS_BARS,
-                APPEARANCE_LIGHT_STATUS_BARS,
-            )
-        }
+    DisposableEffect(darkTheme) {
+        (context as ComponentActivity).enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT,
+            ) { darkTheme },
+            navigationBarStyle = SystemBarStyle.auto(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT,
+            ) { darkTheme }
+        )
+        onDispose {}
     }
 
     val colorScheme = when {
