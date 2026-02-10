@@ -1,6 +1,7 @@
 package com.kynarec.kmusic.ui.theme
 
 import android.os.Build
+import android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
@@ -10,8 +11,10 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 
 /**
  * Theme generated in figma with Material Theme Builder plugin
@@ -257,12 +260,28 @@ val unspecified_scheme = ColorFamily(
 )
 
 @Composable
-fun AppTheme(
+fun KMusicTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
     content: @Composable() () -> Unit
 ) {
+    val view = LocalView.current
+
+    LaunchedEffect(darkTheme) {
+        if (darkTheme) {
+            view.windowInsetsController?.setSystemBarsAppearance(
+                0,
+                APPEARANCE_LIGHT_STATUS_BARS,
+            )
+        } else {
+            view.windowInsetsController?.setSystemBarsAppearance(
+                APPEARANCE_LIGHT_STATUS_BARS,
+                APPEARANCE_LIGHT_STATUS_BARS,
+            )
+        }
+    }
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current

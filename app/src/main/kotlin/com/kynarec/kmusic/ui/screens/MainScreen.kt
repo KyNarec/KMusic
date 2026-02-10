@@ -10,7 +10,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import com.kynarec.kmusic.ui.Navigation
-import com.kynarec.kmusic.ui.theme.AppTheme
+import com.kynarec.kmusic.ui.theme.KMusicTheme
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DARK_MODE
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DYNAMIC_COLORS
@@ -38,7 +38,7 @@ fun MainScreen() {
 
         }
     }
-    AppTheme(
+    KMusicTheme(
         darkTheme = darkTheme,
         dynamicColor = dynamicColors
     ) {
