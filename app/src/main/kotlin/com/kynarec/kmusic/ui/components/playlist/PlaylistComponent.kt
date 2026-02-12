@@ -86,7 +86,6 @@ fun PlaylistComponent(
                 text = playlist.name,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-
             )
         }
     }
