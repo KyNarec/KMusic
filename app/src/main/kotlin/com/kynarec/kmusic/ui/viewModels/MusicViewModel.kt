@@ -24,6 +24,7 @@ import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.Artist
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.data.db.entities.SongAlbumMap
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.service.innertube.getRadioFlow
 import com.kynarec.kmusic.ui.screens.song.SortOption
@@ -129,14 +130,9 @@ class MusicViewModel
 
     init {
         initializeController()
-        println("MusicViewModel initialized")
-        println("MusicViewModel, Random number: ${Random.nextInt()}")
-        val stackTrace = Thread.currentThread().stackTrace
-        // We print the first 10 elements to see the "chain of command"
-        Log.d("MusicViewModel", "Initialization Trace:")
-        stackTrace.take(15).forEach { element ->
-            Log.d("MusicViewModel", "  at ${element.className}.${element.methodName}")
-        }
+        calledStackTrace()
+        removeNotLikedAlbums()
+        removeNotLikedArtists()
     }
 
     private fun initializeController() {
@@ -178,6 +174,26 @@ class MusicViewModel
         }, ContextCompat.getMainExecutor(context)) // Runs on Main Thread safely
     }
 
+    private fun calledStackTrace() {
+        val stackTrace = Thread.currentThread().stackTrace
+        // We print the first 10 elements to see the "chain of command"
+        Log.d("MusicViewModel", "Initialization Trace:")
+        stackTrace.take(15).forEach { element ->
+            Log.d("MusicViewModel", "  at ${element.className}.${element.methodName}")
+        }
+    }
+
+    private fun removeNotLikedAlbums() {
+        viewModelScope.launch(Dispatchers.IO) {
+            albumDao.deleteUnbookmarkedAlbums()
+        }
+    }
+
+    private fun removeNotLikedArtists() {
+        viewModelScope.launch(Dispatchers.IO) {
+            artistDao.deleteUnbookmarkedArtists()
+        }
+    }
     private fun updatePosition() {
         viewModelScope.launch(Dispatchers.Main) {
             while (true) {
@@ -195,7 +211,7 @@ class MusicViewModel
                     }
                 }
 
-                delay(200) // Update position 5 times a second (sufficient for UI)
+                delay(16L) // 60 fps
             }
         }
     }
@@ -581,10 +597,26 @@ class MusicViewModel
         }
     }
 
-    fun toggleFavoriteAlbum(album: Album) {
-        viewModelScope.launch {
+    fun toggleFavoriteAlbum(album: Album, albumSongs: List<Song>) {
+        viewModelScope.launch(Dispatchers.IO) {
             val updated = album.toggleBookmark()
             albumDao.updateAlbum(updated)
+
+            // it was bookmarked before
+            if (album.bookmarkedAt != null) {
+                albumDao.getSongsForAlbum(album.id).forEach { song ->
+                        albumDao.removeSongFromAlbum(album.id, song.id)
+                    }
+            } else {
+                albumSongs.forEachIndexed { index, it ->
+                    songDao.upsertSong(it)
+                    albumDao.insertSongToAlbum(SongAlbumMap(
+                        it.id,
+                        album.id,
+                        index
+                    ))
+                }
+            }
         }
     }
 

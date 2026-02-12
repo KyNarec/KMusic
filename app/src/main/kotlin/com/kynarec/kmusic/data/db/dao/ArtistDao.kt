@@ -17,10 +17,10 @@ interface ArtistDao {
     suspend fun upsertArtist(artist: Artist) {
         val existing = getArtistById(artist.id)
         if (existing == null) {
-            // Song doesn't exist, insert it
+            // Artist doesn't exist, insert it
             insertArtist(artist)
         } else {
-            // Song exists, update metadata but preserve user data
+            // Artist exists, update metadata but preserve user data
             updateArtist(artist.copy(
                 bookmarkedAt = existing.bookmarkedAt,
                 isYoutubeArtist = existing.isYoutubeArtist
@@ -45,4 +45,7 @@ interface ArtistDao {
 
     @Query("SELECT * FROM Artist WHERE bookmarkedAt > 0")
     fun getFavouritesArtistsFlow(): Flow<List<Artist>>
+
+    @Query("DELETE FROM Artist WHERE bookmarkedAt IS NULL OR bookmarkedAt <= 0")
+    suspend fun deleteUnbookmarkedArtists()
 }

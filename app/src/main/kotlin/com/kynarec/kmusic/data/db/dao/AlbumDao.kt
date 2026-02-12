@@ -50,6 +50,9 @@ interface AlbumDao {
     @Query("SELECT * FROM Album WHERE bookmarkedAt > 0")
     fun getFavouritesAlbumsFlow(): Flow<List<Album>>
 
+    @Query("DELETE FROM Album WHERE bookmarkedAt IS NULL OR bookmarkedAt <= 0")
+    suspend fun deleteUnbookmarkedAlbums()
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSongToAlbum(crossRef: SongAlbumMap)
 
@@ -73,5 +76,5 @@ interface AlbumDao {
         WHERE SongAlbumMap.albumId = :albumId
         ORDER BY SongAlbumMap.position ASC
     """)
-    fun getSongsForAlbum(albumId: String): Flow<List<Song>>
+    fun getSongsForAlbum(albumId: String): List<Song>
 }

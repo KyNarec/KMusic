@@ -54,6 +54,7 @@ import androidx.room.withTransaction
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.enums.PopupType
+import com.kynarec.kmusic.service.innertube.NetworkResult
 import com.kynarec.kmusic.service.innertube.getPlaylistAndSongs
 import com.kynarec.kmusic.ui.PlaylistOfflineDetailScreen
 import com.kynarec.kmusic.ui.components.playlist.PlaylistComponent
@@ -242,33 +243,46 @@ fun PlaylistsScreen(
 
                     Log.i("PlaylistScreen", "playlistId = $playlistId")
 
-                    scope.launch {
+                    scope.launch(Dispatchers.IO) {
                         isImportingPlaylist.value = true
                         totalLines.intValue = 1
                         showFAB = false
-                        val playlistAndSongs = getPlaylistAndSongs(playlistId)
-                        if (playlistAndSongs != null) {
-                            withContext(Dispatchers.Main) {
-//                                isImportingPlaylist.value = true
-                                totalLines.intValue = playlistAndSongs.songs.size
+                        when (val result = getPlaylistAndSongs(playlistId)) {
+                            is NetworkResult.Failure.NetworkError -> {
+                                SmartMessage("No Internet", PopupType.Error, false, context)
                             }
-                            database.withTransaction {
-                                val databasePlaylistId =
-                                    database.playlistDao().insertPlaylist(playlistAndSongs.playlist)
-                                Log.i("PlaylistScreen", "databasePlaylistId = $databasePlaylistId")
 
-                                playlistAndSongs.songs.forEachIndexed { index, song ->
+                            is NetworkResult.Failure.ParsingError -> {
+                                SmartMessage("Parsing Error", PopupType.Error, false, context)
+                            }
 
-                                    Log.i("PlaylistScreen", "adding song to db ${song.title}")
-                                    database.songDao().upsertSong(song)
-                                    database.playlistDao()
-                                        .insertSongAtEndOfPlaylist(song.id, databasePlaylistId)
+                            is NetworkResult.Failure.NotFound -> {
+                                SmartMessage("Playlist not found", PopupType.Error, false, context)
+                            }
+                            is NetworkResult.Success -> {
+                                val playlistAndSongs = result.data
+                                withContext(Dispatchers.Main) {
+                                    totalLines.intValue = playlistAndSongs.songs.size
+                                }
+                                database.withTransaction {
+                                    val databasePlaylistId =
+                                        database.playlistDao().insertPlaylist(playlistAndSongs.playlist)
+                                    Log.i("PlaylistScreen", "databasePlaylistId = $databasePlaylistId")
 
-                                    withContext(Dispatchers.Main) {
-                                        currentLine.intValue = index + 1
+                                    playlistAndSongs.songs.forEachIndexed { index, song ->
+
+                                        Log.i("PlaylistScreen", "adding song to db ${song.title}")
+                                        database.songDao().upsertSong(song)
+                                        database.playlistDao()
+                                            .insertSongAtEndOfPlaylist(song.id, databasePlaylistId)
+
+                                        withContext(Dispatchers.Main) {
+                                            currentLine.intValue = index + 1
+                                        }
                                     }
                                 }
                             }
+
                         }
                         withContext(Dispatchers.Main) {
                             isImportingPlaylist.value = false

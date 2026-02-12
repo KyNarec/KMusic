@@ -76,7 +76,7 @@ fun AlbumOptionsBottomSheet(
                     onClick = {
 //                        viewModel.deletePlaylist(playlist!!)
 //                        navController.navigate(PlaylistsScreen)
-                        viewModel.toggleFavoriteAlbum(album!!)
+                        viewModel.toggleFavoriteAlbum(album!!, albumSongs)
 //                        onDismiss()
                     }
                 )
