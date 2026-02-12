@@ -131,6 +131,7 @@ fun SearchResultScreen(
 
                     if (songs.isEmpty()) {
                         Log.w("SearchResultScreen", "No results found for Song '$query'.")
+                        SmartMessage("No results found for Song '$query'", PopupType.Error, false, context)
                     }
                 }
             }
@@ -150,6 +151,7 @@ fun SearchResultScreen(
 
                     if (albums.isEmpty()) {
                         Log.w("SearchResultScreen", "No results found for Album '$query'.")
+                        SmartMessage("No results found for Album '$query'", PopupType.Error, false, context)
                     }
                 }
             }
@@ -166,6 +168,10 @@ fun SearchResultScreen(
                             artists = artists + it
                             isLoading = false
                         }
+                    if (artists.isEmpty()) {
+                        Log.w("SearchResultScreen", "No results found for Artist '$query'.")
+                        SmartMessage("No results found for Artist '$query'", PopupType.Error, false, context)
+                    }
                 }
             }
 
@@ -181,6 +187,10 @@ fun SearchResultScreen(
                             playlists = playlists + it
                             isLoading = false
                         }
+                    if (playlists.isEmpty()) {
+                        Log.w("SearchResultScreen", "No results found for Playlist '$query'.")
+                        SmartMessage("No results found for Playlist '$query'", PopupType.Error, false, context)
+                    }
                 }
             }
         }
