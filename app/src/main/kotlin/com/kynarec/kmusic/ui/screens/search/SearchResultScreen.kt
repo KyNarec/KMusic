@@ -26,14 +26,17 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.Log
@@ -44,6 +47,7 @@ import com.kynarec.kmusic.data.db.entities.AlbumPreview
 import com.kynarec.kmusic.data.db.entities.ArtistPreview
 import com.kynarec.kmusic.data.db.entities.PlaylistPreview
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.service.innertube.searchAlbums
 import com.kynarec.kmusic.service.innertube.searchArtists
 import com.kynarec.kmusic.service.innertube.searchCommunityPlaylists
@@ -65,8 +69,11 @@ import com.kynarec.kmusic.ui.components.song.SongComponentSkeleton
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.screens.song.SortOption
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.utils.SmartMessage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
 
@@ -80,12 +87,16 @@ fun SearchResultScreen(
     navController: NavHostController,
     database: KmusicDatabase = koinInject()
 ) {
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
     var songs by remember { mutableStateOf(emptyList<Song>()) }
     var albums by remember { mutableStateOf(emptyList<AlbumPreview>()) }
     var artists by remember { mutableStateOf(emptyList<ArtistPreview>()) }
     var playlists by remember { mutableStateOf(emptyList<PlaylistPreview>()) }
 
     var isLoading by remember { mutableStateOf(true) }
+    var isRefreshing by remember { mutableStateOf(false) }
 
     val showBottomSheet = remember { mutableStateOf(false) }
     var longClickSong by remember { mutableStateOf<Song?>(null) }
@@ -175,270 +186,362 @@ fun SearchResultScreen(
         }
     }
 
+    suspend fun refresh() {
+        isRefreshing = true
+        when (selectedSearchParam.text) {
+            "Song" -> {
+                isLoading = true
+                val refreshedSongsList = mutableListOf<Song>()
 
-    Column(
-        Modifier.fillMaxSize()
-    ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            MarqueeBox(
-                text = query,
-                style = MaterialTheme.typography.titleLarge,
-                boxModifier = Modifier
-                    .weight(1f)
-                    .padding(end = 8.dp)
-            )
+                searchSongsFlow(query)
+                    .flowOn(Dispatchers.IO)
+                    .collect { song ->
+                        refreshedSongsList += song
+                    }
 
-            IconButton(
-                onClick = {
-                    navController.navigate(SearchScreen(query))
+                if (refreshedSongsList.isEmpty()) {
+                    SmartMessage("No results found for query: '$query'", PopupType.Error, false, context)
+                    delay(500)
+                    if (!songs.isEmpty()) isLoading = false
+                } else {
+                    songs = refreshedSongsList
+                    isLoading = false
                 }
-            ) {
-                Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
+            }
+
+            "Album" -> {
+                isLoading = true
+
+                val updatedAlbumList = mutableListOf<AlbumPreview>()
+                searchAlbums(query)
+                    .flowOn(Dispatchers.IO)
+                    .collect { album ->
+                        updatedAlbumList += album
+                    }
+
+                if (updatedAlbumList.isEmpty()) {
+                    SmartMessage("No results found for query: '$query'", PopupType.Error, false, context)
+                    delay(500)
+                    if (!albums.isEmpty()) isLoading = false
+                } else {
+                    albums = updatedAlbumList
+                    isLoading = false
+                }
+            }
+
+            "Artist" -> {
+                isLoading = true
+
+                val refreshedArtistList = mutableListOf<ArtistPreview>()
+                searchArtists(query)
+                    .flowOn(Dispatchers.IO)
+                    .collect {
+                        refreshedArtistList += it
+                    }
+
+                if (refreshedArtistList.isEmpty()) {
+                    SmartMessage("No results found for query: '$query'", PopupType.Error, false, context)
+                    delay(500)
+                    if (!artists.isEmpty()) isLoading = false
+                } else {
+                    artists = refreshedArtistList
+                    isLoading = false
+                }
+            }
+
+            "Playlist" -> {
+                isLoading = true
+
+                val refreshedPlaylistList = mutableListOf<PlaylistPreview>()
+                searchCommunityPlaylists(query)
+                    .flowOn(Dispatchers.IO)
+                    .collect {
+                        refreshedPlaylistList += it
+                    }
+
+                if (refreshedPlaylistList.isEmpty()) {
+                    SmartMessage("No results found for query: '$query'", PopupType.Error, false, context)
+                    delay(500)
+                    if (!playlists.isEmpty()) isLoading = false
+                } else {
+                    playlists = refreshedPlaylistList
+                    isLoading = false
+                }
             }
         }
-        SortSection(
-            sortOptions = searchParams,
-            selectedSortOption = selectedSearchParam,
-            onOptionSelected = {
-                viewModel.setSearchParam(it)
-            }
-        )
-        AnimatedContent(
-            targetState = selectedSearchParam.text
-        ) { targetState ->
-            when (targetState) {
-                "Song" -> {
-                    Crossfade(
-                        targetState = isLoading,
-                        animationSpec = tween(durationMillis = 400),
-                        label = "SongCrossfade"
-                    ) { loading ->
-                        if (loading) {
-                            LazyColumn(
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(vertical = 8.dp)
-                            ) {
-                                items(30) {
-                                    SongComponentSkeleton()
-                                }
+        isRefreshing = false
+    }
 
-                                if (showControlBar)
-                                    item {
-                                        Spacer(Modifier.height(70.dp))
-                                    }
-                            }
-                        } else {
-                            LazyColumn {
-                                items(
-                                    count = songs.size,
-                                    key = { index -> songs[index].id } // Add stable key!
-                                ) { index ->
-                                    val song = songs[index]
 
-                                    SongComponent(
-                                        song = song,
-                                        onClick = {
-                                            Log.d("SongClick", "Song clicked: ${song.title}")
-                                            viewModel.playSongByIdWithRadio(song)
-                                        },
-                                        onLongClick = {
-                                            longClickSong = song
-                                            showBottomSheet.value = true
-                                        }
-                                    )
-                                }
-                                if (showControlBar)
-                                    item {
-                                        Spacer(Modifier.height(70.dp))
-                                    }
-                            }
-                        }
-                    }
-                }
-
-                "Album" -> {
-                    Crossfade(
-                        targetState = isLoading,
-                        animationSpec = tween(durationMillis = 400),
-                        label = "SongCrossfade"
-                    ) { loading ->
-                        if (loading) {
-                            LazyVerticalGrid(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 8.dp),
-                                contentPadding = PaddingValues(
-                                    top = 8.dp,
-                                    bottom = bottomPadding
-                                ),
-                                columns = GridCells.Adaptive(minSize = 100.dp)
-                            ) {
-                                items(20) {
-                                    AlbumComponentSkeleton()
-                                }
-
-                                if (showControlBar)
-                                    item {
-                                        Spacer(Modifier.height(70.dp))
-                                    }
-                            }
-                        } else {
-                            LazyVerticalGrid(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 8.dp),
-                                contentPadding = PaddingValues(
-                                    top = 8.dp,
-                                    bottom = bottomPadding
-                                ),
-                                columns = GridCells.Adaptive(minSize = 100.dp)
-                            ) {
-                                items(albums, key = { it.id }) { album ->
-                                    AlbumComponent(
-                                        albumPreview = album,
-                                        navController = navController,
-                                        onClick = {
-                                            navController.navigate(AlbumDetailScreen(album.id))
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                "Artist" -> {
-                    Crossfade(
-                        targetState = isLoading,
-                        animationSpec = tween(durationMillis = 400),
-                        label = "SongCrossfade"
-                    ) { loading ->
-                        if (loading) {
-                            LazyVerticalGrid(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 8.dp),
-                                contentPadding = PaddingValues(
-                                    top = 8.dp,
-                                    bottom = bottomPadding
-                                ),
-                                columns = GridCells.Adaptive(minSize = 100.dp)
-                            ) {
-                                items(4) {
-                                    ArtistComponentSkeleton()
-                                }
-
-                                if (showControlBar)
-                                    item {
-                                        Spacer(Modifier.height(70.dp))
-                                    }
-                            }
-                        } else {
-                            LazyVerticalGrid(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 8.dp),
-                                contentPadding = PaddingValues(
-                                    top = 8.dp,
-                                    bottom = bottomPadding
-                                ),
-                                columns = GridCells.Adaptive(minSize = 100.dp)
-                            ) {
-                                items(artists, key = { it.id }) { artist ->
-                                    ArtistComponent(
-                                        artistPreview = artist,
-                                        onClick = {
-                                            navController.navigate(ArtistDetailScreen(artist.id))
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                "Playlist" -> {
-                    Crossfade(
-                        targetState = isLoading,
-                        animationSpec = tween(durationMillis = 400),
-                        label = "SongCrossfade"
-                    ) { loading ->
-                        if (loading) {
-                            LazyVerticalGrid(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 8.dp),
-                                contentPadding = PaddingValues(
-                                    top = 8.dp,
-                                    bottom = bottomPadding
-                                ),
-                                columns = GridCells.Adaptive(minSize = 100.dp)
-                            ) {
-                                items(4) {
-                                    PlaylistComponentSkeleton()
-                                }
-
-                                if (showControlBar)
-                                    item {
-                                        Spacer(Modifier.height(70.dp))
-                                    }
-                            }
-                        } else {
-                            LazyVerticalGrid(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 8.dp),
-                                contentPadding = PaddingValues(
-                                    top = 8.dp,
-                                    bottom = bottomPadding
-                                ),
-                                columns = GridCells.Adaptive(minSize = 100.dp)
-                            ) {
-                                items(playlists, key = { it.id }) { playlist ->
-                                    PlaylistComponent(
-                                        playlistPreview = playlist,
-                                        onClick = {
-                                            navController.navigate(
-                                                PlaylistOnlineDetailScreen(
-                                                    playlist.id,
-                                                    playlist.thumbnail
-                                                )
-                                            )
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                else -> {
-                    Box(
-                        contentAlignment = Alignment.TopCenter,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        CircularWavyProgressIndicator()
-                    }
-                }
-            }
-
-            if (showBottomSheet.value && longClickSong != null) {
-                Log.i("SongsScreen", "Showing bottom sheet")
-                Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
-                viewModel.maybeAddSongToDB(longClickSong!!)
-                SongOptionsBottomSheet(
-                    song = longClickSong!!,
-                    onDismiss = { showBottomSheet.value = false },
-                    viewModel = viewModel,
-                    database = database,
-                    navController = navController
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { scope.launch(Dispatchers.IO) { refresh() } },
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Column(
+            Modifier.fillMaxSize()
+        ) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                MarqueeBox(
+                    text = query,
+                    style = MaterialTheme.typography.titleLarge,
+                    boxModifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp)
                 )
+
+                IconButton(
+                    onClick = {
+                        navController.navigate(SearchScreen(query))
+                    }
+                ) {
+                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
+                }
+            }
+            SortSection(
+                sortOptions = searchParams,
+                selectedSortOption = selectedSearchParam,
+                onOptionSelected = {
+                    viewModel.setSearchParam(it)
+                }
+            )
+            AnimatedContent(
+                targetState = selectedSearchParam.text
+            ) { targetState ->
+                when (targetState) {
+                    "Song" -> {
+                        Crossfade(
+                            targetState = isLoading,
+                            animationSpec = tween(durationMillis = 400),
+                            label = "SongCrossfade"
+                        ) { loading ->
+                            if (loading) {
+                                LazyColumn(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .padding(vertical = 8.dp)
+                                ) {
+                                    items(30) {
+                                        SongComponentSkeleton()
+                                    }
+
+                                    if (showControlBar)
+                                        item {
+                                            Spacer(Modifier.height(70.dp))
+                                        }
+                                }
+                            } else {
+                                LazyColumn {
+                                    items(
+                                        count = songs.size,
+                                        key = { index -> songs[index].id } // Add stable key!
+                                    ) { index ->
+                                        val song = songs[index]
+
+                                        SongComponent(
+                                            song = song,
+                                            onClick = {
+                                                Log.d("SongClick", "Song clicked: ${song.title}")
+                                                viewModel.playSongByIdWithRadio(song)
+                                            },
+                                            onLongClick = {
+                                                longClickSong = song
+                                                showBottomSheet.value = true
+                                            }
+                                        )
+                                    }
+                                    if (showControlBar)
+                                        item {
+                                            Spacer(Modifier.height(70.dp))
+                                        }
+                                }
+                            }
+                        }
+                    }
+
+                    "Album" -> {
+                        Crossfade(
+                            targetState = isLoading,
+                            animationSpec = tween(durationMillis = 400),
+                            label = "SongCrossfade"
+                        ) { loading ->
+                            if (loading) {
+                                LazyVerticalGrid(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 8.dp),
+                                    contentPadding = PaddingValues(
+                                        top = 8.dp,
+                                        bottom = bottomPadding
+                                    ),
+                                    columns = GridCells.Adaptive(minSize = 100.dp)
+                                ) {
+                                    items(20) {
+                                        AlbumComponentSkeleton()
+                                    }
+
+                                    if (showControlBar)
+                                        item {
+                                            Spacer(Modifier.height(70.dp))
+                                        }
+                                }
+                            } else {
+                                LazyVerticalGrid(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 8.dp),
+                                    contentPadding = PaddingValues(
+                                        top = 8.dp,
+                                        bottom = bottomPadding
+                                    ),
+                                    columns = GridCells.Adaptive(minSize = 100.dp)
+                                ) {
+                                    items(albums, key = { it.id }) { album ->
+                                        AlbumComponent(
+                                            albumPreview = album,
+                                            navController = navController,
+                                            onClick = {
+                                                navController.navigate(AlbumDetailScreen(album.id))
+                                            },
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    "Artist" -> {
+                        Crossfade(
+                            targetState = isLoading,
+                            animationSpec = tween(durationMillis = 400),
+                            label = "SongCrossfade"
+                        ) { loading ->
+                            if (loading) {
+                                LazyVerticalGrid(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 8.dp),
+                                    contentPadding = PaddingValues(
+                                        top = 8.dp,
+                                        bottom = bottomPadding
+                                    ),
+                                    columns = GridCells.Adaptive(minSize = 100.dp)
+                                ) {
+                                    items(4) {
+                                        ArtistComponentSkeleton()
+                                    }
+
+                                    if (showControlBar)
+                                        item {
+                                            Spacer(Modifier.height(70.dp))
+                                        }
+                                }
+                            } else {
+                                LazyVerticalGrid(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 8.dp),
+                                    contentPadding = PaddingValues(
+                                        top = 8.dp,
+                                        bottom = bottomPadding
+                                    ),
+                                    columns = GridCells.Adaptive(minSize = 100.dp)
+                                ) {
+                                    items(artists, key = { it.id }) { artist ->
+                                        ArtistComponent(
+                                            artistPreview = artist,
+                                            onClick = {
+                                                navController.navigate(ArtistDetailScreen(artist.id))
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    "Playlist" -> {
+                        Crossfade(
+                            targetState = isLoading,
+                            animationSpec = tween(durationMillis = 400),
+                            label = "SongCrossfade"
+                        ) { loading ->
+                            if (loading) {
+                                LazyVerticalGrid(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 8.dp),
+                                    contentPadding = PaddingValues(
+                                        top = 8.dp,
+                                        bottom = bottomPadding
+                                    ),
+                                    columns = GridCells.Adaptive(minSize = 100.dp)
+                                ) {
+                                    items(12) {
+                                        PlaylistComponentSkeleton()
+                                    }
+
+                                    if (showControlBar)
+                                        item {
+                                            Spacer(Modifier.height(70.dp))
+                                        }
+                                }
+                            } else {
+                                LazyVerticalGrid(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 8.dp),
+                                    contentPadding = PaddingValues(
+                                        top = 8.dp,
+                                        bottom = bottomPadding
+                                    ),
+                                    columns = GridCells.Adaptive(minSize = 100.dp)
+                                ) {
+                                    items(playlists, key = { it.id }) { playlist ->
+                                        PlaylistComponent(
+                                            playlistPreview = playlist,
+                                            onClick = {
+                                                navController.navigate(
+                                                    PlaylistOnlineDetailScreen(
+                                                        playlist.id,
+                                                        playlist.thumbnail
+                                                    )
+                                                )
+                                            },
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    else -> {
+                        Box(
+                            contentAlignment = Alignment.TopCenter,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            CircularWavyProgressIndicator()
+                        }
+                    }
+                }
+
+                if (showBottomSheet.value && longClickSong != null) {
+                    Log.i("SongsScreen", "Showing bottom sheet")
+                    Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
+                    viewModel.maybeAddSongToDB(longClickSong!!)
+                    SongOptionsBottomSheet(
+                        song = longClickSong!!,
+                        onDismiss = { showBottomSheet.value = false },
+                        viewModel = viewModel,
+                        database = database,
+                        navController = navController
+                    )
+                }
             }
         }
     }
