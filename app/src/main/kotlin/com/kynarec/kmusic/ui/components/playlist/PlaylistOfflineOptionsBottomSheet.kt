@@ -45,12 +45,14 @@ import androidx.room.withTransaction
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
 import com.kynarec.kmusic.enums.PopupType
+import com.kynarec.kmusic.service.innertube.NetworkResult
 import com.kynarec.kmusic.service.innertube.getPlaylistAndSongs
 import com.kynarec.kmusic.ui.StarterScreens
 import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.song.BottomSheetItem
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.SmartMessage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
@@ -200,22 +202,36 @@ fun PlaylistOfflineOptionsBottomSheet(
                         icon = Icons.Rounded.CloudSync,
                         text = "Sync",
                         onClick = {
-                            scope.launch {
-                                val playlistAndSongs =
-                                    getPlaylistAndSongs(playlist?.browseId ?: return@launch)
-                                if (playlistAndSongs?.songs != null)
-                                    playlistAndSongs.songs.forEachIndexed { index, song ->
-                                        database.withTransaction {
-                                            database.songDao().upsertSong(song)
-                                            database.playlistDao().insertSongToPlaylist(
-                                                SongPlaylistMap(
-                                                    songId = song.id,
-                                                    playlistId = playlist!!.id,
-                                                    position = index
+                            scope.launch(Dispatchers.IO) {
+                                when (val result = getPlaylistAndSongs(playlist?.browseId ?: return@launch)) {
+                                    is NetworkResult.Failure.NetworkError -> {
+                                        SmartMessage("No Internet", PopupType.Error, false, context)
+                                    }
+
+                                    is NetworkResult.Failure.ParsingError -> {
+                                        SmartMessage("Parsing Error", PopupType.Error, false, context)
+                                    }
+
+                                    is NetworkResult.Failure.NotFound -> {
+                                        SmartMessage("List not found", PopupType.Error, false, context)
+                                    }
+
+                                    is NetworkResult.Success -> {
+                                        val playlistAndSongs = result.data
+                                        playlistAndSongs.songs.forEachIndexed { index, song ->
+                                            database.withTransaction {
+                                                database.songDao().upsertSong(song)
+                                                database.playlistDao().insertSongToPlaylist(
+                                                    SongPlaylistMap(
+                                                        songId = song.id,
+                                                        playlistId = playlist!!.id,
+                                                        position = index
+                                                    )
                                                 )
-                                            )
+                                            }
                                         }
                                     }
+                                }
                                 onDismiss()
                             }
                         }

@@ -569,7 +569,7 @@ class InnerTube(
         browseId: String,
         params: String?,
         continuation: String? = null,
-    ): String {
+    ): NetworkResult<String> {
         val url = "https://music.youtube.com/youtubei/v1/browse"
 
         val requestBody = BrowseRequest(
@@ -594,10 +594,6 @@ class InnerTube(
                 setBody(requestBody)
 
                 headers {
-//                    append(
-//                        "X-Goog-FieldMask",
-//                        "contents.tabbedSearchResultsRenderer.tabs.tabRenderer.content.sectionListRenderer.contents.musicShelfRenderer(continuations,contents.musicResponsiveListItemRenderer(flexColumns,fixedColumns,thumbnail,navigationEndpoint,badges))"
-//                    )
                     append("Accept", "*/*")
                     append("Accept-Charset", "UTF-8")
                     append("User-Agent", clientName.userAgent)
@@ -605,14 +601,14 @@ class InnerTube(
             }
 
             if (!response.status.isSuccess()) {
-                throw kotlinx.io.IOException("Unexpected response code: ${response.status}")
+                return NetworkResult.Failure.NetworkError
             }
 
-            return response.bodyAsText()
+            return NetworkResult.Success(response.bodyAsText())
 
         } catch (e: Exception) {
             e.printStackTrace()
-            return ""
+            return NetworkResult.Failure.NetworkError
         }
     }
 }

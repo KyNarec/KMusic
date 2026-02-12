@@ -326,10 +326,25 @@ data class AlbumWithSongsAndIndices(
 
 suspend fun getAlbumAndSongs(browseId: String): NetworkResult<AlbumWithSongsAndIndices> {
     val innerTubeClient = InnerTube(ClientName.WebRemix)
-    val raw = runCatching { innerTubeClient.browse(browseId, null) }
-        .getOrNull() ?: return NetworkResult.Failure.NetworkError
 
-    if (raw.isEmpty()) return NetworkResult.Failure.NetworkError
+    val raw: String
+    when (val result = innerTubeClient.browse(browseId, null)) {
+        is NetworkResult.Success -> {
+            raw = result.data
+        }
+
+        is NetworkResult.Failure.NetworkError -> {
+            return NetworkResult.Failure.NetworkError
+        }
+
+        is NetworkResult.Failure.ParsingError -> {
+            return NetworkResult.Failure.ParsingError
+        }
+
+        is NetworkResult.Failure.NotFound -> {
+            return NetworkResult.Failure.NotFound
+        }
+    }
 
     val parsed = runCatching { json.decodeFromString<AlbumBrowseResponse>(raw) }
         .getOrNull() ?: return NetworkResult.Failure.ParsingError
@@ -717,9 +732,24 @@ suspend fun getArtist(browseId: String): NetworkResult<ArtistPage> {
     val albums = mutableListOf<AlbumPreview>()
     val singleAndEps = mutableListOf<AlbumPreview>()
 
-    val raw = runCatching { innerTubeClient.browse(browseId, null) }
-        .getOrNull() ?: return NetworkResult.Failure.NetworkError
-    if (raw.isEmpty()) return NetworkResult.Failure.NetworkError
+    val raw: String
+    when (val result = innerTubeClient.browse(browseId, null)) {
+        is NetworkResult.Success -> {
+            raw = result.data
+        }
+
+        is NetworkResult.Failure.NetworkError -> {
+            return NetworkResult.Failure.NetworkError
+        }
+
+        is NetworkResult.Failure.ParsingError -> {
+            return NetworkResult.Failure.ParsingError
+        }
+
+        is NetworkResult.Failure.NotFound -> {
+            return NetworkResult.Failure.NotFound
+        }
+    }
 
     val parsed = runCatching { json.decodeFromString<ArtistResponse>(raw) }
         .getOrNull() ?: return NetworkResult.Failure.ParsingError
@@ -1087,14 +1117,24 @@ suspend fun browseSongs(browseId: String, params: String): NetworkResult<List<So
     val innerTubeClient = InnerTube(ClientName.WebRemix)
     val accumulatedSongs = mutableListOf<Song>()
 
-    val raw = runCatching {
-        innerTubeClient.browse(
-            browseId = browseId,
-            params = params,
-        )
-    }.getOrNull() ?: return NetworkResult.Failure.NetworkError
+    val raw: String
+    when (val result = innerTubeClient.browse(browseId, params)) {
+        is NetworkResult.Success -> {
+            raw = result.data
+        }
 
-    if (raw.isEmpty()) return NetworkResult.Failure.NetworkError
+        is NetworkResult.Failure.NetworkError -> {
+            return NetworkResult.Failure.NetworkError
+        }
+
+        is NetworkResult.Failure.ParsingError -> {
+            return NetworkResult.Failure.ParsingError
+        }
+
+        is NetworkResult.Failure.NotFound -> {
+            return NetworkResult.Failure.NotFound
+        }
+    }
 
     val parsed = runCatching { json.decodeFromString<BrowseSongsResponse>(raw) }
         .getOrNull() ?: return NetworkResult.Failure.ParsingError
@@ -1225,14 +1265,25 @@ suspend fun browseSongs(browseId: String, params: String): NetworkResult<List<So
 
 suspend fun browseAlbums(browseId: String, params: String): NetworkResult<List<AlbumPreview>> {
     val innerTubeClient = InnerTube(ClientName.WebRemix)
-    val raw = runCatching {
-        innerTubeClient.browse(
-            browseId = browseId,
-            params = params,
-        )
-    }.getOrNull() ?: return NetworkResult.Failure.NetworkError
 
-    if (raw.isEmpty()) return NetworkResult.Failure.NetworkError
+    val raw: String
+    when (val result = innerTubeClient.browse(browseId, params)) {
+        is NetworkResult.Success -> {
+            raw = result.data
+        }
+
+        is NetworkResult.Failure.NetworkError -> {
+            return NetworkResult.Failure.NetworkError
+        }
+
+        is NetworkResult.Failure.ParsingError -> {
+            return NetworkResult.Failure.ParsingError
+        }
+
+        is NetworkResult.Failure.NotFound -> {
+            return NetworkResult.Failure.NotFound
+        }
+    }
 
     val parsed = runCatching { json.decodeFromString<BrowseAlbumsResponse>(raw) }
         .getOrNull() ?: return NetworkResult.Failure.ParsingError
@@ -1413,26 +1464,33 @@ data class PlaylistWithSongsAndIndices(
     val year: String
 )
 
-suspend fun getPlaylistAndSongs(browseId: String): PlaylistWithSongsAndIndices? {
+suspend fun getPlaylistAndSongs(browseId: String): NetworkResult<PlaylistWithSongsAndIndices> {
     val innerTubeClient = InnerTube(ClientName.WebRemix)
     val songsList = mutableListOf<Song>()
+
+    val raw: String
+    when (val result = innerTubeClient.browse(browseId, null)) {
+        is NetworkResult.Success -> {
+            raw = result.data
+        }
+
+        is NetworkResult.Failure.NetworkError -> {
+            return NetworkResult.Failure.NetworkError
+        }
+
+        is NetworkResult.Failure.ParsingError -> {
+            return NetworkResult.Failure.ParsingError
+        }
+
+        is NetworkResult.Failure.NotFound -> {
+            return NetworkResult.Failure.NotFound
+        }
+    }
+
+    val parsed = runCatching { json.decodeFromString<GetPlaylistAndSongsResponse>(raw) }
+        .getOrNull() ?: return NetworkResult.Failure.ParsingError
+
     try {
-        val raw = innerTubeClient.browse(
-            browseId = browseId,
-            null
-        )
-
-        val json = json
-
-        val parsed = json.decodeFromString<GetPlaylistAndSongsResponse>(raw)
-
-//        public final val id: Long = 0, auto generated
-//        public final val name: String,
-//        public final val browseId: String? = null,
-//        public final val isEditable: Boolean = true,
-//        public final val isYoutubePlaylist: Boolean = false
-
-        val playlistId = browseId
         val playlist = parsed
             .getPlaylistAndSongsContents
             ?.getPlaylistAndSongsTwoColumnBrowseResultsRenderer
@@ -1474,17 +1532,6 @@ suspend fun getPlaylistAndSongs(browseId: String): PlaylistWithSongsAndIndices? 
             ?.firstOrNull()
             ?.getPlaylistAndSongsMusicPlaylistShelfRenderer
             ?.getPlaylistAndSongsContents
-
-        /*
-        public final data class Song(
-        public final val id: String,
-        public final val title: String,
-        public final val artists: List<SongArtist>,
-        public final val albumId: String? = null,
-        public final val duration: String,
-        public final val thumbnail: String
-        )
-         */
 
         for (item in songs.orEmpty()) {
             val song = item.getPlaylistAndSongsMusicResponsiveListItemRenderer
@@ -1606,50 +1653,74 @@ suspend fun getPlaylistAndSongs(browseId: String): PlaylistWithSongsAndIndices? 
 
             if (continuationToken != null) {
                 println("continuationToken found: $continuationToken")
-                browsePlaylistSongsContinuation(
+                when (val result = browsePlaylistSongsContinuation(
                     browseId,
                     continuationToken,
                     innerTubeClient
-                ).forEach {
-                    songsList.add(it)
+                )) {
+                    is NetworkResult.Success -> {
+                        songsList.addAll(result.data)
+                    }
+
+                    is NetworkResult.Failure -> {
+                        println("Error fetching songs: $result")
+                    }
                 }
             }
         }
 
-        return PlaylistWithSongsAndIndices(
-            playlist = Playlist(
-                name = playlistName ?: "",
-                browseId = playlistId,
-                isEditable = false,
-                isYoutubePlaylist = true
-            ),
-            songs = songsList,
-            views = views ?: "",
-            year = year ?: ""
+        return NetworkResult.Success(
+            PlaylistWithSongsAndIndices(
+                playlist = Playlist(
+                    name = playlistName ?: "",
+                    browseId = browseId,
+                    isEditable = false,
+                    isYoutubePlaylist = true
+                ),
+                songs = songsList,
+                views = views ?: "",
+                year = year ?: ""
+            )
         )
 
     } catch (e: Exception) {
         e.printStackTrace()
+        return NetworkResult.Failure.ParsingError
     }
-    return null
 }
 
 suspend fun browsePlaylistSongsContinuation(
     browseId: String,
     initialToken: String,
     innerTubeClient: InnerTube? = null
-): List<Song> {
+): NetworkResult<List<Song>> {
     val allSongsList = mutableListOf<Song>()
     val client = innerTubeClient ?: InnerTube(ClientName.WebRemix)
-    val json = json
 
     var currentToken: String? = initialToken
 
     while (currentToken != null) {
-        try {
-            val raw = client.browse(browseId, params = null, continuation = currentToken)
-            val parsed = json.decodeFromString<BrowsePlaylistSongsContinuationResponse>(raw)
+        val raw: String
+        when (val result = client.browse(browseId, null, continuation = currentToken)) {
+            is NetworkResult.Success -> {
+                raw = result.data
+            }
 
+            is NetworkResult.Failure.NetworkError -> {
+                return NetworkResult.Failure.NetworkError
+            }
+
+            is NetworkResult.Failure.ParsingError -> {
+                return NetworkResult.Failure.ParsingError
+            }
+
+            is NetworkResult.Failure.NotFound -> {
+                return NetworkResult.Failure.NotFound
+            }
+        }
+        val parsed = runCatching { json.decodeFromString<BrowsePlaylistSongsContinuationResponse>(raw) }
+            .getOrNull() ?: return NetworkResult.Failure.ParsingError
+        try {
             val items = parsed
                 .browsePlaylistSongsContinuationOnResponseReceivedActions
                 ?.firstOrNull()
@@ -1764,5 +1835,5 @@ suspend fun browsePlaylistSongsContinuation(
             currentToken = null
         }
     }
-    return allSongsList
+    return NetworkResult.Success(allSongsList)
 }
