@@ -24,6 +24,7 @@ import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.Artist
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.data.db.entities.SongAlbumMap
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.service.innertube.getRadioFlow
 import com.kynarec.kmusic.ui.screens.song.SortOption
@@ -581,10 +582,26 @@ class MusicViewModel
         }
     }
 
-    fun toggleFavoriteAlbum(album: Album) {
-        viewModelScope.launch {
+    fun toggleFavoriteAlbum(album: Album, albumSongs: List<Song>) {
+        viewModelScope.launch(Dispatchers.IO) {
             val updated = album.toggleBookmark()
             albumDao.updateAlbum(updated)
+
+            // it was bookmarked before
+            if (album.bookmarkedAt != null) {
+                albumDao.getSongsForAlbum(album.id).forEach { song ->
+                        albumDao.removeSongFromAlbum(album.id, song.id)
+                    }
+            } else {
+                albumSongs.forEachIndexed { index, it ->
+                    songDao.upsertSong(it)
+                    albumDao.insertSongToAlbum(SongAlbumMap(
+                        it.id,
+                        album.id,
+                        index
+                    ))
+                }
+            }
         }
     }
 

@@ -73,5 +73,5 @@ interface AlbumDao {
         WHERE SongAlbumMap.albumId = :albumId
         ORDER BY SongAlbumMap.position ASC
     """)
-    fun getSongsForAlbum(albumId: String): Flow<List<Song>>
+    fun getSongsForAlbum(albumId: String): List<Song>
 }

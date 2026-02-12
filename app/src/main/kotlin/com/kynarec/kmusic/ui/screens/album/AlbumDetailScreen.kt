@@ -1,9 +1,11 @@
 package com.kynarec.kmusic.ui.screens.album
 
 import android.util.Log
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,13 +24,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.rounded.Shuffle
-import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,15 +53,20 @@ import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.enums.PopupType
+import com.kynarec.kmusic.service.innertube.AlbumResult
 import com.kynarec.kmusic.service.innertube.getAlbumAndSongs
 import com.kynarec.kmusic.ui.components.album.AlbumOptionsBottomSheet
 import com.kynarec.kmusic.ui.components.song.SongComponent
+import com.kynarec.kmusic.ui.components.song.SongComponentSkeleton
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
+import com.kynarec.kmusic.utils.SmartMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -82,12 +89,13 @@ fun AlbumDetailScreen(
 
     val coloredDownloadIndicator = settingsViewModel.coloredDownloadIndicator
 
-    val albumFLow by database.albumDao().getAlbumByIdFlow(albumId).collectAsStateWithLifecycle(null)
+    var album by remember { mutableStateOf<Album?>(null) }
 
     var songs by remember { mutableStateOf(emptyList<Song>()) }
 
-    var isLoading by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(true) }
 
+    var isRefreshing by remember { mutableStateOf(false) }
     var longClickSong by remember { mutableStateOf<Song?>(null) }
     val showAlbumOptionsBottomSheet = remember { mutableStateOf(false) }
     val showSongDetailBottomSheet = remember { mutableStateOf(false) }
@@ -102,243 +110,343 @@ fun AlbumDetailScreen(
     val isAnyDownloading = songs.any { it.id in downloadingSongs }
 
     LaunchedEffect(Unit) {
-        if (albumFLow == null) {
-            isLoading = true
-            scope.launch {
-                getAlbumAndSongs(albumId).collect { albumWithSongs ->
-                    albumWithSongs.songs.forEach {
-                        songs = songs + it
-                    }
-                    Log.i("AlbumDetailScreen", "upserting album")
-                    withContext(Dispatchers.IO) {
-                        database.albumDao().upsertAlbum(albumWithSongs.album)
-                    }
-                    Log.i("AlbumDetailScreen", "upserting album done")
+        withContext(Dispatchers.IO) {
+            album = database.albumDao().getAlbumById(albumId)
+            songs = database.albumDao().getSongsForAlbum(albumId)
 
+            if (album == null) {
+                isLoading = true
+
+                when (val result = getAlbumAndSongs(albumId)) {
+                    is AlbumResult.Success -> {
+                        val albumWithSongs = result.data
+                        songs = emptyList()
+                        songs = songs + albumWithSongs.songs
+
+                        album = albumWithSongs.album
+                        Log.i("AlbumDetailScreen", "album is now set")
+                    }
+
+                    is AlbumResult.Failure.NetworkError -> {
+                        SmartMessage(
+                            "No Internet",
+                            PopupType.Error,
+                            false,
+                            context
+                        )
+                        Log.e("AlbumDetailScreen", "Failed to fetch: No Internet")
+                    }
+
+                    is AlbumResult.Failure.ParsingError -> {
+                        SmartMessage(
+                            "Parsing Error",
+                            PopupType.Error,
+                            false,
+                            context
+                        )
+                        Log.e("AlbumDetailScreen", "Failed to fetch: YouTube JSON changed")
+                    }
+
+                    is AlbumResult.Failure.NotFound -> {
+                        SmartMessage(
+                            "Album not found",
+                            PopupType.Error,
+                            false,
+                            context
+                        )
+                        Log.e("AlbumDetailScreen", "Album not found")
+                    }
                 }
-                isLoading = false
+            }
+            Log.i("AlbumDetailScreen", "$album")
+        }
+    }
+
+    fun handleRefresh() {
+        if (album != null) return
+        scope.launch {
+            isRefreshing = true
+            songs = emptyList()
+            when (val result = getAlbumAndSongs(albumId)) {
+                is AlbumResult.Success -> {
+                    val albumWithSongs = result.data
+                    songs = emptyList()
+                    songs = songs + albumWithSongs.songs
+
+                    album = albumWithSongs.album
+                    Log.i("AlbumDetailScreen", "album is now set")
+                    isLoading = false
+                    isRefreshing = false
+                }
+
+                is AlbumResult.Failure.NetworkError -> {
+                    SmartMessage(
+                        "No Internet",
+                        PopupType.Error,
+                        false,
+                        context
+                    )
+                    Log.e("AlbumDetailScreen", "Failed to fetch: No Internet")
+                    isRefreshing = false
+                }
+
+                is AlbumResult.Failure.ParsingError -> {
+                    SmartMessage(
+                        "Parsing Error",
+                        PopupType.Error,
+                        false,
+                        context
+                    )
+                    Log.e("AlbumDetailScreen", "Failed to fetch: YouTube JSON changed")
+                    isRefreshing = false
+                }
+
+                is AlbumResult.Failure.NotFound -> {
+                    SmartMessage(
+                        "Album not found",
+                        PopupType.Error,
+                        false,
+                        context
+                    )
+                    Log.e("AlbumDetailScreen", "Album not found")
+                    isRefreshing = false
+                }
             }
         }
     }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize()
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { handleRefresh() },
+        modifier = Modifier.fillMaxSize()
     ) {
-        item {
-            Box(
-                Modifier.fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-            ) {
-                AsyncImage(
-                    model = albumFLow?.thumbnailUrl,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
-                        .clip(RoundedCornerShape(8.dp)),
-                    imageLoader = LocalContext.current.imageLoader
-                )
-            }
-        }
-        item {
-            Column(
-                Modifier.fillMaxWidth(),
-            ) {
-                Spacer(Modifier.height(16.dp))
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
+        Crossfade(
+            targetState = isLoading,
+            animationSpec = tween(durationMillis = 400),
+            label = "SongCrossfade"
+        ) { loading ->
+            if (loading) {
+                AlbumDetailSkeleton()
+            } else {
+                LazyColumn(
+                    modifier = modifier.fillMaxSize()
                 ) {
-                    ConditionalMarqueeText(
-                        text = albumFLow?.title ?: "NA",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                }
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    ConditionalMarqueeText(
-                        text = "${albumFLow?.year} - ${songs.size} Songs",
-//                    style = MaterialTheme.typography.titleLarge
-                    )
-                }
-            }
-        }
-
-        if (albumFLow?.authorsText?.isNotEmpty() == true) {
-            item {
-                Row(
-                    modifier = Modifier
-                        .padding(vertical = 16.dp, horizontal = 8.dp)
-                ) {
-                    Text(
-                        text = "“",
-                        style = MaterialTheme.typography.titleLargeEmphasized,
-                        modifier = Modifier
-                            .offset(y = (-8).dp)
-                            .align(Alignment.Top),
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Text(
-                        text = if (!readMore) {
-                            albumFLow?.authorsText?.substring(
-                                0,
-                                if ((albumFLow?.authorsText?.length
-                                        ?: 0) >= 100
-                                ) 100 else albumFLow?.authorsText?.length ?: 0
-                            ).plus("...")
-                        } else {
-                            albumFLow?.authorsText ?: "NA"
-                        },
-                        style = TextStyle.Default.copy(textAlign = TextAlign.Justify),
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp)
-                            .weight(1f)
-                            .animateContentSize(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioNoBouncy,
-//                                    dampingRatio = Spring.DampingRatioLowBouncy,
-                                    stiffness = Spring.StiffnessVeryLow
-                                )
-                            )
-                            .clickable {
-                                readMore = !readMore
-                            },
-                    )
-
-                    Text(
-                        text = "„",
-                        style = MaterialTheme.typography.titleLargeEmphasized,
-                        modifier = Modifier
-                            .offset(y = 4.dp)
-                            .align(Alignment.Bottom),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                Text(
-                    text = albumFLow?.copyright ?: "NA",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
-        }
-
-        item {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ConditionalMarqueeText(
-                    text = "Songs",
-                    style = MaterialTheme.typography.titleLargeEmphasized.copy(fontWeight = FontWeight.SemiBold),
-                )
-
-                Spacer(Modifier.weight(1f))
-                when {
-                    isAnyDownloading -> {
-                        IconButton(
-                            onClick = {
-
-                            }
+                    item {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp)
                         ) {
-                            Icon(
-                                painter = painterResource(R.drawable.rounded_downloading_24),
-                                contentDescription = "Downloaded"
+                            AsyncImage(
+                                model = album?.thumbnailUrl,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .clip(RoundedCornerShape(8.dp)),
+                                imageLoader = LocalContext.current.imageLoader,
                             )
                         }
                     }
 
-                    allDownloaded -> {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    dataViewModel.removeDownloads(songs)
+                    item {
+                        Column(
+                            Modifier.fillMaxWidth(),
+                        ) {
+                            Spacer(Modifier.height(16.dp))
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                ConditionalMarqueeText(
+                                    text = album?.title ?: "NA",
+                                    style = MaterialTheme.typography.titleLarge
+                                )
+                            }
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                ConditionalMarqueeText(
+                                    text = "${album?.year} - ${songs.size} Songs",
+                                )
+                            }
+                        }
+                    }
+
+                    if (album?.authorsText?.isNotEmpty() == true) {
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .padding(vertical = 16.dp, horizontal = 8.dp)
+                            ) {
+                                Text(
+                                    text = "“",
+                                    style = MaterialTheme.typography.titleLargeEmphasized,
+                                    modifier = Modifier
+                                        .offset(y = (-8).dp)
+                                        .align(Alignment.Top),
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                Text(
+                                    text = if (!readMore) {
+                                        album?.authorsText?.substring(
+                                            0,
+                                            if ((album?.authorsText?.length
+                                                    ?: 0) >= 100
+                                            ) 100 else album?.authorsText?.length ?: 0
+                                        ).plus("...")
+                                    } else {
+                                        album?.authorsText ?: "NA"
+                                    },
+                                    style = TextStyle.Default.copy(textAlign = TextAlign.Justify),
+                                    modifier = Modifier
+                                        .padding(horizontal = 8.dp)
+                                        .weight(1f)
+                                        .animateContentSize(
+                                            animationSpec = spring(
+                                                dampingRatio = Spring.DampingRatioNoBouncy,
+//                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                                stiffness = Spring.StiffnessLow
+                                            )
+                                        )
+                                        .clickable {
+                                            readMore = !readMore
+                                        },
+                                )
+
+                                Text(
+                                    text = "„",
+                                    style = MaterialTheme.typography.titleLargeEmphasized,
+                                    modifier = Modifier
+                                        .offset(y = 4.dp)
+                                        .align(Alignment.Bottom),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Text(
+                                text = album?.copyright ?: "NA",
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.padding(horizontal = 8.dp),
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                        }
+                    }
+
+                    item {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            horizontalArrangement = Arrangement.Start,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ConditionalMarqueeText(
+                                text = "Songs",
+                                style = MaterialTheme.typography.titleLargeEmphasized.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                            )
+
+                            Spacer(Modifier.weight(1f))
+                            when {
+                                isAnyDownloading -> {
+                                    IconButton(
+                                        onClick = {
+
+                                        }
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.rounded_downloading_24),
+                                            contentDescription = "Downloaded"
+                                        )
+                                    }
+                                }
+
+                                allDownloaded -> {
+                                    IconButton(
+                                        onClick = {
+                                            scope.launch {
+                                                dataViewModel.removeDownloads(songs)
+                                            }
+                                        }
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.rounded_download_done_24),
+                                            contentDescription = "Downloaded",
+                                            tint = if (coloredDownloadIndicator) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                                        )
+                                    }
+                                }
+
+                                else -> {
+                                    IconButton(
+                                        onClick = {
+                                            dataViewModel.addDownloads(songs)
+                                        }
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.rounded_download_24),
+                                            contentDescription = "Download"
+                                        )
+                                    }
                                 }
                             }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.rounded_download_done_24),
-                                contentDescription = "Downloaded",
-                                tint = if (coloredDownloadIndicator) MaterialTheme.colorScheme.primary else LocalContentColor.current
-                            )
-                        }
-                    }
 
-                    else -> {
-                        IconButton(
-                            onClick = {
-                                dataViewModel.addDownloads(songs)
+                            IconButton(
+                                onClick = {
+                                    viewModel.playShuffledPlaylist(songs)
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Shuffle,
+                                    contentDescription = "Shuffle"
+                                )
                             }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.rounded_download_24),
-                                contentDescription = "Download"
+
+                            IconButton(
+                                onClick = {
+                                    showAlbumOptionsBottomSheet.value = true
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "More Options"
+                                )
+                            }
+                        }
+                    }
+
+                    if (loading) {
+                        items(8) {
+                            SongComponentSkeleton()
+                        }
+                    } else {
+                        items(songs) {
+                            SongComponent(
+                                song = it,
+                                onClick = {
+                                    scope.launch {
+                                        viewModel.playPlaylist(songs, it)
+                                    }
+                                },
+                                onLongClick = {
+                                    longClickSong = it
+                                    showSongDetailBottomSheet.value = true
+                                }
                             )
                         }
                     }
-                }
-
-                IconButton(
-                    onClick = {
-                        viewModel.playShuffledPlaylist(songs)
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Shuffle,
-                        contentDescription = "Shuffle"
-                    )
-                }
-
-                IconButton(
-                    onClick = {
-                        showAlbumOptionsBottomSheet.value = true
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "More Options"
-                    )
-                }
-            }
-        }
-        if (isLoading) {
-            item {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    CircularWavyProgressIndicator()
-                }
-            }
-        } else {
-            items(songs) {
-                SongComponent(
-                    song = it,
-                    onClick = {
-                        scope.launch {
-                            viewModel.playPlaylist(songs, it)
+                    if (showControlBar)
+                        item {
+                            Spacer(Modifier.height(70.dp))
                         }
-                    },
-                    onLongClick = {
-                        longClickSong = it
-                        showSongDetailBottomSheet.value = true
-                    }
-                )
+                }
             }
         }
-        if (showControlBar)
-            item {
-                Spacer(Modifier.height(70.dp))
-            }
     }
+
     if (showSongDetailBottomSheet.value && longClickSong != null) {
         Log.i("SongsScreen", "Showing bottom sheet")
         Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
