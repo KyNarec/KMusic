@@ -62,7 +62,7 @@ fun PlaylistComponentSkeleton() {
             Text(
                 text = "",
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxWidth(0.7f)
                     .clip(RoundedCornerShape(4.dp))
                     .shimmerEffect()
             )
@@ -73,7 +73,7 @@ fun PlaylistComponentSkeleton() {
             Text(
                 text = "",
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxWidth(0.4f)
                     .clip(RoundedCornerShape(4.dp))
                     .shimmerEffect()
             )
