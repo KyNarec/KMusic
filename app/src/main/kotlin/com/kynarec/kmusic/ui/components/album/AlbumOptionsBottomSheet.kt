@@ -17,14 +17,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
-import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.song.BottomSheetItem
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
@@ -33,20 +30,13 @@ import com.kynarec.kmusic.utils.SmartMessage
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AlbumOptionsBottomSheet(
-    albumId: String,
+    album: Album?,
     albumSongs: List<Song>,
     onDismiss: () -> Unit,
     viewModel: MusicViewModel,
-    database: KmusicDatabase,
-    navController: NavHostController
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
-
-    val album by database.albumDao().getAlbumByIdFlow(albumId)
-        .collectAsStateWithLifecycle(null)
-
-
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
