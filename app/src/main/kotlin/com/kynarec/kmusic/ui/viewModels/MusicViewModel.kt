@@ -130,14 +130,9 @@ class MusicViewModel
 
     init {
         initializeController()
-        println("MusicViewModel initialized")
-        println("MusicViewModel, Random number: ${Random.nextInt()}")
-        val stackTrace = Thread.currentThread().stackTrace
-        // We print the first 10 elements to see the "chain of command"
-        Log.d("MusicViewModel", "Initialization Trace:")
-        stackTrace.take(15).forEach { element ->
-            Log.d("MusicViewModel", "  at ${element.className}.${element.methodName}")
-        }
+        calledStackTrace()
+        removeNotLikedAlbums()
+        removeNotLikedArtists()
     }
 
     private fun initializeController() {
@@ -179,6 +174,26 @@ class MusicViewModel
         }, ContextCompat.getMainExecutor(context)) // Runs on Main Thread safely
     }
 
+    private fun calledStackTrace() {
+        val stackTrace = Thread.currentThread().stackTrace
+        // We print the first 10 elements to see the "chain of command"
+        Log.d("MusicViewModel", "Initialization Trace:")
+        stackTrace.take(15).forEach { element ->
+            Log.d("MusicViewModel", "  at ${element.className}.${element.methodName}")
+        }
+    }
+
+    private fun removeNotLikedAlbums() {
+        viewModelScope.launch(Dispatchers.IO) {
+            albumDao.deleteUnbookmarkedAlbums()
+        }
+    }
+
+    private fun removeNotLikedArtists() {
+        viewModelScope.launch(Dispatchers.IO) {
+            artistDao.deleteUnbookmarkedArtists()
+        }
+    }
     private fun updatePosition() {
         viewModelScope.launch(Dispatchers.Main) {
             while (true) {
@@ -196,7 +211,7 @@ class MusicViewModel
                     }
                 }
 
-                delay(200) // Update position 5 times a second (sufficient for UI)
+                delay(16L) // 60 fps
             }
         }
     }

@@ -56,7 +56,7 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.enums.PopupType
-import com.kynarec.kmusic.service.innertube.AlbumResult
+import com.kynarec.kmusic.service.innertube.NetworkResult
 import com.kynarec.kmusic.service.innertube.getAlbumAndSongs
 import com.kynarec.kmusic.ui.components.album.AlbumOptionsBottomSheet
 import com.kynarec.kmusic.ui.components.song.SongComponent
@@ -94,8 +94,8 @@ fun AlbumDetailScreen(
     var songs by remember { mutableStateOf(emptyList<Song>()) }
 
     var isLoading by remember { mutableStateOf(true) }
-
     var isRefreshing by remember { mutableStateOf(false) }
+
     var longClickSong by remember { mutableStateOf<Song?>(null) }
     val showAlbumOptionsBottomSheet = remember { mutableStateOf(false) }
     val showSongDetailBottomSheet = remember { mutableStateOf(false) }
@@ -115,19 +115,18 @@ fun AlbumDetailScreen(
             songs = database.albumDao().getSongsForAlbum(albumId)
 
             if (album == null) {
-                isLoading = true
-
                 when (val result = getAlbumAndSongs(albumId)) {
-                    is AlbumResult.Success -> {
+                    is NetworkResult.Success -> {
                         val albumWithSongs = result.data
                         songs = emptyList()
                         songs = songs + albumWithSongs.songs
 
                         album = albumWithSongs.album
+                        isLoading = false
                         Log.i("AlbumDetailScreen", "album is now set")
                     }
 
-                    is AlbumResult.Failure.NetworkError -> {
+                    is NetworkResult.Failure.NetworkError -> {
                         SmartMessage(
                             "No Internet",
                             PopupType.Error,
@@ -137,7 +136,7 @@ fun AlbumDetailScreen(
                         Log.e("AlbumDetailScreen", "Failed to fetch: No Internet")
                     }
 
-                    is AlbumResult.Failure.ParsingError -> {
+                    is NetworkResult.Failure.ParsingError -> {
                         SmartMessage(
                             "Parsing Error",
                             PopupType.Error,
@@ -147,7 +146,7 @@ fun AlbumDetailScreen(
                         Log.e("AlbumDetailScreen", "Failed to fetch: YouTube JSON changed")
                     }
 
-                    is AlbumResult.Failure.NotFound -> {
+                    is NetworkResult.Failure.NotFound -> {
                         SmartMessage(
                             "Album not found",
                             PopupType.Error,
@@ -157,7 +156,7 @@ fun AlbumDetailScreen(
                         Log.e("AlbumDetailScreen", "Album not found")
                     }
                 }
-            }
+            } else isLoading = false
             Log.i("AlbumDetailScreen", "$album")
         }
     }
@@ -168,7 +167,7 @@ fun AlbumDetailScreen(
             isRefreshing = true
             songs = emptyList()
             when (val result = getAlbumAndSongs(albumId)) {
-                is AlbumResult.Success -> {
+                is NetworkResult.Success -> {
                     val albumWithSongs = result.data
                     songs = emptyList()
                     songs = songs + albumWithSongs.songs
@@ -179,7 +178,7 @@ fun AlbumDetailScreen(
                     isRefreshing = false
                 }
 
-                is AlbumResult.Failure.NetworkError -> {
+                is NetworkResult.Failure.NetworkError -> {
                     SmartMessage(
                         "No Internet",
                         PopupType.Error,
@@ -190,7 +189,7 @@ fun AlbumDetailScreen(
                     isRefreshing = false
                 }
 
-                is AlbumResult.Failure.ParsingError -> {
+                is NetworkResult.Failure.ParsingError -> {
                     SmartMessage(
                         "Parsing Error",
                         PopupType.Error,
@@ -201,7 +200,7 @@ fun AlbumDetailScreen(
                     isRefreshing = false
                 }
 
-                is AlbumResult.Failure.NotFound -> {
+                is NetworkResult.Failure.NotFound -> {
                     SmartMessage(
                         "Album not found",
                         PopupType.Error,
