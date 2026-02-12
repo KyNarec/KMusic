@@ -1,12 +1,5 @@
 package com.kynarec.kmusic.ui.components.song
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,15 +14,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.kynarec.kmusic.utils.shimmerEffect
 
 @Composable
 fun SongComponentSkeleton() {
@@ -81,38 +70,17 @@ fun SongComponentSkeleton() {
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.Center
         ) {
-            Box(modifier = Modifier
+            Box(
+                modifier = Modifier
                     .size(24.dp)
                     .clip(CircleShape)
-                    .shimmerEffect())
+                    .shimmerEffect()
+            )
             Spacer(modifier = Modifier.weight(1f))
             Box(
-                modifier = Modifier.width(30.dp).height(14.dp).clip(RoundedCornerShape(4.dp)).shimmerEffect()
+                modifier = Modifier.width(30.dp).height(14.dp).clip(RoundedCornerShape(4.dp))
+                    .shimmerEffect()
             )
         }
     }
-}
-
-fun Modifier.shimmerEffect(): Modifier = composed {
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnim by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ), label = "shimmer"
-    )
-
-    background(
-        brush = Brush.linearGradient(
-            colors = listOf(
-                Color.LightGray.copy(alpha = 0.6f),
-                Color.LightGray.copy(alpha = 0.2f),
-                Color.LightGray.copy(alpha = 0.6f),
-            ),
-            start = Offset(translateAnim - 200f, translateAnim - 200f),
-            end = Offset(translateAnim, translateAnim)
-        )
-    )
 }
