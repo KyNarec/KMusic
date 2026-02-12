@@ -1,6 +1,8 @@
 package com.kynarec.kmusic.ui.screens.song
 
 import android.util.Log
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,11 +14,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Shuffle
-import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,11 +35,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.enums.PopupType
+import com.kynarec.kmusic.service.innertube.NetworkResult
 import com.kynarec.kmusic.service.innertube.browseSongs
 import com.kynarec.kmusic.ui.components.song.SongComponent
+import com.kynarec.kmusic.ui.components.song.SongComponentSkeleton
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
+import com.kynarec.kmusic.utils.SmartMessage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
@@ -61,89 +68,134 @@ fun SongListScreen(
     val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
     var songs by remember { mutableStateOf(emptyList<Song>()) }
     var isLoading by remember { mutableStateOf(false) }
+    var isRefreshing by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         if (songs.isEmpty()) {
             isLoading = true
-            browseSongs(browseId, browseParams)
-                .collect {
-                    songs = songs + it
+            when (val result = browseSongs(browseId, browseParams)) {
+                is NetworkResult.Success -> {
+                    songs = result.data
+                    isLoading = false
                 }
-            isLoading = false
+
+                is NetworkResult.Failure.NetworkError -> {
+                    SmartMessage(
+                        "No Internet", PopupType.Error, false, context
+                    )
+                }
+                is NetworkResult.Failure.ParsingError -> {
+                    SmartMessage(
+                        "Parsing Error", PopupType.Error, false, context
+                    )
+                }
+                is NetworkResult.Failure.NotFound -> {
+                    SmartMessage(
+                        "List not found", PopupType.Error, false, context
+                    )
+                }
+            }
+        }
+    }
+    fun handleRefresh() {
+        isRefreshing = true
+        scope.launch(Dispatchers.IO) {
+            when (val result = browseSongs(browseId, browseParams)) {
+                is NetworkResult.Success -> {
+                    songs = result.data
+                    isRefreshing = false
+                    isLoading = false
+                }
+
+                is NetworkResult.Failure.NetworkError -> {
+                    SmartMessage(
+                        "No Internet", PopupType.Error, false, context
+                    )
+                    isRefreshing = false
+                }
+                is NetworkResult.Failure.ParsingError -> {
+                    SmartMessage(
+                        "Parsing Error", PopupType.Error, false, context
+                    )
+                    isRefreshing = false
+                }
+                is NetworkResult.Failure.NotFound -> {
+                    SmartMessage(
+                        "List not found", PopupType.Error, false, context
+                    )
+                    isRefreshing = false
+                }
+            }
         }
     }
 
-    LazyColumn(
-        modifier.fillMaxSize()
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { handleRefresh() },
+        modifier = Modifier.fillMaxSize()
     ) {
-        item {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+        Crossfade(
+            targetState = isLoading,
+            animationSpec = tween(durationMillis = 400),
+            label = "SongCrossfade"
+        ) { loading ->
+
+            LazyColumn(
+                modifier.fillMaxSize()
             ) {
-                ConditionalMarqueeText(
-                    text = "Songs",
-                    style = MaterialTheme.typography.titleLargeEmphasized.copy(fontWeight = FontWeight.SemiBold),
-                )
+                item {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ConditionalMarqueeText(
+                            text = "Songs",
+                            style = MaterialTheme.typography.titleLargeEmphasized.copy(fontWeight = FontWeight.SemiBold),
+                        )
 
-                Spacer(Modifier.weight(1f))
+                        Spacer(Modifier.weight(1f))
 
-                IconButton(
-                    onClick = {
-                        viewModel.playShuffledPlaylist(songs)
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Shuffle,
-                        contentDescription = "Shuffle"
-                    )
-                }
-//                IconButton(
-//                    onClick = {
-//                        showAlbumOptionsBottomSheet.value = true
-//                    }
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.MoreVert,
-//                        contentDescription = "More Options"
-//                    )
-//                }
-            }
-        }
-        if (isLoading){
-            item {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    CircularWavyProgressIndicator()
-                }
-            }
-        } else {
-            items(songs, key = { it.id }) {
-                SongComponent(
-                    song = it,
-                    onClick = {
-                        scope.launch {
-                            viewModel.playPlaylist(songs, it)
+                        IconButton(
+                            onClick = {
+                                viewModel.playShuffledPlaylist(songs)
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Shuffle,
+                                contentDescription = "Shuffle"
+                            )
                         }
-                    },
-                    onLongClick = {
-                        longClickSong = it
-                        showSongDetailBottomSheet.value = true
                     }
-                )
+                }
+                if (loading) {
+                    items(10) {
+                        SongComponentSkeleton()
+                    }
+                } else {
+                    items(songs, key = { it.id }) {
+                        SongComponent(
+                            song = it,
+                            onClick = {
+                                scope.launch {
+                                    viewModel.playPlaylist(songs, it)
+                                }
+                            },
+                            onLongClick = {
+                                longClickSong = it
+                                showSongDetailBottomSheet.value = true
+                            }
+                        )
+                    }
+                }
+                if (showControlBar)
+                    item {
+                        Spacer(Modifier.height(70.dp))
+                    }
             }
         }
-        if (showControlBar)
-            item {
-                Spacer(Modifier.height(70.dp))
-            }
     }
 
     if (showSongDetailBottomSheet.value && longClickSong != null) {
