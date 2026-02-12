@@ -114,7 +114,7 @@ fun AlbumDetailScreen(
             album = database.albumDao().getAlbumById(albumId)
             songs = database.albumDao().getSongsForAlbum(albumId)
 
-            if (album == null) {
+            if (album == null || songs.isEmpty()) {
                 when (val result = getAlbumAndSongs(albumId)) {
                     is NetworkResult.Success -> {
                         val albumWithSongs = result.data
@@ -459,12 +459,10 @@ fun AlbumDetailScreen(
     }
     if (showAlbumOptionsBottomSheet.value) {
         AlbumOptionsBottomSheet(
-            albumId = albumId,
+            album = album,
             albumSongs = songs,
             onDismiss = { showAlbumOptionsBottomSheet.value = false },
             viewModel = viewModel,
-            database = database,
-            navController = navController
         )
     }
 }
