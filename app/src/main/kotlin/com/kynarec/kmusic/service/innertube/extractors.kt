@@ -1223,19 +1223,23 @@ suspend fun browseSongs(browseId: String, params: String): NetworkResult<List<So
 }
 
 
-fun browseAlbums(browseId: String, params: String): Flow<AlbumPreview> = flow {
+suspend fun browseAlbums(browseId: String, params: String): NetworkResult<List<AlbumPreview>> {
     val innerTubeClient = InnerTube(ClientName.WebRemix)
-
-    try {
-        val raw = innerTubeClient.browse(
+    val raw = runCatching {
+        innerTubeClient.browse(
             browseId = browseId,
             params = params,
         )
+    }.getOrNull() ?: return NetworkResult.Failure.NetworkError
 
-        val json = json
+    if (raw.isEmpty()) return NetworkResult.Failure.NetworkError
 
-        val parsed = json.decodeFromString<BrowseAlbumsResponse>(raw)
+    val parsed = runCatching { json.decodeFromString<BrowseAlbumsResponse>(raw) }
+        .getOrNull() ?: return NetworkResult.Failure.ParsingError
 
+    val albumPreviews = mutableListOf<AlbumPreview>()
+
+    try {
         val items = parsed
             .browseAlbumsContents
             ?.browseAlbumsSingleColumnBrowseResultsRenderer
@@ -1291,7 +1295,7 @@ fun browseAlbums(browseId: String, params: String): Flow<AlbumPreview> = flow {
                 ?.lastOrNull()
                 ?.browseAlbumsText
 
-            emit(
+            albumPreviews.add(
                 AlbumPreview(
                     id = id ?: "",
                     title = title ?: "",
@@ -1301,8 +1305,10 @@ fun browseAlbums(browseId: String, params: String): Flow<AlbumPreview> = flow {
                 )
             )
         }
+        return NetworkResult.Success(albumPreviews)
     } catch (e: Exception) {
         e.printStackTrace()
+        return NetworkResult.Failure.ParsingError
     }
 }
 

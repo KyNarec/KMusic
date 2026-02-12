@@ -46,6 +46,7 @@ import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import com.kynarec.kmusic.utils.SmartMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
 
@@ -71,7 +72,7 @@ fun SongListScreen(
     var isRefreshing by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        if (songs.isEmpty()) {
+        withContext(Dispatchers.IO) {
             isLoading = true
             when (val result = browseSongs(browseId, browseParams)) {
                 is NetworkResult.Success -> {
@@ -84,11 +85,13 @@ fun SongListScreen(
                         "No Internet", PopupType.Error, false, context
                     )
                 }
+
                 is NetworkResult.Failure.ParsingError -> {
                     SmartMessage(
                         "Parsing Error", PopupType.Error, false, context
                     )
                 }
+
                 is NetworkResult.Failure.NotFound -> {
                     SmartMessage(
                         "List not found", PopupType.Error, false, context
@@ -113,12 +116,14 @@ fun SongListScreen(
                     )
                     isRefreshing = false
                 }
+
                 is NetworkResult.Failure.ParsingError -> {
                     SmartMessage(
                         "Parsing Error", PopupType.Error, false, context
                     )
                     isRefreshing = false
                 }
+
                 is NetworkResult.Failure.NotFound -> {
                     SmartMessage(
                         "List not found", PopupType.Error, false, context
