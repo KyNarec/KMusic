@@ -329,7 +329,6 @@ fun ArtistDetailScreen(
                             AnimatedPane(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-
                                 Crossfade(
                                     targetState = isLoading,
                                     animationSpec = tween(durationMillis = 400),
