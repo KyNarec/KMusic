@@ -2,13 +2,21 @@ package com.kynarec.kmusic.ui.screens.album
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,8 +25,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -30,6 +40,7 @@ import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.components.album.AlbumComponent
 import com.kynarec.kmusic.ui.components.album.AlbumComponentSkeleton
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.rememberColumnCount
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +55,8 @@ fun AlbumListScreen(
     browseId: String,
     browseParams: String,
     navController: NavHostController,
+    backIconButton: (@Composable () -> Unit)? = null,
+    title: String? = null,
     viewModel: MusicViewModel = koinActivityViewModel(),
 ) {
     val context = LocalContext.current
@@ -128,28 +141,53 @@ fun AlbumListScreen(
             animationSpec = tween(durationMillis = 400),
             label = "AlbumCrossfade"
         ) { loading ->
-            LazyVerticalGrid(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp),
-                contentPadding = PaddingValues(
-                    top = 8.dp,
-                    bottom = bottomPadding
-                ),
-                columns = GridCells.Fixed(rememberColumnCount())
-            ) {
-                if (loading) {
-                  items(15) {
-                      AlbumComponentSkeleton()
-                  }
-                } else {
-                    items(albums, key = { it.id }) { album ->
-                        AlbumComponent(
-                            albumPreview = album,
-                            onClick = {
-                                navController.navigate(AlbumDetailScreen(album.id))
-                            }
-                        )
+            Scaffold(
+                topBar = {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(end = 8.dp),
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (backIconButton == null) Spacer(Modifier.width(16.dp))
+                        else Box() { backIconButton() }
+
+                        title?.let { str ->
+                            ConditionalMarqueeText(
+                                text = str,
+                                style = MaterialTheme.typography.titleLargeEmphasized.copy(fontWeight = FontWeight.SemiBold),
+                            )
+                            Spacer(Modifier.weight(1f))
+                        }
+
+                    }
+                }
+            ) { contentPadding ->
+                LazyVerticalGrid(
+                    modifier = Modifier
+                        .padding(contentPadding)
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp),
+                    contentPadding = PaddingValues(
+                        top = 8.dp,
+                        bottom = bottomPadding
+                    ),
+                    columns = GridCells.Fixed(rememberColumnCount())
+                ) {
+                    if (loading) {
+                        items(18) {
+                            AlbumComponentSkeleton()
+                        }
+                    } else {
+                        items(albums, key = { it.id }) { album ->
+                            AlbumComponent(
+                                albumPreview = album,
+                                onClick = {
+                                    navController.navigate(AlbumDetailScreen(album.id))
+                                }
+                            )
+                        }
                     }
                 }
             }

@@ -1,6 +1,7 @@
 package com.kynarec.kmusic.ui.screens.artist
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,24 +21,32 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.rounded.Shuffle
-import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.layout.AnimatedPane
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
+import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneScaffold
+import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
@@ -66,18 +76,23 @@ import com.kynarec.kmusic.ui.AlbumListScreen
 import com.kynarec.kmusic.ui.SongListScreen
 import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.album.AlbumComponent
+import com.kynarec.kmusic.ui.components.album.AlbumComponentSkeleton
 import com.kynarec.kmusic.ui.components.artist.ArtistOptionsBottomSheet
 import com.kynarec.kmusic.ui.components.song.SongComponent
+import com.kynarec.kmusic.ui.components.song.SongComponentSkeleton
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
+import com.kynarec.kmusic.ui.screens.album.AlbumListScreen
+import com.kynarec.kmusic.ui.screens.song.SongListScreen
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.SmartMessage
+import com.kynarec.kmusic.utils.shimmerEffect
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun ArtistDetailScreen(
     modifier: Modifier = Modifier,
@@ -88,6 +103,18 @@ fun ArtistDetailScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    val listDetailNavigator = rememberListDetailPaneScaffoldNavigator()
+    val isSinglePane =
+        listDetailNavigator.scaffoldValue[ListDetailPaneScaffoldRole.Detail] == PaneAdaptedValue.Hidden
+
+    var artistDestination by remember { mutableStateOf(ArtistDestination.Overview) }
+
+    BackHandler() {
+        if (artistDestination != ArtistDestination.Overview)
+            artistDestination = ArtistDestination.Overview
+        else navController.popBackStack()
+    }
 
     var artist by retain { mutableStateOf<Artist?>(null) }
 
@@ -161,6 +188,7 @@ fun ArtistDetailScreen(
                     artistPage = emptyList()
                     albums = emptyList()
                     singlesAndEps = emptyList()
+                    songs = emptyList()
 
                     artistPage = artistPage + fetchedArtistPage
                     fetchedArtistPage.topSongs.forEach {
@@ -207,346 +235,225 @@ fun ArtistDetailScreen(
         onRefresh = { handleRefresh() },
         modifier = Modifier.fillMaxSize()
     ) {
-        Crossfade(
-            targetState = isLoading,
-            animationSpec = tween(durationMillis = 400),
-            label = "SongCrossfade"
-        ) { loading ->
-            if (loading) {
-                ArtistDetailSkeleton()
-            } else {
-                LazyColumn(
-                    modifier = modifier.fillMaxSize()
+        NavigableListDetailPaneScaffold(
+            navigator = listDetailNavigator,
+            listPane = {
+                AnimatedPane(
+                    modifier = if (isSinglePane) Modifier.fillMaxSize() else Modifier.fillMaxWidth(
+                        0.5f
+                    )
                 ) {
-                    item {
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp)
-                        ) {
-                            AsyncImage(
-                                model = artist?.thumbnailUrl,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp)),
-                                imageLoader = LocalContext.current.imageLoader,
-                                contentScale = ContentScale.FillWidth
-                            )
-                        }
-                    }
-                    item {
-                        Column(
-                            Modifier.fillMaxWidth(),
-                        ) {
-                            Spacer(Modifier.height(16.dp))
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center
+                    Crossfade(
+                        targetState = isLoading,
+                        animationSpec = tween(durationMillis = 400),
+                        label = "ArtistPageCrossfade"
+                    ) { loading ->
+                        if (loading) {
+                            LazyColumn(
+                                modifier = modifier.fillMaxSize()
                             ) {
-                                MarqueeBox(
-                                    contentAlignment = Alignment.Center,
-                                    text = artist?.name ?: "NA",
-                                    style = MaterialTheme.typography.titleLarge
-                                )
+                                artistHeaderSkeleton()
+                                if (isSinglePane) artistContentListSkeleton()
+                                if (showControlBar)
+                                    item {
+                                        Spacer(Modifier.height(75.dp))
+                                    }
                             }
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center
+                        } else {
+                            LazyColumn(
+                                modifier = modifier.fillMaxSize()
                             ) {
-                                MarqueeBox(
-                                    contentAlignment = Alignment.Center,
-                                    text = "${artist?.subscriber} Followers",
-                                )
-                            }
-                        }
-                    }
-
-                    if (artist?.description?.isNotEmpty() == true) {
-                        item {
-                            Row(
-                                modifier = Modifier
-                                    .padding(vertical = 16.dp, horizontal = 8.dp)
-                            ) {
-                                Text(
-                                    text = "“",
-                                    style = MaterialTheme.typography.titleLargeEmphasized,
-                                    modifier = Modifier
-                                        .offset(y = (-8).dp)
-                                        .align(Alignment.Top),
-                                    fontWeight = FontWeight.Bold
+                                artistHeader(
+                                    artist = artist,
+                                    readMore = readMore,
+                                    onReadMoreToggle = { readMore = !readMore }
                                 )
 
-                                Text(
-                                    text = if (!readMore) {
-                                        artist?.description?.substring(
-                                            0,
-                                            if ((artist?.description?.length
-                                                    ?: 0) >= 100
-                                            ) 100 else artist?.description?.length ?: 0
-                                        ).plus("...")
-                                    } else {
-                                        artist?.description ?: "NA"
-                                    },
-                                    style = TextStyle.Default.copy(textAlign = TextAlign.Justify),
-                                    modifier = Modifier
-                                        .padding(horizontal = 8.dp)
-                                        .weight(1f)
-                                        .animateContentSize(
-                                            animationSpec = spring(
-                                                dampingRatio = Spring.DampingRatioNoBouncy,
-//                                    dampingRatio = Spring.DampingRatioLowBouncy,
-                                                stiffness = Spring.StiffnessLow
-                                            )
-                                        )
-                                        .clickable {
-                                            readMore = !readMore
+                                if (isSinglePane) {
+                                    artistContentList(
+                                        navController = navController,
+                                        viewModel = viewModel,
+                                        songs = songs,
+                                        albums = albums,
+                                        singlesAndEps = singlesAndEps,
+                                        artistPage = artistPage,
+                                        showArtistOptionsBottomSheet = {
+                                            showArtistOptionsBottomSheet.value = it
                                         },
-                                )
-
-
-                                Text(
-                                    text = "„",
-                                    style = MaterialTheme.typography.titleLargeEmphasized,
-                                    modifier = Modifier
-                                        .offset(y = 4.dp)
-                                        .align(Alignment.Bottom),
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
-
-                    item {
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp),
-                            horizontalArrangement = Arrangement.Start,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            MarqueeBox(
-                                boxModifier = Modifier
-                                    .weight(1f),
-                                text = "Top Songs",
-                                style = MaterialTheme.typography.titleLargeEmphasized.copy(
-                                    fontWeight = FontWeight.SemiBold
-                                ),
-                            )
-
-                            IconButton(
-                                onClick = {
-                                    viewModel.playShuffledPlaylist(songs)
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Shuffle,
-                                    contentDescription = "Shuffle"
-                                )
-                            }
-
-                            IconButton(
-                                onClick = {
-                                    showArtistOptionsBottomSheet.value = true
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.MoreVert,
-                                    contentDescription = "More Options"
-                                )
-                            }
-
-                            if (artistPage.isNotEmpty() && artistPage.first().topSongsBrowseId.isNotEmpty()) {
-                                IconButton(
-                                    onClick = {
-                                        navController.navigate(
-                                            SongListScreen(
-                                                browseId = artistPage.first().topSongsBrowseId,
-                                                browseParams = artistPage.first().topSongsParams
+                                        setLongClickSong = { longClickSong = it },
+                                        showSongDetailBottomSheet = {
+                                            showSongDetailBottomSheet.value = it
+                                        },
+                                        onShowSongList = {
+                                            navController.navigate(
+                                                SongListScreen(
+                                                    browseId = artistPage.first().topSongsBrowseId,
+                                                    browseParams = artistPage.first().topSongsParams
+                                                )
                                             )
-                                        )
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                        contentDescription = "Show all Songs"
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    if (isLoading) {
-                        item {
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp),
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                CircularWavyProgressIndicator()
-                            }
-                        }
-                    } else {
-                        items(songs) {
-                            SongComponent(
-                                song = it,
-                                onClick = {
-                                    scope.launch {
-                                        viewModel.playPlaylist(songs, it)
-                                    }
-                                },
-                                onLongClick = {
-                                    longClickSong = it
-                                    showSongDetailBottomSheet.value = true
-                                }
-                            )
-                        }
-                    }
-
-                    item {
-                        if (artistPage.isNotEmpty()) {
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp),
-                                horizontalArrangement = Arrangement.Start,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                MarqueeBox(
-                                    boxModifier = Modifier
-                                        .weight(1f),
-                                    text = "Albums",
-                                    style = MaterialTheme.typography.titleLargeEmphasized.copy(
-                                        fontWeight = FontWeight.SemiBold
-                                    ),
-                                )
-
-                                if (artistPage.first().albumsBrowseId.isNotEmpty()) {
-                                    IconButton(
-                                        onClick = {
+                                        },
+                                        onShowAlbumList = {
                                             navController.navigate(
                                                 AlbumListScreen(
                                                     browseId = artistPage.first().albumsBrowseId,
                                                     browseParams = artistPage.first().albumsParams
+
                                                 )
                                             )
-                                        }
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                            contentDescription = "Show all Albums"
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (isLoading) {
-                        item {
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp),
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                CircularWavyProgressIndicator()
-                            }
-                        }
-                    } else {
-                        item {
-                            LazyRow() {
-                                items(albums) {
-                                    AlbumComponent(
-                                        modifier = Modifier
-                                            .padding(horizontal = 4.dp)
-                                            .width(100.dp),
-                                        albumPreview = it,
-                                        onClick = {
-                                            navController.navigate(AlbumDetailScreen(it.id))
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    item {
-                        if (artistPage.isNotEmpty()) {
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp),
-                                horizontalArrangement = Arrangement.Start,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                MarqueeBox(
-                                    boxModifier = Modifier
-                                        .weight(1f),
-                                    text = "Singles & EPs",
-                                    style = MaterialTheme.typography.titleLargeEmphasized.copy(
-                                        fontWeight = FontWeight.SemiBold
-                                    ),
-                                )
-
-                                if (artistPage.first().singlesAndEpsBrowseId.isNotEmpty()) {
-                                    IconButton(
-                                        onClick = {
+                                        },
+                                        showSinglesAndEpsList = {
                                             navController.navigate(
                                                 AlbumListScreen(
                                                     browseId = artistPage.first().singlesAndEpsBrowseId,
-                                                    browseParams = artistPage.first().singlesAndEpsParams
+                                                    browseParams = artistPage.first().singlesAndEpsBrowseId
                                                 )
                                             )
                                         }
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                            contentDescription = "Show all Singles & EPs"
-                                        )
+                                    )
+                                }
+
+                                if (showControlBar)
+                                    item {
+                                        Spacer(Modifier.height(75.dp))
+                                    }
+
+                            }
+                        }
+                    }
+                }
+            },
+            detailPane = {
+                if (!isSinglePane) {
+                    when (artistDestination) {
+                        ArtistDestination.Overview -> {
+                            AnimatedPane(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+
+                                Crossfade(
+                                    targetState = isLoading,
+                                    animationSpec = tween(durationMillis = 400),
+                                    label = "OverviewCrossfade"
+                                ) { loading ->
+                                    LazyColumn {
+                                        if (loading) {
+                                            artistContentListSkeleton()
+                                            if (showControlBar)
+                                                item {
+                                                    Spacer(Modifier.height(75.dp))
+                                                }
+                                        } else {
+                                            artistContentList(
+                                                navController = navController,
+                                                viewModel = viewModel,
+                                                songs = songs,
+                                                albums = albums,
+                                                singlesAndEps = singlesAndEps,
+                                                artistPage = artistPage,
+                                                showArtistOptionsBottomSheet = {
+                                                    showArtistOptionsBottomSheet.value = it
+                                                },
+                                                setLongClickSong = { longClickSong = it },
+                                                showSongDetailBottomSheet = {
+                                                    showSongDetailBottomSheet.value = it
+                                                },
+                                                onShowSongList = {
+                                                    artistDestination =
+                                                        ArtistDestination.SongListScreen
+                                                },
+                                                onShowAlbumList = {
+                                                    artistDestination =
+                                                        ArtistDestination.AlbumListScreen
+                                                },
+                                                showSinglesAndEpsList = {
+                                                    artistDestination =
+                                                        ArtistDestination.SingleAndEpListScreen
+
+                                                }
+                                            )
+                                            if (showControlBar)
+                                                item {
+                                                    Spacer(Modifier.height(75.dp))
+                                                }
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    if (isLoading) {
-                        item {
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp),
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                CircularWavyProgressIndicator()
-                            }
-                        }
-                    } else {
-                        item {
-                            LazyRow() {
-                                items(singlesAndEps) {
-                                    AlbumComponent(
-                                        modifier = Modifier
-                                            .padding(horizontal = 4.dp)
-                                            .width(100.dp),
-                                        albumPreview = it,
-                                        onClick = {
-                                            navController.navigate(AlbumDetailScreen(it.id))
+                        ArtistDestination.SongListScreen -> {
+                            AnimatedPane() {
+                                SongListScreen(
+                                    navController = navController,
+                                    browseId = artistPage.first().topSongsBrowseId,
+                                    browseParams = artistPage.first().topSongsParams,
+                                    backIconButton = {
+                                        IconButton(
+                                            onClick = {
+                                                artistDestination = ArtistDestination.Overview
+                                            }
+                                        ) {
+                                            Icon(
+                                                Icons.AutoMirrored.Rounded.ArrowBack,
+                                                contentDescription = "Close"
+                                            )
                                         }
-                                    )
-                                }
+                                    }
+                                )
+                            }
+                        }
+
+                        ArtistDestination.AlbumListScreen -> {
+                            AnimatedPane() {
+                                AlbumListScreen(
+                                    navController = navController,
+                                    browseId = artistPage.first().albumsBrowseId,
+                                    browseParams = artistPage.first().albumsParams,
+                                    title = "Albums",
+                                    backIconButton = {
+                                        IconButton(
+                                            onClick = {
+                                                artistDestination = ArtistDestination.Overview
+                                            }
+                                        ) {
+                                            Icon(
+                                                Icons.AutoMirrored.Rounded.ArrowBack,
+                                                contentDescription = "Close"
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                        }
+
+                        ArtistDestination.SingleAndEpListScreen -> {
+                            AnimatedPane() {
+                                AlbumListScreen(
+                                    navController = navController,
+                                    browseId = artistPage.first().singlesAndEpsBrowseId,
+                                    browseParams = artistPage.first().singlesAndEpsParams,
+                                    title = "Single & Eps",
+                                    backIconButton = {
+                                        IconButton(
+                                            onClick = {
+                                                artistDestination = ArtistDestination.Overview
+                                            }
+                                        ) {
+                                            Icon(
+                                                Icons.AutoMirrored.Rounded.ArrowBack,
+                                                contentDescription = "Close"
+                                            )
+                                        }
+                                    }
+                                )
                             }
                         }
                     }
-
-                    if (showControlBar)
-                        item {
-                            Spacer(Modifier.height(75.dp))
-                        }
-
                 }
-            }
-        }
+            },
+        )
     }
+
     if (showSongDetailBottomSheet.value && longClickSong != null) {
         Log.i("SongsScreen", "Showing bottom sheet")
         Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
@@ -568,4 +475,523 @@ fun ArtistDetailScreen(
             navController = navController
         )
     }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun LazyListScope.artistHeader(
+    artist: Artist?,
+    readMore: Boolean,
+    onReadMoreToggle: () -> Unit
+) {
+
+    item {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        ) {
+            AsyncImage(
+                model = artist?.thumbnailUrl,
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp)),
+                imageLoader = LocalContext.current.imageLoader,
+                contentScale = ContentScale.FillWidth
+            )
+        }
+    }
+    item {
+        Column(
+            Modifier.fillMaxWidth(),
+        ) {
+            Spacer(Modifier.height(16.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                MarqueeBox(
+                    contentAlignment = Alignment.Center,
+                    text = artist?.name ?: "NA",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                MarqueeBox(
+                    contentAlignment = Alignment.Center,
+                    text = "${artist?.subscriber} Followers",
+                )
+            }
+        }
+    }
+
+    if (artist?.description?.isNotEmpty() == true) {
+        item {
+            Row(
+                modifier = Modifier
+                    .padding(vertical = 16.dp, horizontal = 8.dp)
+            ) {
+                Text(
+                    text = "“",
+                    style = MaterialTheme.typography.titleLargeEmphasized,
+                    modifier = Modifier
+                        .offset(y = (-8).dp)
+                        .align(Alignment.Top),
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = if (!readMore) {
+                        artist.description.take(
+                            if (artist.description.length >= 100
+                            ) 100 else artist.description.length
+                        ).plus("...")
+                    } else {
+                        artist.description
+                    },
+                    style = TextStyle.Default.copy(textAlign = TextAlign.Justify),
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .weight(1f)
+                        .animateContentSize(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+//                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
+                        )
+                        .clickable { onReadMoreToggle() },
+                )
+
+
+                Text(
+                    text = "„",
+                    style = MaterialTheme.typography.titleLargeEmphasized,
+                    modifier = Modifier
+                        .offset(y = 4.dp)
+                        .align(Alignment.Bottom),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun LazyListScope.artistHeaderSkeleton() {
+    item {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+                .aspectRatio(4f / 3f)
+                .clip(RoundedCornerShape(8.dp))
+                .shimmerEffect()
+        )
+    }
+    item {
+        Column(
+            Modifier.fillMaxWidth(),
+        ) {
+            Spacer(Modifier.height(16.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .clip(RoundedCornerShape(4.dp))
+                        .shimmerEffect()
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "",
+                    modifier = Modifier
+                        .fillMaxWidth(0.4f)
+                        .clip(RoundedCornerShape(4.dp))
+                        .shimmerEffect()
+                )
+            }
+        }
+    }
+    item {
+        Row(
+            modifier = Modifier
+                .padding(vertical = 16.dp, horizontal = 8.dp)
+        ) {
+            Text(
+                text = "“",
+                style = MaterialTheme.typography.titleLargeEmphasized,
+                modifier = Modifier
+                    .offset(y = (-8).dp)
+                    .align(Alignment.Top),
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = "",
+                style = TextStyle.Default.copy(textAlign = TextAlign.Justify),
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .weight(1f)
+                    .shimmerEffect(),
+                minLines = 3
+            )
+
+
+            Text(
+                text = "„",
+                style = MaterialTheme.typography.titleLargeEmphasized,
+                modifier = Modifier
+                    .offset(y = 4.dp)
+                    .align(Alignment.Bottom),
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun LazyListScope.artistContentList(
+    navController: NavHostController,
+    viewModel: MusicViewModel,
+    songs: List<Song>,
+    albums: List<AlbumPreview>,
+    singlesAndEps: List<AlbumPreview>,
+    artistPage: List<ArtistPage>,
+    showArtistOptionsBottomSheet: (Boolean) -> Unit,
+    setLongClickSong: (Song) -> Unit,
+    showSongDetailBottomSheet: (Boolean) -> Unit,
+    onShowSongList: () -> Unit,
+    onShowAlbumList: () -> Unit,
+    showSinglesAndEpsList: () -> Unit
+) {
+    item {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            MarqueeBox(
+                boxModifier = Modifier
+                    .weight(1f),
+                text = "Top Songs",
+                style = MaterialTheme.typography.titleLargeEmphasized.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+            )
+
+            IconButton(
+                onClick = {
+                    viewModel.playShuffledPlaylist(songs)
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Shuffle,
+                    contentDescription = "Shuffle"
+                )
+            }
+
+            IconButton(
+                onClick = {
+                    showArtistOptionsBottomSheet(true)
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "More Options"
+                )
+            }
+
+            if (artistPage.isNotEmpty() && artistPage.first().topSongsBrowseId.isNotEmpty()) {
+                IconButton(
+                    onClick = {
+                        onShowSongList()
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Show all Songs"
+                    )
+                }
+            }
+        }
+    }
+
+    items(songs) {
+        val scope = rememberCoroutineScope()
+        SongComponent(
+            song = it,
+            onClick = {
+                scope.launch {
+                    viewModel.playPlaylist(songs, it)
+                }
+            },
+            onLongClick = {
+                setLongClickSong(it)
+                showSongDetailBottomSheet(true)
+            }
+        )
+    }
+
+    item {
+        if (artistPage.isNotEmpty()) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                MarqueeBox(
+                    boxModifier = Modifier
+                        .weight(1f),
+                    text = "Albums",
+                    style = MaterialTheme.typography.titleLargeEmphasized.copy(
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                )
+
+                if (artistPage.first().albumsBrowseId.isNotEmpty()) {
+                    IconButton(
+                        onClick = {
+                            onShowAlbumList()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Show all Albums"
+                        )
+                    }
+                }
+            }
+        }
+    }
+    item {
+        LazyRow() {
+            items(albums) {
+                AlbumComponent(
+                    modifier = Modifier
+                        .padding(horizontal = 4.dp)
+                        .width(100.dp),
+                    albumPreview = it,
+                    onClick = {
+                        navController.navigate(
+                            AlbumDetailScreen(
+                                it.id
+                            )
+                        )
+                    }
+                )
+            }
+        }
+    }
+
+    item {
+        if (artistPage.isNotEmpty()) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                MarqueeBox(
+                    boxModifier = Modifier
+                        .weight(1f),
+                    text = "Singles & EPs",
+                    style = MaterialTheme.typography.titleLargeEmphasized.copy(
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                )
+
+                if (artistPage.first().singlesAndEpsBrowseId.isNotEmpty()) {
+                    IconButton(
+                        onClick = {
+                            showSinglesAndEpsList()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Show all Singles & EPs"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    item {
+        LazyRow() {
+            items(singlesAndEps) {
+                AlbumComponent(
+                    modifier = Modifier
+                        .padding(horizontal = 4.dp)
+                        .width(100.dp),
+                    albumPreview = it,
+                    onClick = {
+                        navController.navigate(
+                            AlbumDetailScreen(
+                                it.id
+                            )
+                        )
+                    }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun LazyListScope.artistContentListSkeleton() {
+    item {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            MarqueeBox(
+                boxModifier = Modifier
+                    .weight(1f),
+                text = "Top Songs",
+                style = MaterialTheme.typography.titleLargeEmphasized.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+            )
+
+            IconButton(
+                onClick = {
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Shuffle,
+                    contentDescription = "Shuffle"
+                )
+            }
+
+            IconButton(
+                onClick = {
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "More Options"
+                )
+            }
+            IconButton(
+                onClick = {
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Show all Songs"
+                )
+            }
+        }
+    }
+    items(5) {
+        SongComponentSkeleton()
+    }
+
+    item {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            MarqueeBox(
+                boxModifier = Modifier
+                    .weight(1f),
+                text = "Albums",
+                style = MaterialTheme.typography.titleLargeEmphasized.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+            )
+            IconButton(
+                onClick = {
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Show all Songs"
+                )
+            }
+        }
+    }
+
+    item {
+        LazyRow {
+            items(8) {
+                AlbumComponentSkeleton(
+                    modifier = Modifier
+                        .width(100.dp)
+                        .padding(horizontal = 4.dp)
+                )
+            }
+        }
+    }
+
+    item {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            MarqueeBox(
+                boxModifier = Modifier
+                    .weight(1f),
+                text = "Singles & EPs",
+                style = MaterialTheme.typography.titleLargeEmphasized.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+            )
+            IconButton(
+                onClick = {
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Show all Songs"
+                )
+            }
+        }
+    }
+
+    item {
+        LazyRow {
+            items(8) {
+                AlbumComponentSkeleton(
+                    modifier = Modifier
+                        .width(100.dp)
+                        .padding(horizontal = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+enum class ArtistDestination {
+    Overview,
+    SongListScreen,
+    AlbumListScreen,
+    SingleAndEpListScreen
 }

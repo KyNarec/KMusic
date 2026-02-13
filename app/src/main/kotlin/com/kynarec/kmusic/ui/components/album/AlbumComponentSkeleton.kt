@@ -22,9 +22,11 @@ import androidx.compose.ui.unit.dp
 import com.kynarec.kmusic.utils.shimmerEffect
 
 @Composable
-fun AlbumComponentSkeleton() {
+fun AlbumComponentSkeleton(
+    modifier: Modifier = Modifier
+) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp),
         shape = RoundedCornerShape(0.dp),

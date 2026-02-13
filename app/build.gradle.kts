@@ -104,6 +104,7 @@ dependencies {
     implementation(libs.androidx.room.common.jvm)
     implementation(libs.androidx.room.runtime.android)
     implementation(libs.androidx.ui)
+    implementation(libs.androidx.compose.adaptive)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -171,4 +172,10 @@ dependencies {
     // lyrics
     implementation(libs.lyrics.core)
     implementation(libs.lyrics.ui)
+
+    // adaptive layouts
+    implementation(libs.androidx.compose.adaptive)
+    implementation(libs.androidx.compose.adaptive.layout)
+    implementation(libs.androidx.compose.adaptive.navigation)
+
 }
