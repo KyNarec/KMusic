@@ -35,8 +35,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,18 +89,18 @@ fun AlbumDetailScreen(
 
     val coloredDownloadIndicator = settingsViewModel.coloredDownloadIndicator
 
-    var album by remember { mutableStateOf<Album?>(null) }
+    var album by retain { mutableStateOf<Album?>(null) }
 
-    var songs by remember { mutableStateOf(emptyList<Song>()) }
+    var songs by retain { mutableStateOf(emptyList<Song>()) }
 
-    var isLoading by remember { mutableStateOf(true) }
-    var isRefreshing by remember { mutableStateOf(false) }
+    var isLoading by retain { mutableStateOf(true) }
+    var isRefreshing by retain { mutableStateOf(false) }
 
-    var longClickSong by remember { mutableStateOf<Song?>(null) }
-    val showAlbumOptionsBottomSheet = remember { mutableStateOf(false) }
-    val showSongDetailBottomSheet = remember { mutableStateOf(false) }
+    var longClickSong by retain { mutableStateOf<Song?>(null) }
+    val showAlbumOptionsBottomSheet = retain { mutableStateOf(false) }
+    val showSongDetailBottomSheet = retain { mutableStateOf(false) }
 
-    var readMore by remember { mutableStateOf(false) }
+    var readMore by retain { mutableStateOf(false) }
 
     val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
     val downloadingSongs by dataViewModel.downloadingSongs.collectAsStateWithLifecycle()

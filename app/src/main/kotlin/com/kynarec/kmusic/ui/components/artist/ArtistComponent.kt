@@ -1,14 +1,11 @@
 package com.kynarec.kmusic.ui.components.artist
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -31,14 +28,11 @@ fun ArtistComponent(
     modifier: Modifier = Modifier,
     artistPreview: ArtistPreview,
     onClick: () -> Unit,
-    imageWith: Int = 100,
-    imageHeight: Int = 100
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 4.dp)
-            .background(Color.Transparent),
+            .padding(horizontal = 4.dp, vertical = 4.dp),
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
 
@@ -52,8 +46,6 @@ fun ArtistComponent(
         ) {
             Box(
                 Modifier
-                    .width(imageWith.dp)
-                    .height(imageHeight.dp)
                     .align(Alignment.CenterHorizontally)
             )
             {

@@ -1,14 +1,13 @@
 package com.kynarec.kmusic.ui.components.album
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -27,10 +26,9 @@ fun AlbumComponentSkeleton() {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 4.dp)
-            .background(Color.Transparent),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-        shape = RoundedCornerShape(0.dp)
+            .padding(horizontal = 4.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(0.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Column(
             modifier = Modifier
@@ -41,7 +39,8 @@ fun AlbumComponentSkeleton() {
         ) {
             Box(
                 modifier = Modifier
-                    .size(100.dp)
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
                     .clip(RoundedCornerShape(8.dp))
                     .shimmerEffect()
             )

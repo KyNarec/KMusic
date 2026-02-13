@@ -26,6 +26,7 @@ import com.kynarec.kmusic.data.db.entities.AlbumPreview
 import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.components.album.AlbumComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.utils.rememberColumnCount
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
 
@@ -63,7 +64,7 @@ fun AlbumsScreen(
                     .fillMaxSize()
                     .padding(horizontal = 8.dp),
                 contentPadding = PaddingValues(top = 8.dp, bottom = bottomPadding),
-                    columns = GridCells.Adaptive(   120.dp)
+                columns = GridCells.Fixed(rememberColumnCount())
             ) {
                 items(albums!!, key = { it.id }) { album ->
                     AlbumComponent(
@@ -74,12 +75,9 @@ fun AlbumsScreen(
                             year = album.year,
                             thumbnail = album.thumbnailUrl
                         ),
-                        navController = navController,
                         onClick = {
                             navController.navigate(AlbumDetailScreen(album.id))
                         },
-                        imageWith = 120,
-                        imageHeight = 120,
                     )
                 }
 

@@ -37,8 +37,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,21 +89,21 @@ fun ArtistDetailScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var artist by remember { mutableStateOf<Artist?>(null) }
+    var artist by retain { mutableStateOf<Artist?>(null) }
 
-    var songs by remember { mutableStateOf(emptyList<Song>()) }
-    var albums by remember { mutableStateOf(emptyList<AlbumPreview>()) }
-    var singlesAndEps by remember { mutableStateOf(emptyList<AlbumPreview>()) }
-    var artistPage by remember { mutableStateOf(emptyList<ArtistPage>()) }
+    var songs by retain { mutableStateOf(emptyList<Song>()) }
+    var albums by retain { mutableStateOf(emptyList<AlbumPreview>()) }
+    var singlesAndEps by retain { mutableStateOf(emptyList<AlbumPreview>()) }
+    var artistPage by retain { mutableStateOf(emptyList<ArtistPage>()) }
 
-    var isLoading by remember { mutableStateOf(true) }
-    var isRefreshing by remember { mutableStateOf(false) }
+    var isLoading by retain { mutableStateOf(true) }
+    var isRefreshing by retain { mutableStateOf(false) }
 
-    var longClickSong by remember { mutableStateOf<Song?>(null) }
-    val showArtistOptionsBottomSheet = remember { mutableStateOf(false) }
-    val showSongDetailBottomSheet = remember { mutableStateOf(false) }
+    var longClickSong by retain { mutableStateOf<Song?>(null) }
+    val showArtistOptionsBottomSheet = retain { mutableStateOf(false) }
+    val showSongDetailBottomSheet = retain { mutableStateOf(false) }
 
-    var readMore by remember { mutableStateOf(false) }
+    var readMore by retain { mutableStateOf(false) }
 
     val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
 
@@ -461,7 +461,6 @@ fun ArtistDetailScreen(
                                             .padding(horizontal = 4.dp)
                                             .width(100.dp),
                                         albumPreview = it,
-                                        navController = navController,
                                         onClick = {
                                             navController.navigate(AlbumDetailScreen(it.id))
                                         }
@@ -530,7 +529,6 @@ fun ArtistDetailScreen(
                                             .padding(horizontal = 4.dp)
                                             .width(100.dp),
                                         albumPreview = it,
-                                        navController = navController,
                                         onClick = {
                                             navController.navigate(AlbumDetailScreen(it.id))
                                         }

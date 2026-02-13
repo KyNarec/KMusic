@@ -1,14 +1,11 @@
 package com.kynarec.kmusic.ui.components.album
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -21,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.data.db.entities.AlbumPreview
@@ -31,19 +27,14 @@ import com.kynarec.kmusic.ui.components.MarqueeBox
 fun AlbumComponent(
     modifier: Modifier = Modifier,
     albumPreview: AlbumPreview,
-    navController: NavHostController,
     onClick: () -> Unit,
-    imageWith: Int = 100,
-    imageHeight: Int = 100
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 4.dp)
-            .background(Color.Transparent),
+            .padding(horizontal = 4.dp, vertical = 4.dp),
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-
     ) {
         Column(
             modifier = Modifier
@@ -54,8 +45,6 @@ fun AlbumComponent(
         ) {
             Box(
                 Modifier
-                    .width(imageWith.dp)
-                    .height(imageHeight.dp)
                     .align(Alignment.CenterHorizontally)
             )
             {

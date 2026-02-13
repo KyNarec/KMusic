@@ -31,6 +31,7 @@ import com.kynarec.kmusic.ui.components.album.AlbumComponent
 import com.kynarec.kmusic.ui.components.album.AlbumComponentSkeleton
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.SmartMessage
+import com.kynarec.kmusic.utils.rememberColumnCount
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -135,7 +136,7 @@ fun AlbumListScreen(
                     top = 8.dp,
                     bottom = bottomPadding
                 ),
-                columns = GridCells.Adaptive(minSize = 100.dp)
+                columns = GridCells.Fixed(rememberColumnCount())
             ) {
                 if (loading) {
                   items(15) {
@@ -145,7 +146,6 @@ fun AlbumListScreen(
                     items(albums, key = { it.id }) { album ->
                         AlbumComponent(
                             albumPreview = album,
-                            navController = navController,
                             onClick = {
                                 navController.navigate(AlbumDetailScreen(album.id))
                             }
