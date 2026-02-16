@@ -1,5 +1,7 @@
 package com.kynarec.kmusic.utils
 
+import com.kynarec.kmusic.enums.SortBy
+import com.kynarec.kmusic.enums.SortOrder
 import com.kynarec.kmusic.enums.StartDestination
 import com.kynarec.kmusic.enums.TransitionEffect
 
@@ -40,5 +42,14 @@ object Constants {
 
     const val COLORED_DOWNLOAD_INDICATOR_KEY = "coloredDownloadIndicator"
     const val DEFAULT_COLORED_DOWNLOAD_INDICATOR = true
+
+
+    const val PLAYLIST_SORT_BY_KEY = "playlistSortBy"
+    val DEFAULT_PLAYLIST_SORT_BY = SortBy.Position
+
+    const val PLAYLIST_SORT_ORDER_KEY = "playlistSortOrder"
+    val DEFAULT_PLAYLIST_SORT_ORDER = SortOrder.Descending
+
+
 }
 

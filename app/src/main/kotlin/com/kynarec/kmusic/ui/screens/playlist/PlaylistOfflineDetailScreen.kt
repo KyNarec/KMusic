@@ -2,6 +2,9 @@ package com.kynarec.kmusic.ui.screens.playlist
 
 import android.util.Log
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.rounded.AccessTime
 import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material.icons.rounded.MusicNote
@@ -44,6 +48,8 @@ import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
 import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneScaffold
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,6 +59,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -66,8 +73,11 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.data.db.entities.SongArtist
+import com.kynarec.kmusic.enums.SortBy
+import com.kynarec.kmusic.enums.SortOrder
 import com.kynarec.kmusic.ui.components.TopBarComponentPreview
 import com.kynarec.kmusic.ui.components.playlist.PlaylistOfflineOptionsBottomSheet
+import com.kynarec.kmusic.ui.components.playlist.PlaylistSortByBottomSheet
 import com.kynarec.kmusic.ui.components.playlist.TwoByTwoImageGrid
 import com.kynarec.kmusic.ui.components.song.PreviewSongComponent
 import com.kynarec.kmusic.ui.components.song.SongComponent
@@ -77,6 +87,8 @@ import com.kynarec.kmusic.ui.theme.KMusicTheme
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
+import com.kynarec.kmusic.utils.Constants.DEFAULT_PLAYLIST_SORT_BY
+import com.kynarec.kmusic.utils.Constants.DEFAULT_PLAYLIST_SORT_ORDER
 import com.kynarec.kmusic.utils.formatDuration
 import com.kynarec.kmusic.utils.shimmerEffect
 import kotlinx.coroutines.launch
@@ -106,10 +118,14 @@ fun PlaylistOfflineDetailScreen(
     }
 
     val playlist by playlistFlow.collectAsStateWithLifecycle(null)
-    val songs by songsFlow.collectAsStateWithLifecycle(emptyList())
+    val rawSongs by songsFlow.collectAsStateWithLifecycle(emptyList())
+
+    val sortBy by settingsViewModel.playlistSortByFlow.collectAsStateWithLifecycle(DEFAULT_PLAYLIST_SORT_BY)
+    val sortOrder by settingsViewModel.playlistSortOrderFlow.collectAsStateWithLifecycle(DEFAULT_PLAYLIST_SORT_ORDER)
 
     val showSongDetailBottomSheet = remember { mutableStateOf(false) }
     val showPlaylistOptionsBottomSheet = remember { mutableStateOf(false) }
+    val showPlaylistSortByBottomSheet = remember { mutableStateOf(false) }
 
     var longClickSong by remember { mutableStateOf<Song?>(null) }
 
@@ -121,12 +137,31 @@ fun PlaylistOfflineDetailScreen(
     val downloadingSongs by dataViewModel.downloadingSongs.collectAsStateWithLifecycle()
     val completedIds by dataViewModel.completedDownloadIds.collectAsStateWithLifecycle()
 
-    val allDownloaded = if (songs.isNotEmpty()) songs.all { it.id in completedIds } else false
-    val isAnyDownloading = songs.any { it.id in downloadingSongs }
+    val allDownloaded = if (rawSongs.isNotEmpty()) rawSongs.all { it.id in completedIds } else false
+    val isAnyDownloading = rawSongs.any { it.id in downloadingSongs }
 
     val listDetailNavigator = rememberListDetailPaneScaffoldNavigator()
     val isSinglePane =
         listDetailNavigator.scaffoldValue[ListDetailPaneScaffoldRole.Detail] == PaneAdaptedValue.Hidden
+
+    val sortedSongs by retain(rawSongs, sortBy, sortOrder) {
+        derivedStateOf {
+            val sorted = when (sortBy) {
+                SortBy.Position -> rawSongs
+                SortBy.Title -> rawSongs.sortedBy { it.title.lowercase() }
+                SortBy.Artist -> rawSongs.sortedBy { it.artists.firstOrNull()?.name?.lowercase() ?: "" }
+                SortBy.Album -> rawSongs.sortedBy { it.albumId }
+                SortBy.Duration -> rawSongs.sortedBy { it.duration }
+                SortBy.DateFavorited -> rawSongs.sortedBy { it.likedAt }
+            }
+
+            if (sortOrder == SortOrder.Ascending) sorted.reversed() else sorted
+        }
+    }
+
+    LaunchedEffect(sortOrder) {
+        println("toggleSortOrder, sortOrder = $sortOrder")
+    }
 
     NavigableListDetailPaneScaffold(
         navigator = listDetailNavigator,
@@ -144,6 +179,10 @@ fun PlaylistOfflineDetailScreen(
                             playlistHeaderSkeleton(isSinglePane)
                             if (isSinglePane) {
                                 playlistControlRow(
+                                    sortBy = sortBy,
+                                    onSortByClick = { showPlaylistSortByBottomSheet.value = true },
+                                    sortOrder = sortOrder,
+                                    onSortOrderClick = { toggleSortOrder(settingsViewModel, it) },
                                     allDownloaded = allDownloaded,
                                     isAnyDownloading = isAnyDownloading,
                                     onAllDownloadedClick = {  },
@@ -168,29 +207,33 @@ fun PlaylistOfflineDetailScreen(
                         LazyColumn(
                             Modifier.fillMaxSize()
                         ) {
-                            playlistHeader(songs, playlist!!, isSinglePane)
+                            playlistHeader(sortedSongs, playlist!!, isSinglePane)
                             if (isSinglePane) {
                                 playlistControlRow(
+                                    sortBy = sortBy,
+                                    onSortByClick = { showPlaylistSortByBottomSheet.value = true },
+                                    sortOrder = sortOrder,
+                                    onSortOrderClick = { toggleSortOrder(settingsViewModel, it) },
                                     allDownloaded = allDownloaded,
                                     isAnyDownloading = isAnyDownloading,
                                     onAllDownloadedClick = {
                                         scope.launch {
-                                            dataViewModel.removeDownloads(songs)
+                                            dataViewModel.removeDownloads(sortedSongs)
                                         }
                                     },
-                                    onNoneDownloadedClick = { dataViewModel.addDownloads(songs) },
+                                    onNoneDownloadedClick = { dataViewModel.addDownloads(sortedSongs) },
                                     coloredDownloadIndicator = coloredDownloadIndicator,
                                     isEditable = playlist!!.isEditable,
                                     onLockClick = { scope.launch { database.playlistDao().toggleIsEditable(playlistId) } },
-                                    onShuffleClick = { viewModel.playShuffledPlaylist(songs) },
+                                    onShuffleClick = { viewModel.playShuffledPlaylist(sortedSongs) },
                                     onMoreClick = { showPlaylistOptionsBottomSheet.value = true }
                                 )
-                                items(songs) { song ->
+                                items(sortedSongs) { song ->
                                     SongComponent(
                                         song = song,
                                         onClick = {
                                             scope.launch {
-                                                viewModel.playPlaylist(songs, song)
+                                                viewModel.playPlaylist(sortedSongs, song)
                                             }
                                         },
                                         onLongClick = {
@@ -220,6 +263,10 @@ fun PlaylistOfflineDetailScreen(
                         LazyColumn {
                             if (loading) {
                                 playlistControlRow(
+                                    sortBy = sortBy,
+                                    onSortByClick = { showPlaylistSortByBottomSheet.value = true },
+                                    sortOrder = sortOrder,
+                                    onSortOrderClick = { toggleSortOrder(settingsViewModel, it) },
                                     allDownloaded = allDownloaded,
                                     isAnyDownloading = isAnyDownloading,
                                     onAllDownloadedClick = {  },
@@ -239,26 +286,30 @@ fun PlaylistOfflineDetailScreen(
                                     }
                             } else {
                                 playlistControlRow(
+                                    sortBy = sortBy,
+                                    onSortByClick = { showPlaylistSortByBottomSheet.value = true },
+                                    sortOrder = sortOrder,
+                                    onSortOrderClick = { toggleSortOrder(settingsViewModel, it) },
                                     allDownloaded = allDownloaded,
                                     isAnyDownloading = isAnyDownloading,
                                     onAllDownloadedClick = {
                                         scope.launch {
-                                            dataViewModel.removeDownloads(songs)
+                                            dataViewModel.removeDownloads(sortedSongs)
                                         }
                                     },
-                                    onNoneDownloadedClick = { dataViewModel.addDownloads(songs) },
+                                    onNoneDownloadedClick = { dataViewModel.addDownloads(sortedSongs) },
                                     coloredDownloadIndicator = coloredDownloadIndicator,
                                     isEditable = playlist!!.isEditable,
                                     onLockClick = { scope.launch { database.playlistDao().toggleIsEditable(playlistId) } },
-                                    onShuffleClick = { viewModel.playShuffledPlaylist(songs) },
+                                    onShuffleClick = { viewModel.playShuffledPlaylist(sortedSongs) },
                                     onMoreClick = { showPlaylistOptionsBottomSheet.value = true }
                                 )
-                                items(songs) { song ->
+                                items(sortedSongs) { song ->
                                     SongComponent(
                                         song = song,
                                         onClick = {
                                             scope.launch {
-                                                viewModel.playPlaylist(songs, song)
+                                                viewModel.playPlaylist(sortedSongs, song)
                                             }
                                         },
                                         onLongClick = {
@@ -306,6 +357,25 @@ fun PlaylistOfflineDetailScreen(
             navController = navController
         )
     }
+
+    if (showPlaylistSortByBottomSheet.value) {
+        PlaylistSortByBottomSheet(
+            onClick = { settingsViewModel.putPlaylistSortBy(it) },
+            onDismiss = { showPlaylistSortByBottomSheet.value = false }
+        )
+    }
+}
+
+fun toggleSortOrder(
+    settingsViewModel: SettingsViewModel,
+    currentSortOrder: SortOrder
+) {
+    println("toggleSortOrder")
+
+    when (currentSortOrder) {
+        SortOrder.Ascending -> settingsViewModel.putPlaylistSortOrder(SortOrder.Descending)
+        SortOrder.Descending -> settingsViewModel.putPlaylistSortOrder(SortOrder.Ascending)
+    }
 }
 
 fun LazyListScope.playlistHeader(
@@ -324,7 +394,9 @@ fun LazyListScope.playlistHeader(
                 )
         ) {
             Column(
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 4.dp),
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(vertical = 4.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -389,12 +461,15 @@ fun LazyListScope.playlistHeaderSkeleton(
                 )
         ) {
             Column(
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 4.dp),
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(vertical = 4.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(
-                    Modifier.fillMaxWidth(0.5f)
+                    Modifier
+                        .fillMaxWidth(0.5f)
                         .padding(bottom = 2.dp)
                         .aspectRatio(1f)
                         .clip(RoundedCornerShape(8.dp))
@@ -404,7 +479,8 @@ fun LazyListScope.playlistHeaderSkeleton(
                 Text(
                     "",
                     style = MaterialTheme.typography.titleLargeEmphasized,
-                    modifier = Modifier.fillMaxWidth(0.25f)
+                    modifier = Modifier
+                        .fillMaxWidth(0.25f)
                         .clip(RoundedCornerShape(4.dp))
                         .shimmerEffect()
                 )
@@ -424,7 +500,8 @@ fun LazyListScope.playlistHeaderSkeleton(
                     Text(
                         "",
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.fillMaxWidth(0.15f)
+                        modifier = Modifier
+                            .fillMaxWidth(0.15f)
                             .clip(RoundedCornerShape(4.dp))
                             .shimmerEffect()
                     )
@@ -439,7 +516,8 @@ fun LazyListScope.playlistHeaderSkeleton(
                     Text(
                         "",
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.fillMaxWidth(0.25f)
+                        modifier = Modifier
+                            .fillMaxWidth(0.25f)
                             .padding(start = 2.dp)
                             .clip(RoundedCornerShape(4.dp))
                             .shimmerEffect()
@@ -451,6 +529,10 @@ fun LazyListScope.playlistHeaderSkeleton(
 }
 
 fun LazyListScope.playlistControlRow(
+    sortBy: SortBy,
+    onSortByClick:() -> Unit,
+    sortOrder: SortOrder,
+    onSortOrderClick: (SortOrder) -> Unit,
     allDownloaded: Boolean,
     isAnyDownloading: Boolean,
     onAllDownloadedClick: () -> Unit,
@@ -469,19 +551,27 @@ fun LazyListScope.playlistControlRow(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val rotationAngle by animateFloatAsState(
+                targetValue = if (sortOrder == SortOrder.Ascending) 0f else 180f,
+                label = "SortOrderRotation",
+                animationSpec = spring(stiffness = Spring.StiffnessLow),
+            )
 
             IconButton(
-                onClick = {}
+                onClick = { onSortOrderClick(sortOrder) }
             ) {
                 Icon(
-                    Icons.Rounded.ArrowDownward,
-                    contentDescription = "sort"
+                    Icons.Rounded.ArrowUpward,
+                    contentDescription = "sort",
+                    modifier = Modifier.graphicsLayer {
+                        rotationZ = rotationAngle
+                    }
                 )
             }
 
-            Box(Modifier.clickable(onClick = {})) {
+            Box(Modifier.clickable(onClick = { onSortByClick() })) {
                 Text(
-                    "Position",
+                    sortBy.title,
                 )
             }
             Spacer(Modifier.weight(1f))
@@ -652,7 +742,9 @@ fun PODS() {
                             .padding(horizontal = 8.dp)
                     ) {
                         Column(
-                            modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 4.dp),
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(vertical = 4.dp),
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
