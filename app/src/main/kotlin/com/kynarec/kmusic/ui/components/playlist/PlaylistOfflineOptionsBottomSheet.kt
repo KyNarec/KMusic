@@ -13,9 +13,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material.icons.rounded.LowPriority
+import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -153,7 +153,7 @@ fun PlaylistOfflineOptionsBottomSheet(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = Icons.Default.LibraryMusic,
+                                imageVector = Icons.Rounded.MusicNote,
                                 contentDescription = "Music Icon",
                                 modifier = Modifier.size(iconSizeDp)
                             )
