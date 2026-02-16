@@ -44,7 +44,6 @@ import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
 import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneScaffold
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -129,12 +128,6 @@ fun PlaylistOfflineDetailScreen(
     val isSinglePane =
         listDetailNavigator.scaffoldValue[ListDetailPaneScaffoldRole.Detail] == PaneAdaptedValue.Hidden
 
-    var isLoading by retain { mutableStateOf(true) }
-
-    LaunchedEffect(Unit) {
-        playlist?.let { isLoading = false }
-    }
-
     NavigableListDetailPaneScaffold(
         navigator = listDetailNavigator,
         listPane = {
@@ -148,7 +141,7 @@ fun PlaylistOfflineDetailScreen(
                         LazyColumn(
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            playlistHeaderSkeleton()
+                            playlistHeaderSkeleton(isSinglePane)
                             if (isSinglePane) {
                                 playlistControlRow(
                                     allDownloaded = allDownloaded,
@@ -157,7 +150,7 @@ fun PlaylistOfflineDetailScreen(
                                     onNoneDownloadedClick = {  },
                                     coloredDownloadIndicator = coloredDownloadIndicator,
                                     isEditable = false,
-                                    onLockClick = { /* Playlist toggle editable */ },
+                                    onLockClick = {  },
                                     onShuffleClick = {  },
                                     onMoreClick = {  }
                                 )
@@ -175,40 +168,42 @@ fun PlaylistOfflineDetailScreen(
                         LazyColumn(
                             Modifier.fillMaxSize()
                         ) {
-                            playlistHeader(songs, playlist!!)
-                            playlistControlRow(
-                                allDownloaded = allDownloaded,
-                                isAnyDownloading = isAnyDownloading,
-                                onAllDownloadedClick = {
-                                    scope.launch {
-                                        dataViewModel.removeDownloads(songs)
-                                    }
-                                },
-                                onNoneDownloadedClick = { dataViewModel.addDownloads(songs) },
-                                coloredDownloadIndicator = coloredDownloadIndicator,
-                                isEditable = playlist!!.isEditable,
-                                onLockClick = { /* Playlist toggle editable */ },
-                                onShuffleClick = { viewModel.playShuffledPlaylist(songs) },
-                                onMoreClick = { showPlaylistOptionsBottomSheet.value = true }
-                            )
-                            items(songs) { song ->
-                                SongComponent(
-                                    song = song,
-                                    onClick = {
+                            playlistHeader(songs, playlist!!, isSinglePane)
+                            if (isSinglePane) {
+                                playlistControlRow(
+                                    allDownloaded = allDownloaded,
+                                    isAnyDownloading = isAnyDownloading,
+                                    onAllDownloadedClick = {
                                         scope.launch {
-                                            viewModel.playPlaylist(songs, song)
+                                            dataViewModel.removeDownloads(songs)
                                         }
                                     },
-                                    onLongClick = {
-                                        longClickSong = song
-                                        showSongDetailBottomSheet.value = true
-                                    }
+                                    onNoneDownloadedClick = { dataViewModel.addDownloads(songs) },
+                                    coloredDownloadIndicator = coloredDownloadIndicator,
+                                    isEditable = playlist!!.isEditable,
+                                    onLockClick = { scope.launch { database.playlistDao().toggleIsEditable(playlistId) } },
+                                    onShuffleClick = { viewModel.playShuffledPlaylist(songs) },
+                                    onMoreClick = { showPlaylistOptionsBottomSheet.value = true }
                                 )
-                            }
-                            if (showControlBar)
-                                item {
-                                    Spacer(Modifier.height(70.dp))
+                                items(songs) { song ->
+                                    SongComponent(
+                                        song = song,
+                                        onClick = {
+                                            scope.launch {
+                                                viewModel.playPlaylist(songs, song)
+                                            }
+                                        },
+                                        onLongClick = {
+                                            longClickSong = song
+                                            showSongDetailBottomSheet.value = true
+                                        }
+                                    )
                                 }
+                                if (showControlBar)
+                                    item {
+                                        Spacer(Modifier.height(70.dp))
+                                    }
+                            }
                         }
                     }
                 }
@@ -231,7 +226,7 @@ fun PlaylistOfflineDetailScreen(
                                     onNoneDownloadedClick = {  },
                                     coloredDownloadIndicator = coloredDownloadIndicator,
                                     isEditable = false,
-                                    onLockClick = { /* Playlist toggle editable */ },
+                                    onLockClick = {  },
                                     onShuffleClick = {  },
                                     onMoreClick = {  }
                                 )
@@ -254,7 +249,7 @@ fun PlaylistOfflineDetailScreen(
                                     onNoneDownloadedClick = { dataViewModel.addDownloads(songs) },
                                     coloredDownloadIndicator = coloredDownloadIndicator,
                                     isEditable = playlist!!.isEditable,
-                                    onLockClick = { /* Playlist toggle editable */ },
+                                    onLockClick = { scope.launch { database.playlistDao().toggleIsEditable(playlistId) } },
                                     onShuffleClick = { viewModel.playShuffledPlaylist(songs) },
                                     onMoreClick = { showPlaylistOptionsBottomSheet.value = true }
                                 )
@@ -315,13 +310,18 @@ fun PlaylistOfflineDetailScreen(
 
 fun LazyListScope.playlistHeader(
     songs: List<Song>,
-    playlist: Playlist
+    playlist: Playlist,
+    isSinglePane: Boolean = false
 ) {
     item {
         ElevatedCard(
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
+                .then(
+                    if (isSinglePane) Modifier
+                    else Modifier.padding(top = 16.dp)
+                )
         ) {
             Column(
                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 4.dp),
@@ -375,12 +375,18 @@ fun LazyListScope.playlistHeader(
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-fun LazyListScope.playlistHeaderSkeleton() {
+fun LazyListScope.playlistHeaderSkeleton(
+    isSinglePane: Boolean = false
+) {
     item {
         ElevatedCard(
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
+                .then(
+                    if (isSinglePane) Modifier
+                    else Modifier.padding(top = 16.dp)
+                )
         ) {
             Column(
                 modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 4.dp),
