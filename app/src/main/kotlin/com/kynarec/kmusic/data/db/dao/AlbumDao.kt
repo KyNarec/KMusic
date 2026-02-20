@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import androidx.room.Upsert
 import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.AlbumWithSongs
 import com.kynarec.kmusic.data.db.entities.Song
@@ -18,7 +19,7 @@ interface AlbumDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAlbum(album: Album): Long
 
-    suspend fun upsertAlbum(album: Album) {
+    suspend fun upsertAlbumData(album: Album) {
         val existing = getAlbumById(album.id)
         if (existing == null) {
             // Song doesn't exist, insert it
@@ -31,6 +32,9 @@ interface AlbumDao {
             ))
         }
     }
+
+    @Upsert
+    suspend fun upsertAlbum(album: Album)
 
     @Delete
     suspend fun deleteAlbum(album: Album)
