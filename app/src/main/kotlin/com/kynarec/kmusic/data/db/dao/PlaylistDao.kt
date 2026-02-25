@@ -102,4 +102,28 @@ interface PlaylistDao {
 
     @Query("UPDATE Playlist SET isEditable = NOT isEditable WHERE id = :playlistId")
     suspend fun toggleIsEditable(playlistId: Long)
+
+    @Query("UPDATE SongPlaylistMap SET position = position + 1 WHERE playlistId = :playlistId AND position >= :to AND position < :from")
+    suspend fun shiftSongsDown(playlistId: Long, from: Int, to: Int)
+
+    @Query("UPDATE SongPlaylistMap SET position = position - 1 WHERE playlistId = :playlistId AND position <= :to AND position > :from")
+    suspend fun shiftSongsUp(playlistId: Long, from: Int, to: Int)
+
+    @Query("UPDATE SongPlaylistMap SET position = :to WHERE playlistId = :playlistId AND position = :internalTempPosition")
+    suspend fun updateSongPositionByOldPosition(playlistId: Long, internalTempPosition: Int, to: Int)
+
+
+    @Transaction
+    suspend fun moveSongInPlaylist(playlistId: Long, fromIndex: Int, toIndex: Int) {
+        if (fromIndex == toIndex) return
+        val tempPosition = -1
+        updateSongPositionByOldPosition(playlistId, fromIndex, tempPosition)
+        if (fromIndex > toIndex) {
+            shiftSongsDown(playlistId, from = fromIndex, to = toIndex)
+        } else {
+            shiftSongsUp(playlistId, from = fromIndex, to = toIndex)
+        }
+
+        updateSongPositionByOldPosition(playlistId, tempPosition, toIndex)
+    }
 }

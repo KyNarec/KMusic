@@ -2,7 +2,6 @@ package com.kynarec.kmusic.ui.components.player
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,6 +36,7 @@ import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.ui.components.MarqueeBox
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -49,6 +49,7 @@ fun QueueSongComponent(
     onDragStarted: () -> Unit,
     onDragStopped: () -> Unit,
     reorderableCollectionItemScope: ReorderableCollectionItemScope,
+    draggingEnabled: Boolean = true
 ) {
     val title = song.title
     val artist = song.artists.joinToString(", ") { it.name }
@@ -100,24 +101,16 @@ fun QueueSongComponent(
                         .fillMaxHeight(),
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text(
+                    MarqueeBox(
                         text = title,
                         fontSize = 24.sp,
-                        maxLines = 1,
-                        modifier = Modifier
-                            .basicMarquee(
-                                initialDelayMillis = 1000, iterations = Int.MAX_VALUE
-                            )
+                        maxLines = 1
                     )
 
-                    Text(
+                    MarqueeBox(
                         text = artist,
                         fontSize = 14.sp,
-                        maxLines = 1,
-                        modifier = Modifier
-                            .basicMarquee(
-                                initialDelayMillis = 1000, iterations = Int.MAX_VALUE
-                            )
+                        maxLines = 1
                     )
                 }
 
@@ -144,30 +137,33 @@ fun QueueSongComponent(
                     )
                 }
             }
-            Box(
-                modifier = with(reorderableCollectionItemScope) {
-                    Modifier
-                        .align(Alignment.TopCenter)
-                        .zIndex(2f)
-                        .padding(top = 6.dp)
-                        .size(width = 40.dp, height = 12.dp)
-                        .background(Color.Transparent)
-                        .draggableHandle(
-                            onDragStarted = {
-                                onDragStarted()
-                            },
-                            onDragStopped = {
-                                onDragStopped()
-                            },
-                        )
-                }
-            ) {
+            if (draggingEnabled) {
                 Box(
-                    Modifier
-                        .align(Alignment.TopCenter)
-                        .size(width = 32.dp, height = 4.dp)
-                        .background(Color.Gray.copy(alpha = 0.5f), RoundedCornerShape(2.dp))
-                )
+                    modifier = with(reorderableCollectionItemScope) {
+                        Modifier
+                            .align(Alignment.TopCenter)
+                            .zIndex(2f)
+                            .padding(top = 6.dp)
+                            .size(width = 40.dp, height = 12.dp)
+                            .background(Color.Transparent)
+                            .draggableHandle(
+                                onDragStarted = {
+                                    onDragStarted()
+                                },
+                                onDragStopped = {
+                                    onDragStopped()
+                                },
+                            )
+                    }
+                ) {
+                    Box(
+                        Modifier
+                            .align(Alignment.TopCenter)
+                            .size(width = 32.dp, height = 4.dp)
+                            .background(Color.Gray.copy(alpha = 0.5f), RoundedCornerShape(2.dp))
+                    )
+                }
+
             }
         }
     }
