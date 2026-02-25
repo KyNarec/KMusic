@@ -24,8 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,18 +70,18 @@ fun PlaylistOnlineDetailScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    var songs by remember { mutableStateOf(emptyList<Song>()) }
-    var playlist by remember { mutableStateOf<PlaylistWithSongsAndIndices?>(null) }
+    var songs by retain { mutableStateOf(emptyList<Song>()) }
+    var playlist by retain { mutableStateOf<PlaylistWithSongsAndIndices?>(null) }
 
-    var isLoading by remember { mutableStateOf(true) }
-    var isRefreshing by remember { mutableStateOf(false) }
+    var isLoading by retain { mutableStateOf(true) }
+    var isRefreshing by retain { mutableStateOf(false) }
 
-    var longClickSong by remember { mutableStateOf<Song?>(null) }
+    var longClickSong by retain { mutableStateOf<Song?>(null) }
 
     val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
 
-    val showSongDetailBottomSheet = remember { mutableStateOf(false) }
-    val showPlaylistOptionsBottomSheet = remember { mutableStateOf(false) }
+    val showSongDetailBottomSheet = retain { mutableStateOf(false) }
+    val showPlaylistOptionsBottomSheet = retain { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current

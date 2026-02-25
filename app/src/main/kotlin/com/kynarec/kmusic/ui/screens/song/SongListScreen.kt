@@ -4,27 +4,31 @@ import android.util.Log
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,7 +54,7 @@ import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SongListScreen(
     modifier: Modifier = Modifier,
@@ -58,18 +62,19 @@ fun SongListScreen(
     browseParams: String,
     viewModel: MusicViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
-    navController: NavHostController
+    navController: NavHostController,
+    backIconButton: (@Composable () -> Unit)? = null
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var longClickSong by remember { mutableStateOf<Song?>(null) }
-    val showSongDetailBottomSheet = remember { mutableStateOf(false) }
+    var longClickSong by retain { mutableStateOf<Song?>(null) }
+    val showSongDetailBottomSheet = retain { mutableStateOf(false) }
 
     val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
-    var songs by remember { mutableStateOf(emptyList<Song>()) }
-    var isLoading by remember { mutableStateOf(false) }
-    var isRefreshing by remember { mutableStateOf(false) }
+    var songs by retain { mutableStateOf(emptyList<Song>()) }
+    var isLoading by retain { mutableStateOf(false) }
+    var isRefreshing by retain { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
@@ -144,25 +149,23 @@ fun SongListScreen(
             animationSpec = tween(durationMillis = 400),
             label = "SongCrossfade"
         ) { loading ->
-
-            LazyColumn(
-                modifier.fillMaxSize()
-            ) {
-                item {
+            Scaffold(
+                topBar = {
                     Row(
                         Modifier
                             .fillMaxWidth()
-                            .padding(8.dp),
+                            .padding(end = 8.dp),
                         horizontalArrangement = Arrangement.Start,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        if (backIconButton == null) Spacer(Modifier.width(16.dp))
+                        else Box() { backIconButton() }
+
                         ConditionalMarqueeText(
                             text = "Songs",
                             style = MaterialTheme.typography.titleLargeEmphasized.copy(fontWeight = FontWeight.SemiBold),
                         )
-
                         Spacer(Modifier.weight(1f))
-
                         IconButton(
                             onClick = {
                                 viewModel.playShuffledPlaylist(songs)
@@ -175,30 +178,39 @@ fun SongListScreen(
                         }
                     }
                 }
-                if (loading) {
-                    items(10) {
-                        SongComponentSkeleton()
-                    }
-                } else {
-                    items(songs, key = { it.id }) {
-                        SongComponent(
-                            song = it,
-                            onClick = {
-                                scope.launch {
-                                    viewModel.playPlaylist(songs, it)
+            ) { contentPadding ->
+
+
+                LazyColumn(
+                    modifier
+                        .padding(contentPadding)
+                        .fillMaxSize()
+                ) {
+                    if (loading) {
+                        items(10) {
+                            SongComponentSkeleton()
+                        }
+                    } else {
+                        items(songs, key = { it.id }) {
+                            SongComponent(
+                                song = it,
+                                onClick = {
+                                    scope.launch {
+                                        viewModel.playPlaylist(songs, it)
+                                    }
+                                },
+                                onLongClick = {
+                                    longClickSong = it
+                                    showSongDetailBottomSheet.value = true
                                 }
-                            },
-                            onLongClick = {
-                                longClickSong = it
-                                showSongDetailBottomSheet.value = true
-                            }
-                        )
+                            )
+                        }
                     }
+                    if (showControlBar)
+                        item {
+                            Spacer(Modifier.height(70.dp))
+                        }
                 }
-                if (showControlBar)
-                    item {
-                        Spacer(Modifier.height(70.dp))
-                    }
             }
         }
     }

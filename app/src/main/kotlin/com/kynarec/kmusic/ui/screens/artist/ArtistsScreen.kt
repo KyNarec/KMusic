@@ -24,6 +24,7 @@ import com.kynarec.kmusic.data.db.entities.ArtistPreview
 import com.kynarec.kmusic.ui.ArtistDetailScreen
 import com.kynarec.kmusic.ui.components.artist.ArtistComponent
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.utils.rememberColumnCount
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
 
@@ -59,7 +60,7 @@ fun ArtistsScreen(
                     .fillMaxSize()
                     .padding(horizontal = 8.dp),
                 contentPadding = PaddingValues(top = 8.dp, bottom = bottomPadding),
-                columns = GridCells.Adaptive(minSize = 120.dp)
+                columns = GridCells.Fixed(rememberColumnCount())
             ) {
                 items(artists!!, key = { it.id }) { artist ->
                     ArtistComponent(
@@ -72,8 +73,6 @@ fun ArtistsScreen(
                         onClick = {
                             navController.navigate(ArtistDetailScreen(artist.id))
                         },
-                        imageWith = 120,
-                        imageHeight = 120
                     )
                 }
 

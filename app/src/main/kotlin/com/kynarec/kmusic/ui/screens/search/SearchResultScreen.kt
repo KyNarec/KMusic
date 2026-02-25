@@ -31,8 +31,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,6 +70,7 @@ import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.screens.song.SortOption
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.SmartMessage
+import com.kynarec.kmusic.utils.rememberColumnCount
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOn
@@ -90,16 +91,16 @@ fun SearchResultScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    var songs by remember { mutableStateOf(emptyList<Song>()) }
-    var albums by remember { mutableStateOf(emptyList<AlbumPreview>()) }
-    var artists by remember { mutableStateOf(emptyList<ArtistPreview>()) }
-    var playlists by remember { mutableStateOf(emptyList<PlaylistPreview>()) }
+    var songs by retain { mutableStateOf(emptyList<Song>()) }
+    var albums by retain { mutableStateOf(emptyList<AlbumPreview>()) }
+    var artists by retain { mutableStateOf(emptyList<ArtistPreview>()) }
+    var playlists by retain { mutableStateOf(emptyList<PlaylistPreview>()) }
 
-    var isLoading by remember { mutableStateOf(true) }
-    var isRefreshing by remember { mutableStateOf(false) }
+    var isLoading by retain { mutableStateOf(true) }
+    var isRefreshing by retain { mutableStateOf(false) }
 
-    val showBottomSheet = remember { mutableStateOf(false) }
-    var longClickSong by remember { mutableStateOf<Song?>(null) }
+    val showBottomSheet = retain { mutableStateOf(false) }
+    var longClickSong by retain { mutableStateOf<Song?>(null) }
     val selectedSearchParam = viewModel.uiState.collectAsStateWithLifecycle().value.searchParam
 
     val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
@@ -113,6 +114,8 @@ fun SearchResultScreen(
         SortOption("Videos"),
         SortOption("Podcasts"),
     )
+
+    val columnCount = rememberColumnCount()
 
     LaunchedEffect(query, selectedSearchParam) {
         when (selectedSearchParam.text) {
@@ -389,7 +392,7 @@ fun SearchResultScreen(
                                         top = 8.dp,
                                         bottom = bottomPadding
                                     ),
-                                    columns = GridCells.Adaptive(minSize = 100.dp)
+                                    columns = GridCells.Fixed(columnCount)
                                 ) {
                                     items(20) {
                                         AlbumComponentSkeleton()
@@ -409,12 +412,11 @@ fun SearchResultScreen(
                                         top = 8.dp,
                                         bottom = bottomPadding
                                     ),
-                                    columns = GridCells.Adaptive(minSize = 100.dp)
+                                    columns = GridCells.Fixed(columnCount)
                                 ) {
                                     items(albums, key = { it.id }) { album ->
                                         AlbumComponent(
                                             albumPreview = album,
-                                            navController = navController,
                                             onClick = {
                                                 navController.navigate(AlbumDetailScreen(album.id))
                                             },
@@ -440,9 +442,9 @@ fun SearchResultScreen(
                                         top = 8.dp,
                                         bottom = bottomPadding
                                     ),
-                                    columns = GridCells.Adaptive(minSize = 100.dp)
+                                    columns = GridCells.Fixed(columnCount)
                                 ) {
-                                    items(4) {
+                                    items(20) {
                                         ArtistComponentSkeleton()
                                     }
 
@@ -460,7 +462,7 @@ fun SearchResultScreen(
                                         top = 8.dp,
                                         bottom = bottomPadding
                                     ),
-                                    columns = GridCells.Adaptive(minSize = 100.dp)
+                                    columns = GridCells.Fixed(columnCount)
                                 ) {
                                     items(artists, key = { it.id }) { artist ->
                                         ArtistComponent(
@@ -490,7 +492,7 @@ fun SearchResultScreen(
                                         top = 8.dp,
                                         bottom = bottomPadding
                                     ),
-                                    columns = GridCells.Adaptive(minSize = 100.dp)
+                                    columns = GridCells.Fixed(columnCount)
                                 ) {
                                     items(12) {
                                         PlaylistComponentSkeleton()
@@ -510,7 +512,7 @@ fun SearchResultScreen(
                                         top = 8.dp,
                                         bottom = bottomPadding
                                     ),
-                                    columns = GridCells.Adaptive(minSize = 100.dp)
+                                    columns = GridCells.Fixed(columnCount)
                                 ) {
                                     items(playlists, key = { it.id }) { playlist ->
                                         PlaylistComponent(

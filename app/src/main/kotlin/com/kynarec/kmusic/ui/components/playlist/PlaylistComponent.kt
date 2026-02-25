@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -57,8 +55,7 @@ fun PlaylistComponent(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 4.dp)
-            .background(Color.Transparent),
+            .padding(horizontal = 4.dp, vertical = 4.dp),
         onClick = onClick,
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
 
@@ -72,8 +69,6 @@ fun PlaylistComponent(
         ) {
             Box(
                 Modifier
-                    .width(100.dp)
-                    .height(100.dp)
                     .align(Alignment.CenterHorizontally)
             )
             {
@@ -84,7 +79,7 @@ fun PlaylistComponent(
             MarqueeBox(
                 contentAlignment = Alignment.Center,
                 text = playlist.name,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -117,8 +112,8 @@ fun PlaylistComponent(
         ) {
             Box(
                 Modifier
-                    .width(100.dp)
-                    .height(100.dp)
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
                     .align(Alignment.CenterHorizontally)
             )
             {
@@ -135,7 +130,7 @@ fun PlaylistComponent(
             MarqueeBox(
                 contentAlignment = Alignment.Center,
                 text = playlistPreview.title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
             )

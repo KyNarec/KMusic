@@ -23,7 +23,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButtonMenu
 import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleFloatingActionButton
@@ -63,6 +62,7 @@ import com.kynarec.kmusic.ui.components.playlist.PlaylistImportFromOnlineDialog
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.importPlaylistFromCsv
+import com.kynarec.kmusic.utils.rememberColumnCount
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.openFilePicker
@@ -108,20 +108,20 @@ fun PlaylistsScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
 
     Scaffold(
-        topBar = {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "Playlists",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-            }
-        },
+//        topBar = {
+//            Row(
+//                Modifier
+//                    .fillMaxWidth()
+//                    .padding(horizontal = 16.dp, vertical = 8.dp),
+//                horizontalArrangement = Arrangement.SpaceBetween,
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//                Text(
+//                    "Playlists",
+//                    style = MaterialTheme.typography.headlineMedium
+//                )
+//            }
+//        },
         floatingActionButton = {
             if (showFAB) {
                 FloatingActionButtonMenu(
@@ -312,9 +312,9 @@ fun PlaylistsScreen(
                     .padding(horizontal = 8.dp),
                 contentPadding = PaddingValues(
                     top = 8.dp,
-                    bottom = if (showControlBar) 70.dp else 0.dp // 70.dp (bar) + 16.dp (margin)
+                    bottom = if (showControlBar) 70.dp else 0.dp
                 ),
-                columns = GridCells.Adaptive(minSize = 100.dp)
+                columns = GridCells.Fixed(rememberColumnCount())
             ) {
                 items(playlists, key = { it.id }) { playlist ->
                     PlaylistComponent(
@@ -336,7 +336,6 @@ fun PlaylistsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             CircularWavyProgressIndicator(
-                                // Use .intValue for both the numerator and denominator
                                 progress = { currentLine.intValue.toFloat() / totalLines.intValue.toFloat() },
                                 modifier = Modifier
                                     .padding(vertical = 16.dp)

@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,6 +41,7 @@ import coil.compose.AsyncImage
 import coil.imageLoader
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.data.db.entities.SongArtist
 import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
@@ -50,7 +52,7 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 fun SongComponent(
     song: Song,
     onClick: () -> Unit,
-    onLongClick: () ->  Unit = {},
+    onLongClick: () -> Unit = {},
     isPlaying: Boolean = false,
     dataViewModel: DataViewModel = koinActivityViewModel(),
     settingsViewModel: SettingsViewModel = koinActivityViewModel()
@@ -123,21 +125,26 @@ fun SongComponent(
             Box(contentAlignment = Alignment.Center) {
                 when {
                     isDownloading -> {
-                        IconButton(onClick = {  },
+                        IconButton(
+                            onClick = { },
                             modifier = Modifier.size(ButtonDefaults.LargeIconSize),
 
-                            shape = IconButtonDefaults.smallSquareShape ) {
+                            shape = IconButtonDefaults.smallSquareShape
+                        ) {
                             Icon(
                                 painter = painterResource(R.drawable.rounded_downloading_24),
                                 contentDescription = "Downloading",
                             )
                         }
                     }
+
                     isDownloaded -> {
-                        IconButton(onClick = { dataViewModel.removeDownload(song) },
+                        IconButton(
+                            onClick = { dataViewModel.removeDownload(song) },
                             modifier = Modifier.size(ButtonDefaults.LargeIconSize),
 
-                            shape = IconButtonDefaults.smallSquareShape ) {
+                            shape = IconButtonDefaults.smallSquareShape
+                        ) {
                             Icon(
                                 painter = painterResource(R.drawable.rounded_download_done_24),
                                 contentDescription = "Downloaded",
@@ -145,16 +152,115 @@ fun SongComponent(
                             )
                         }
                     }
+
                     else -> {
-                        IconButton(onClick = { dataViewModel.addDownload(song) },
+                        IconButton(
+                            onClick = { dataViewModel.addDownload(song) },
                             modifier = Modifier.size(ButtonDefaults.LargeIconSize),
-                            shape = IconButtonDefaults.smallSquareShape ) {
+                            shape = IconButtonDefaults.smallSquareShape
+                        ) {
                             Icon(
                                 painter = painterResource(R.drawable.rounded_download_24),
                                 contentDescription = "Download"
                             )
                         }
                     }
+                }
+            }
+            Spacer(modifier = Modifier.weight(1f))
+
+            Text(
+                text = duration,
+                fontSize = 14.sp,
+                modifier = Modifier
+                    .padding(bottom = 4.dp)
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Preview
+@Composable
+fun PreviewSongComponent(
+    song: Song = Song(
+        id = "",
+        title = "505",
+        artists = listOf(SongArtist("", "Arctic Monkeys")),
+        duration = "4:14",
+        thumbnail = "https://lh3.googleusercontent.com/F_Qgb74OCFJGWwkQpua2ITH4Z27HABNXVNxLGtTksu_BKUlQOLnftS2-NQ3nemam3AhSIBN35AfP_Qu4",
+    )
+) {
+    val title = song.title
+    val artist = song.artists.joinToString(", ") { it.name }
+    val duration = song.duration
+    val imageUrl = song.thumbnail
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(80.dp)
+            .combinedClickable(
+                onClick = {},
+                onLongClick = {}
+            )
+            .background(Color.Transparent)
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = "Album art",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(62.dp)
+                .padding(start = 16.dp)
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(8.dp)),
+            imageLoader = LocalContext.current.imageLoader
+
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+            verticalArrangement = Arrangement.Center
+        ) {
+
+            MarqueeBox(
+                text = title,
+                fontSize = 24.sp,
+                maxLines = 1
+            )
+
+            MarqueeBox(
+                text = artist,
+                fontSize = 14.sp,
+                maxLines = 1
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(end = 16.dp, start = 8.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.End
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+
+                IconButton(
+                    onClick = { },
+                    modifier = Modifier.size(ButtonDefaults.LargeIconSize),
+                    shape = IconButtonDefaults.smallSquareShape
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.rounded_download_24),
+                        contentDescription = "Download"
+                    )
                 }
             }
             Spacer(modifier = Modifier.weight(1f))

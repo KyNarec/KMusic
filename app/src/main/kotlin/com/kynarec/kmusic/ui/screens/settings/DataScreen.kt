@@ -11,13 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
@@ -71,13 +69,7 @@ fun DataScreen(
             .padding(horizontal = 16.dp),
     ) {
         item {
-            ElevatedCard(
-                shape = RoundedCornerShape(24.dp),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                )
-            ) {
+            ElevatedCard() {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -150,11 +142,6 @@ fun DataScreen(
 
         item {
             ElevatedCard(
-                shape = RoundedCornerShape(24.dp),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                ),
                 modifier = Modifier.padding(top = 12.dp) // Space between the cards
             ) {
                 Column(
@@ -226,11 +213,6 @@ fun DataScreen(
 
         item {
             ElevatedCard(
-                shape = RoundedCornerShape(24.dp),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                ),
                 modifier = Modifier.padding(top = 12.dp)
             ) {
                 Column(

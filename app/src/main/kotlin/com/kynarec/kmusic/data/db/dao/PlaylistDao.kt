@@ -99,4 +99,7 @@ interface PlaylistDao {
         """
     )
     fun getFirstFourSongsForPlaylistFlow(playlistId: Long): Flow<List<Song>>
+
+    @Query("UPDATE Playlist SET isEditable = NOT isEditable WHERE id = :playlistId")
+    suspend fun toggleIsEditable(playlistId: Long)
 }

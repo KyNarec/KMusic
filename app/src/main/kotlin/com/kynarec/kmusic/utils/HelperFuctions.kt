@@ -96,6 +96,18 @@ fun Long.toSeconds(): Int {
     return (this / 1000).toInt()
 }
 
+fun List<Song>.formatDuration(): String {
+    val totalSeconds = this.sumOf { it.duration.toSeconds() }
+
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+
+    return when {
+        hours > 0 -> "${hours}h ${minutes}min"
+        else -> "${minutes}min"
+    }
+}
+
 suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = withContext(Dispatchers.IO) {
     val uri = playSongById(song.id) ?: return@withContext MediaItem.Builder().build()
 
