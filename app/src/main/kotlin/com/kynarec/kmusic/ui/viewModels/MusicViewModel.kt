@@ -596,7 +596,7 @@ class MusicViewModel
     fun toggleFavoriteAlbum(album: Album, albumSongs: List<Song>) {
         viewModelScope.launch(Dispatchers.IO) {
             val updated = album.toggleBookmark()
-            albumDao.updateAlbum(updated)
+            albumDao.upsertAlbum(updated)
 
             // it was bookmarked before
             if (album.bookmarkedAt != null) {
@@ -604,8 +604,11 @@ class MusicViewModel
                         albumDao.removeSongFromAlbum(album.id, song.id)
                     }
             } else {
+                Log.i(tag, "Adding ${albumSongs.size} songs to album ${album.title}")
                 albumSongs.forEachIndexed { index, it ->
+                    Log.i(tag, "Upserting song: $it")
                     songDao.upsertSong(it)
+                    Log.i(tag, "inserting song to album")
                     albumDao.insertSongToAlbum(SongAlbumMap(
                         it.id,
                         album.id,

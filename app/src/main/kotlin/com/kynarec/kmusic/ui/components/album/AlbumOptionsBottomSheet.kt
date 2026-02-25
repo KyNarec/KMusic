@@ -17,15 +17,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.retain.retain
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.song.BottomSheetItem
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.SmartMessage
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -34,9 +40,16 @@ fun AlbumOptionsBottomSheet(
     albumSongs: List<Song>,
     onDismiss: () -> Unit,
     viewModel: MusicViewModel,
+    database: KmusicDatabase = koinInject()
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val context = LocalContext.current
+
+    val localAlbumState by album?.let {
+        database.albumDao().getAlbumByIdFlow(it.id).collectAsStateWithLifecycle(initialValue = null)
+    } ?: retain { mutableStateOf(null) }
+
+    val activeAlbum = localAlbumState ?: album
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -44,7 +57,7 @@ fun AlbumOptionsBottomSheet(
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
     ) {
-        if (album == null) {
+        if (activeAlbum == null) {
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -54,7 +67,7 @@ fun AlbumOptionsBottomSheet(
             }
             return@ModalBottomSheet
         } else {
-            val isLiked = album!!.isLiked
+            val isLiked = activeAlbum.isLiked
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -66,7 +79,7 @@ fun AlbumOptionsBottomSheet(
                     onClick = {
 //                        viewModel.deletePlaylist(playlist!!)
 //                        navController.navigate(PlaylistsScreen)
-                        viewModel.toggleFavoriteAlbum(album!!, albumSongs)
+                        viewModel.toggleFavoriteAlbum(activeAlbum, albumSongs)
 //                        onDismiss()
                     }
                 )
@@ -75,7 +88,7 @@ fun AlbumOptionsBottomSheet(
                     text = "Play next",
                     onClick = {
                         viewModel.playNextList(albumSongs)
-                        SmartMessage("Playing ${album?.title} next", context = context)
+                        SmartMessage("Playing ${activeAlbum.title} next", context = context)
                         onDismiss()
                     }
                 )
@@ -85,7 +98,7 @@ fun AlbumOptionsBottomSheet(
                     text = "Enqueue",
                     onClick = {
                         viewModel.enqueueSongList(albumSongs)
-                        SmartMessage("Added ${album?.title} to queue", context = context)
+                        SmartMessage("Added ${activeAlbum.title} to queue", context = context)
                         onDismiss()
                     }
                 )
