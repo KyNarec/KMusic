@@ -210,6 +210,21 @@ fun PlaylistOfflineDetailScreen(
         }
     }
 
+    val detailLazyListState = rememberLazyListState()
+    val reorderableDetailLazyListState = rememberReorderableLazyListState(detailLazyListState) { from, to ->
+        Log.i("PlaylistOfflineDetailScreen", "Reordering songs from $initialDraggingIndex")
+        if (initialDraggingIndex == null) {
+            initialDraggingIndex = from.index - 1
+        }
+        currentTargetIndex = to.index - 1
+
+        hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+
+        localSongList = localSongList.toMutableList().apply {
+            add(to.index - 1, removeAt(from.index - 1))
+        }
+    }
+
     val isDragging = reorderableLazyListState.isAnyItemDragging
 
     LaunchedEffect(isDragging) {
@@ -367,7 +382,8 @@ fun PlaylistOfflineDetailScreen(
                         label = "PlaylistCrossfade"
                     ) { loading ->
                         LazyColumn(
-                            state = lazyListState
+                            Modifier.fillMaxSize(),
+                            state = detailLazyListState
                         ) {
                             if (loading) {
                                 playlistControlRow(
@@ -418,7 +434,7 @@ fun PlaylistOfflineDetailScreen(
                                     localSongList,
                                     key = { _, song -> song.id }) { index, playlistItem ->
                                     ReorderableItem(
-                                        reorderableLazyListState,
+                                        reorderableDetailLazyListState,
                                         key = playlistItem.id,
                                     ) { isDragging ->
                                         val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
