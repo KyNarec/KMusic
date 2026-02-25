@@ -7,6 +7,7 @@ import com.kynarec.kmusic.service.update.UpdateManager
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
+import com.kynarec.kmusic.ui.viewModels.PlaylistOfflineDetailViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
 import eu.anifantakis.lib.ksafe.KSafe
@@ -57,5 +58,9 @@ val appModule = module {
             downloadCache = get(),
             database = get()
         )
+    }
+
+    viewModel { (playlistId: Long) ->
+        PlaylistOfflineDetailViewModel(playlistId = playlistId, database = get(), ksafe = get())
     }
 }

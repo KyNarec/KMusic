@@ -52,7 +52,6 @@ import androidx.compose.material3.adaptive.navigation.NavigableListDetailPaneSca
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -93,14 +92,11 @@ import com.kynarec.kmusic.ui.components.song.SongComponentSkeleton
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.PlaylistOfflineDetailActions
+import com.kynarec.kmusic.ui.viewModels.PlaylistOfflineDetailViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
-import com.kynarec.kmusic.ui.viewModels.toPlaylistItem
-import com.kynarec.kmusic.utils.Constants.DEFAULT_PLAYLIST_SORT_BY
-import com.kynarec.kmusic.utils.Constants.DEFAULT_PLAYLIST_SORT_ORDER
 import com.kynarec.kmusic.utils.formatDuration
 import com.kynarec.kmusic.utils.shimmerEffect
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
@@ -116,38 +112,21 @@ fun PlaylistOfflineDetailScreen(
     dataViewModel: DataViewModel = koinActivityViewModel(),
     settingsViewModel: SettingsViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
+    playlistOfflineDetailViewModel: PlaylistOfflineDetailViewModel,
     navController: NavHostController
 ) {
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
 
     val coloredDownloadIndicator = settingsViewModel.coloredDownloadIndicator
 
-    val playlistFlow = retain(playlistId) {
-        database.playlistDao().getPlaylistByIdFlow(playlistId)
-    }
-    val songsFlow = retain(playlistId) {
-        database.playlistDao().getSongsForPlaylist(playlistId)
-            .distinctUntilChanged { old, new ->
-                old.size == new.size
-            }
-    }
+    val state by playlistOfflineDetailViewModel.state.collectAsStateWithLifecycle()
+    val rawSongs = state.playlistItems.map { it.song }
+    val sortBy = state.sortBy
+    val playlist = state.playlist
+    val sortOrder = state.sortOrder
+    val sortedSongs = state.sortedSongs
 
-    val playlist by playlistFlow.collectAsStateWithLifecycle(null)
-    val rawSongs by songsFlow.collectAsStateWithLifecycle(emptyList())
-
-    val sortBy by settingsViewModel.playlistSortByFlow.collectAsStateWithLifecycle(
-        DEFAULT_PLAYLIST_SORT_BY
-    )
-    val sortOrder by settingsViewModel.playlistSortOrderFlow.collectAsStateWithLifecycle(
-        DEFAULT_PLAYLIST_SORT_ORDER
-    )
-
-    val showSongDetailBottomSheet = remember { mutableStateOf(false) }
-    val showPlaylistOptionsBottomSheet = remember { mutableStateOf(false) }
-    val showPlaylistSortByBottomSheet = remember { mutableStateOf(false) }
-
-    var longClickSong by remember { mutableStateOf<Song?>(null) }
+    var longClickSong by retain { mutableStateOf<Song?>(null) }
 
     val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
 
@@ -156,7 +135,6 @@ fun PlaylistOfflineDetailScreen(
 
     val downloadingSongs by dataViewModel.downloadingSongs.collectAsStateWithLifecycle()
     val completedIds by dataViewModel.completedDownloadIds.collectAsStateWithLifecycle()
-
     val allDownloaded = if (rawSongs.isNotEmpty()) rawSongs.all { it.id in completedIds } else false
     val isAnyDownloading = rawSongs.any { it.id in downloadingSongs }
 
@@ -164,38 +142,15 @@ fun PlaylistOfflineDetailScreen(
     val isSinglePane =
         listDetailNavigator.scaffoldValue[ListDetailPaneScaffoldRole.Detail] == PaneAdaptedValue.Hidden
 
-    val rawPlaylistItems by retain(rawSongs) {
-        derivedStateOf {
-            rawSongs.map { it.toPlaylistItem() }
-        }
-    }
-
-    val sortedSongs by retain(rawPlaylistItems, sortBy, sortOrder) {
-        derivedStateOf {
-            val sorted = when (sortBy) {
-                SortBy.Position -> rawPlaylistItems
-                SortBy.Title -> rawPlaylistItems.sortedBy { it.song.title.lowercase() }
-                SortBy.Artist -> rawPlaylistItems.sortedBy {
-                    it.song.artists.firstOrNull()?.name?.lowercase() ?: ""
-                }
-
-                SortBy.Album -> rawPlaylistItems.sortedBy { it.song.albumId }
-                SortBy.Duration -> rawPlaylistItems.sortedBy { it.song.duration }
-                SortBy.DateFavorited -> rawPlaylistItems.sortedBy { it.song.likedAt }
-            }
-
-            if (sortOrder == SortOrder.Ascending) sorted.reversed() else sorted
-        }
-    }
-
     val hapticFeedback = LocalHapticFeedback.current
-    var initialDraggingIndex by remember { mutableStateOf<Int?>(null) }
 
-    val lazyListState = rememberLazyListState()
-    var localSongList by retain(sortedSongs) { mutableStateOf(sortedSongs) }
-    LaunchedEffect(sortedSongs) { localSongList = sortedSongs }
+    var initialDraggingIndex by remember { mutableStateOf<Int?>(null) }
     var currentTargetIndex by remember { mutableStateOf<Int?>(null) }
 
+    var localSongList by retain(sortedSongs) { mutableStateOf(sortedSongs) }
+    LaunchedEffect(sortedSongs) { localSongList = sortedSongs }
+
+    val lazyListState = rememberLazyListState()
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
         Log.i("PlaylistOfflineDetailScreen", "Reordering songs from $initialDraggingIndex")
         if (initialDraggingIndex == null) {
@@ -233,20 +188,10 @@ fun PlaylistOfflineDetailScreen(
             val end = currentTargetIndex
             if (start != null && end != null && start != end) {
                 Log.i("PlaylistOfflineDetailScreen", "Moving from $start to $end")
-                scope.launch(Dispatchers.IO) {
-                    database.playlistDao().moveSongInPlaylist(playlistId, start, end)
-                }
+                playlistOfflineDetailViewModel.moveSong(from = start, to = end)
             }
             currentTargetIndex = null
             initialDraggingIndex = null
-        }
-    }
-
-    fun handleIsEditable(playlistId: Long, sortBy: SortBy, sortOrder: SortOrder) {
-        if (sortBy == SortBy.Position && sortOrder == SortOrder.Descending) {
-            scope.launch {
-                database.playlistDao().toggleIsEditable(playlistId)
-            }
         }
     }
 
@@ -255,7 +200,7 @@ fun PlaylistOfflineDetailScreen(
         listPane = {
             AnimatedPane {
                 Crossfade(
-                    targetState = playlist == null,
+                    targetState = state.isLoading,
                     animationSpec = tween(durationMillis = 400),
                     label = "PlaylistCrossfade"
                 ) { loading ->
@@ -267,18 +212,16 @@ fun PlaylistOfflineDetailScreen(
                             if (isSinglePane) {
                                 playlistControlRow(
                                     sortBy = sortBy,
-                                    onSortByClick = { showPlaylistSortByBottomSheet.value = true },
                                     sortOrder = sortOrder,
-                                    onSortOrderClick = { toggleSortOrder(settingsViewModel, it) },
+                                    onSortOrderClick = { playlistOfflineDetailViewModel.toggleSortOrder() },
                                     allDownloaded = allDownloaded,
                                     isAnyDownloading = isAnyDownloading,
                                     onAllDownloadedClick = { },
                                     onNoneDownloadedClick = { },
                                     coloredDownloadIndicator = coloredDownloadIndicator,
                                     isEditable = false,
-                                    onLockClick = { },
+                                    playlistOfflineDetailAction = { },
                                     onShuffleClick = { },
-                                    onMoreClick = { }
                                 )
                                 items(15) {
                                     SongComponentSkeleton()
@@ -299,9 +242,8 @@ fun PlaylistOfflineDetailScreen(
                             if (isSinglePane) {
                                 playlistControlRow(
                                     sortBy = sortBy,
-                                    onSortByClick = { showPlaylistSortByBottomSheet.value = true },
                                     sortOrder = sortOrder,
-                                    onSortOrderClick = { toggleSortOrder(settingsViewModel, it) },
+                                    onSortOrderClick = { playlistOfflineDetailViewModel.toggleSortOrder() },
                                     allDownloaded = allDownloaded,
                                     isAnyDownloading = isAnyDownloading,
                                     onAllDownloadedClick = {
@@ -312,11 +254,8 @@ fun PlaylistOfflineDetailScreen(
                                     onNoneDownloadedClick = { dataViewModel.addDownloads(sortedSongs.map { it.song }) },
                                     coloredDownloadIndicator = coloredDownloadIndicator,
                                     isEditable = sortOrder == SortOrder.Descending && sortBy == SortBy.Position && playlist!!.isEditable,
-                                    onLockClick = {
-                                        handleIsEditable(playlistId, sortBy, sortOrder)
-                                    },
+                                    playlistOfflineDetailAction = playlistOfflineDetailViewModel::onAction,
                                     onShuffleClick = { viewModel.playShuffledPlaylist(sortedSongs.map { it.song }) },
-                                    onMoreClick = { showPlaylistOptionsBottomSheet.value = true }
                                 )
                                 itemsIndexed(
                                     localSongList,
@@ -344,7 +283,7 @@ fun PlaylistOfflineDetailScreen(
                                                 },
                                                 onLongClick = {
                                                     longClickSong = playlistItem.song
-                                                    showSongDetailBottomSheet.value = true
+                                                    playlistOfflineDetailViewModel.onAction(PlaylistOfflineDetailActions.ToggleSongDetailBottomSheet)
                                                 },
                                                 reorderableCollectionItemScope = this@ReorderableItem,
                                                 onDragStarted = {
@@ -377,7 +316,7 @@ fun PlaylistOfflineDetailScreen(
             if (!isSinglePane) {
                 AnimatedPane {
                     Crossfade(
-                        targetState = playlist == null,
+                        targetState = state.isLoading,
                         animationSpec = tween(durationMillis = 400),
                         label = "PlaylistCrossfade"
                     ) { loading ->
@@ -388,18 +327,16 @@ fun PlaylistOfflineDetailScreen(
                             if (loading) {
                                 playlistControlRow(
                                     sortBy = sortBy,
-                                    onSortByClick = { showPlaylistSortByBottomSheet.value = true },
                                     sortOrder = sortOrder,
-                                    onSortOrderClick = { toggleSortOrder(settingsViewModel, it) },
+                                    onSortOrderClick = { playlistOfflineDetailViewModel.toggleSortOrder() },
                                     allDownloaded = allDownloaded,
                                     isAnyDownloading = isAnyDownloading,
                                     onAllDownloadedClick = { },
                                     onNoneDownloadedClick = { },
                                     coloredDownloadIndicator = coloredDownloadIndicator,
                                     isEditable = false,
-                                    onLockClick = { },
+                                    playlistOfflineDetailAction = { },
                                     onShuffleClick = { },
-                                    onMoreClick = { }
                                 )
                                 items(15) {
                                     SongComponentSkeleton()
@@ -411,9 +348,8 @@ fun PlaylistOfflineDetailScreen(
                             } else {
                                 playlistControlRow(
                                     sortBy = sortBy,
-                                    onSortByClick = { showPlaylistSortByBottomSheet.value = true },
                                     sortOrder = sortOrder,
-                                    onSortOrderClick = { toggleSortOrder(settingsViewModel, it) },
+                                    onSortOrderClick = { playlistOfflineDetailViewModel.toggleSortOrder() },
                                     allDownloaded = allDownloaded,
                                     isAnyDownloading = isAnyDownloading,
                                     onAllDownloadedClick = {
@@ -424,11 +360,8 @@ fun PlaylistOfflineDetailScreen(
                                     onNoneDownloadedClick = { dataViewModel.addDownloads(sortedSongs.map { it.song }) },
                                     coloredDownloadIndicator = coloredDownloadIndicator,
                                     isEditable = sortOrder == SortOrder.Descending && sortBy == SortBy.Position && playlist!!.isEditable,
-                                    onLockClick = {
-                                        handleIsEditable(playlistId, sortBy, sortOrder)
-                                    },
+                                    playlistOfflineDetailAction = playlistOfflineDetailViewModel::onAction,
                                     onShuffleClick = { viewModel.playShuffledPlaylist(sortedSongs.map { it.song }) },
-                                    onMoreClick = { showPlaylistOptionsBottomSheet.value = true }
                                 )
                                 itemsIndexed(
                                     localSongList,
@@ -456,7 +389,7 @@ fun PlaylistOfflineDetailScreen(
                                                 },
                                                 onLongClick = {
                                                     longClickSong = playlistItem.song
-                                                    showSongDetailBottomSheet.value = true
+                                                    playlistOfflineDetailViewModel.onAction(PlaylistOfflineDetailActions.ToggleSongDetailBottomSheet)
                                                 },
                                                 reorderableCollectionItemScope = this@ReorderableItem,
                                                 onDragStarted = {
@@ -487,12 +420,12 @@ fun PlaylistOfflineDetailScreen(
         }
     )
 
-    if (showSongDetailBottomSheet.value && longClickSong != null) {
+    if (state.showSongDetailBottomSheet && longClickSong != null) {
         Log.i("SongsScreen", "Showing bottom sheet")
         Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
         SongOptionsBottomSheet(
             song = longClickSong!!,
-            onDismiss = { showSongDetailBottomSheet.value = false },
+            onDismiss = { playlistOfflineDetailViewModel.onAction(PlaylistOfflineDetailActions.ToggleSongDetailBottomSheet) },
             viewModel = viewModel,
             database = database,
             navController = navController,
@@ -501,11 +434,11 @@ fun PlaylistOfflineDetailScreen(
         )
     }
 
-    if (showPlaylistOptionsBottomSheet.value) {
+    if (state.showPlaylistOptionsBottomSheet) {
         PlaylistOfflineOptionsBottomSheet(
             playlistId = playlistId,
             onDismiss = {
-                showPlaylistOptionsBottomSheet.value = false
+                playlistOfflineDetailViewModel.onAction(PlaylistOfflineDetailActions.TogglePlaylistOptionsBottomSheet)
                 focusManager.clearFocus()
                 keyboardController?.hide()
             },
@@ -515,23 +448,11 @@ fun PlaylistOfflineDetailScreen(
         )
     }
 
-    if (showPlaylistSortByBottomSheet.value) {
+    if (state.showPlaylistSortByBottomSheet) {
         PlaylistSortByBottomSheet(
-            onClick = { settingsViewModel.putPlaylistSortBy(it) },
-            onDismiss = { showPlaylistSortByBottomSheet.value = false }
+            onClick = playlistOfflineDetailViewModel::putPlaylistSortBy,
+            onDismiss = playlistOfflineDetailViewModel::onAction
         )
-    }
-}
-
-fun toggleSortOrder(
-    settingsViewModel: SettingsViewModel,
-    currentSortOrder: SortOrder
-) {
-    println("toggleSortOrder")
-
-    when (currentSortOrder) {
-        SortOrder.Ascending -> settingsViewModel.putPlaylistSortOrder(SortOrder.Descending)
-        SortOrder.Descending -> settingsViewModel.putPlaylistSortOrder(SortOrder.Ascending)
     }
 }
 
@@ -688,7 +609,6 @@ fun LazyListScope.playlistHeaderSkeleton(
 
 fun LazyListScope.playlistControlRow(
     sortBy: SortBy,
-    onSortByClick: () -> Unit,
     sortOrder: SortOrder,
     onSortOrderClick: (SortOrder) -> Unit,
     allDownloaded: Boolean,
@@ -697,9 +617,8 @@ fun LazyListScope.playlistControlRow(
     onNoneDownloadedClick: () -> Unit,
     coloredDownloadIndicator: Boolean,
     isEditable: Boolean,
-    onLockClick: () -> Unit,
+    playlistOfflineDetailAction: (PlaylistOfflineDetailActions) -> Unit,
     onShuffleClick: () -> Unit,
-    onMoreClick: () -> Unit,
 ) {
     item {
         Row(
@@ -727,7 +646,7 @@ fun LazyListScope.playlistControlRow(
                 )
             }
 
-            Box(Modifier.clickable(onClick = { onSortByClick() })) {
+            Box(Modifier.clickable(onClick = { playlistOfflineDetailAction(PlaylistOfflineDetailActions.TogglePlaylistSortByBottomSheet) })) {
                 Text(
                     sortBy.title,
                 )
@@ -735,7 +654,7 @@ fun LazyListScope.playlistControlRow(
             Spacer(Modifier.weight(1f))
 
             IconButton(onClick = {
-                onLockClick()
+                playlistOfflineDetailAction(PlaylistOfflineDetailActions.LockCLick)
             }) {
 
                 Icon(
@@ -799,7 +718,7 @@ fun LazyListScope.playlistControlRow(
                 )
             }
             IconButton(
-                onClick = { onMoreClick() }
+                onClick = { playlistOfflineDetailAction(PlaylistOfflineDetailActions.TogglePlaylistOptionsBottomSheet) }
             ) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,

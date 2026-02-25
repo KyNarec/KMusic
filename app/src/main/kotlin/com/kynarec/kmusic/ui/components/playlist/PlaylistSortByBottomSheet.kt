@@ -16,27 +16,24 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.kynarec.kmusic.enums.SortBy
+import com.kynarec.kmusic.ui.viewModels.PlaylistOfflineDetailActions
 
 @Preview
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PlaylistSortByBottomSheet(
     onClick: (SortBy) -> Unit = {},
-    onDismiss: () -> Unit = {},
+    onDismiss: (PlaylistOfflineDetailActions) -> Unit = {},
 ) {
     val sheetState = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { onDismiss(PlaylistOfflineDetailActions.TogglePlaylistSortByBottomSheet) },
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
@@ -52,7 +49,7 @@ fun PlaylistSortByBottomSheet(
                 Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     .clickable(onClick = {
                         onClick(sortBy)
-                        onDismiss()
+                        onDismiss(PlaylistOfflineDetailActions.TogglePlaylistSortByBottomSheet)
                     }),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
