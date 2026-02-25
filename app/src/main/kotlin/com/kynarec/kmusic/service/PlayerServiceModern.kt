@@ -1,6 +1,7 @@
 package com.kynarec.kmusic.service
 
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
@@ -96,7 +97,6 @@ class PlayerServiceModern : MediaLibraryService(), KoinComponent {
          * Called when the player transitions to a new song or the playlist ends
          */
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-//            super.onMediaItemTransition(mediaItem, reason)
             when (reason) {
                 Player.MEDIA_ITEM_TRANSITION_REASON_AUTO ->
                     Log.i("PlayerService", "MEDIA_ITEM_TRANSITION_REASON_AUTO (Playback has automatically transitioned to the next media item)")
@@ -107,7 +107,7 @@ class PlayerServiceModern : MediaLibraryService(), KoinComponent {
                 Player.MEDIA_ITEM_TRANSITION_REASON_SEEK ->
                     Log.i("PlayerService", "MEDIA_ITEM_TRANSITION_REASON_SEEK (A seek to another media item has occurred)")
             }
-            Log.i("PlayerService", "mediaItem?.localConfiguration?.uri.toString() ${mediaItem?.localConfiguration?.uri.toString()}")
+            Log.i("PlayerService", "mediaItem?.localConfiguration?.uri.toString(): ${mediaItem?.localConfiguration?.uri.toString()}")
             saveCurrentPlaybackTime()
 
             val mediaItem = mediaItem
@@ -117,105 +117,94 @@ class PlayerServiceModern : MediaLibraryService(), KoinComponent {
             val download = downloadManager.downloadIndex.getDownload(songId)
             val isDownloaded = download != null && download.state == Download.STATE_COMPLETED
 
-            if (isDownloaded) {
-                Log.i("PlayerService", "Song $songId is downloaded. Ensuring local playback.")
-                if (downloadCache.getCachedSpans(songId).isNotEmpty()) {
-                    Log.w(
-                        "PlayerService",
-                        "Download record exists and cache is notEmpty for $songId"
-                    )
-                } else {
-                    Log.w("PlayerService", "Download record exists but cache is empty for $songId. Playing online.")
-                }
-
-                // Check if the current MediaItem already has the custom cache key set
-                if (mediaItem.localConfiguration?.customCacheKey != songId) {
-                    Log.i(tag, "No customCacheKey found")
-                    val context = this@PlayerServiceModern
-                    serviceScope.launch(Dispatchers.IO) {
-                        val request = ImageRequest.Builder(context)
-                            .data(mediaItem.mediaMetadata.artworkUri)
-                            .allowHardware(false)
-                            .build()
-
-                        val result = context.imageLoader.execute(request)
-                        val bitmap = (result.drawable as? BitmapDrawable)?.bitmap
-                        val artworkData = bitmap?.let {
-                            val outputStream = ByteArrayOutputStream()
-                            it.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-                            outputStream.toByteArray()
-                        }
-                        val offlineMediaItem = MediaItem.Builder()
-                            .setMediaId(mediaItem.mediaId)
-                            .setUri(mediaItem.localConfiguration?.uri.toString())
-                            .setMediaMetadata(MediaMetadata.Builder()
-                                .setTitle(mediaItem.mediaMetadata.title)
-                                .setArtist(mediaItem.mediaMetadata.artist)
-                                .setArtworkData(artworkData, MediaMetadata.PICTURE_TYPE_FRONT_COVER)                                .build())
-                            .setCustomCacheKey(songId)
-                            .build()
-
-                        withContext(Dispatchers.Main) {
-                            Log.i("PlayerService", "Replacing MediaItem with cached version for $songId")
-                            player?.replaceMediaItem(currentIndex, offlineMediaItem)
-                        }
-                    }
-                    return
-                }
-            }
-
-            when (mediaItem.localConfiguration?.uri.toString()) {
-                "EMPTY" -> {
-                    Log.i("PlayerService", "mediaItem is empty")
-
-                    player?.stop()
-
-                    serviceScope.launch {
-                        val fullMediaItem = mediaItem.createFullMediaItem()
-
-                        withContext(Dispatchers.Main) {
-                            if (fullMediaItem != MediaItem.EMPTY && currentIndex == player?.currentMediaItemIndex) {
-                                player?.replaceMediaItem(currentIndex, fullMediaItem)
-                                player?.prepare()
-                                player?.play()
-                            }
-                        }
-                    }
-                    return
-                }
-
-                "NA" -> {
-                    Log.e("PlayerService", "mediaItem URI cannot be fetched")
-                    SmartMessage("Fetching error", PopupType.Error, false, this@PlayerServiceModern)
-                    player?.seekToNextMediaItem()
-                    return
-                }
-
-                else -> {
-                    accumulatedPlayTime = 0L
-                    playbackStartTime = System.currentTimeMillis()
-                    currentSongId = mediaItem.mediaId
-                    Log.i("PlayerService", "Playing: ${mediaItem.mediaId}")                }
-            }
-
-            val playlistSize = player?.mediaItemCount ?: 0
-            val neighbors = listOf(currentIndex - 1, currentIndex + 1)
-
             serviceScope.launch {
-                neighbors.forEach { index ->
-                    if (index in 0 until playlistSize) {
-                        // Get the item currently at that index
-                        val neighborItem = withContext(Dispatchers.Main) { player?.getMediaItemAt(index) }
+                if (isDownloaded && downloadCache.getCachedSpans(songId).isNotEmpty()) {
+                    Log.i("PlayerService", "Download record exists and cache is notEmpty for $songId")
 
-                        if (neighborItem?.localConfiguration?.uri.toString() == "EMPTY") {
-                            Log.i("PlayerService", "Pre-fetching neighbor at index $index")
-                            val fullNeighbor = neighborItem?.createFullMediaItem()
+                    val offlineResult = createOfflineMediaItem(this@PlayerServiceModern, mediaItem)
+                    if (offlineResult.isSuccess) {
+                        player?.replaceMediaItem(currentIndex, offlineResult.getOrThrow())
+                        Log.i("PlayerService", "Offline version swapped for $songId.")
+                        return@launch
+                    }
+                }
+
+                when (mediaItem.localConfiguration?.uri.toString()) {
+                    "EMPTY", "" -> {
+                        Log.i("PlayerService", "mediaItem is empty")
+
+                        player?.stop()
+
+                        serviceScope.launch(Dispatchers.IO) {
+                            val fullMediaItem = mediaItem.createFullMediaItem()
 
                             withContext(Dispatchers.Main) {
-                                // Re-verify index and item identity before replacing
-                                if (index < (player?.mediaItemCount ?: 0) &&
-                                    player?.getMediaItemAt(index)?.mediaId == neighborItem?.mediaId) {
-                                    player?.replaceMediaItem(index, fullNeighbor!!)
+                                if (fullMediaItem != MediaItem.EMPTY && currentIndex == player?.currentMediaItemIndex) {
+                                    player?.replaceMediaItem(currentIndex, fullMediaItem)
+                                    player?.prepare()
+                                    player?.play()
+                                }
+                            }
+                        }
+                        return@launch
+                    }
+
+                    "NA" -> {
+                        Log.e("PlayerService", "mediaItem URI cannot be fetched")
+                        SmartMessage("Fetching error", PopupType.Error, false, this@PlayerServiceModern)
+                        player?.seekToNextMediaItem()
+                        return@launch
+                    }
+
+                    else -> {
+                        accumulatedPlayTime = 0L
+                        playbackStartTime = System.currentTimeMillis()
+                        currentSongId = mediaItem.mediaId
+                        Log.i("PlayerService", "Playing: ${mediaItem.mediaId}")                }
+                }
+            }
+
+
+            val playlistSize = player?.mediaItemCount ?: 0
+            val neighborsIndexes = listOf(currentIndex - 1, currentIndex + 1)
+
+            serviceScope.launch(Dispatchers.IO) {
+                neighborsIndexes.forEach { index ->
+                    if (index in 0 until playlistSize) {
+
+                        val neighborItem = withContext(Dispatchers.Main) { player?.getMediaItemAt(index) } ?:  return@forEach
+                        val neighborSongId = neighborItem.mediaId
+
+                        if (neighborItem.localConfiguration?.uri.toString() == "EMPTY") {
+                            val download = downloadManager.downloadIndex.getDownload(neighborSongId)
+                            val isDownloaded = download != null && download.state == Download.STATE_COMPLETED
+
+                            if (isDownloaded) {
+                                val context = this@PlayerServiceModern
+                                createOfflineMediaItem(context, neighborItem)
+                                    .onSuccess {
+                                        withContext(Dispatchers.Main) {
+                                            Log.i("PlayerService", "Replacing MediaItem with cached version for $songId")
+                                            if (index < (player?.mediaItemCount ?: 0) &&
+                                                player?.getMediaItemAt(index)?.mediaId == neighborItem.mediaId) {
+                                                player?.replaceMediaItem(index, it)
+                                            }
+                                        }
+                                    }
+                                    .onFailure {
+                                        return@forEach
+                                    }
+
+                            } else {
+                                Log.i("PlayerService", "Pre-fetching neighbor at index $index")
+                                val fullNeighbor = neighborItem.createFullMediaItem()
+
+                                withContext(Dispatchers.Main) {
+                                    // Re-verify index and item identity before replacing
+                                    if (index < (player?.mediaItemCount ?: 0) &&
+                                        player?.getMediaItemAt(index)?.mediaId == neighborItem.mediaId) {
+                                        player?.replaceMediaItem(index, fullNeighbor)
+                                    }
                                 }
                             }
                         }
@@ -519,7 +508,7 @@ class PlayerServiceModern : MediaLibraryService(), KoinComponent {
         serviceScope.cancel()
 
         mediaLibrarySession?.run {
-            player?.release()
+            player.release()
             release()
             mediaLibrarySession = null
         }
@@ -589,6 +578,41 @@ class PlayerServiceModern : MediaLibraryService(), KoinComponent {
             } catch (e: Exception) {
                 Log.e("PlayerService", "Error updating playback time: ${e.message}", e)
             }
+        }
+    }
+
+    private suspend fun createOfflineMediaItem(
+        context: Context,
+        mediaItem: MediaItem,
+    ): Result<MediaItem> {
+        val songId = mediaItem.mediaId
+        if (mediaItem.localConfiguration?.customCacheKey != songId) {
+            val request = ImageRequest.Builder(context)
+                .data(mediaItem.mediaMetadata.artworkUri)
+                .allowHardware(false)
+                .build()
+
+            val result = context.imageLoader.execute(request)
+            val bitmap = (result.drawable as? BitmapDrawable)?.bitmap
+            val artworkData = bitmap?.let {
+                val outputStream = ByteArrayOutputStream()
+                it.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                outputStream.toByteArray()
+            }
+            val offlineNeighborItem = MediaItem.Builder()
+                .setMediaId(songId)
+                .setUri(mediaItem.localConfiguration?.uri.toString())
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(mediaItem.mediaMetadata.title)
+                        .setArtist(mediaItem.mediaMetadata.artist)
+                        .setArtworkData(artworkData, MediaMetadata.PICTURE_TYPE_FRONT_COVER).build()
+                )
+                .setCustomCacheKey(songId)
+                .build()
+            return Result.success(offlineNeighborItem)
+        } else {
+            return Result.failure(Exception("MediaItem already has customCacheKey"))
         }
     }
 }
