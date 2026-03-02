@@ -1,20 +1,8 @@
 package com.kynarec.kmusic.ui.screens
 
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandIn
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
@@ -44,7 +32,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kynarec.kmusic.enums.StartDestination
-import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.ui.components.MyNavigationRailComponent
 import com.kynarec.kmusic.ui.components.TopBarComponent
 import com.kynarec.kmusic.ui.components.player.PlayerControlBar
@@ -120,90 +107,6 @@ fun StarterScreensContainer(
                             StartDestination.AlbumsScreen -> AlbumsScreen
                             StartDestination.PlaylistsScreen -> PlaylistsScreen
                         },
-                        enterTransition = {
-                            when (transitionEffect) {
-                                TransitionEffect.None -> EnterTransition.None
-                                TransitionEffect.Expand -> expandIn(
-                                    animationSpec = tween(
-                                        350,
-                                        easing = LinearOutSlowInEasing
-                                    ), expandFrom = Alignment.TopStart
-                                )
-
-                                TransitionEffect.Fade -> fadeIn(animationSpec = tween(350))
-                                TransitionEffect.Scale -> scaleIn(animationSpec = tween(350))
-                                TransitionEffect.SlideVertical -> slideIntoContainer(
-                                    AnimatedContentTransitionScope.SlideDirection.Up
-                                )
-
-                                TransitionEffect.SlideHorizontal -> slideIntoContainer(
-                                    AnimatedContentTransitionScope.SlideDirection.Left
-                                )
-                            }
-                        },
-                        exitTransition = {
-                            when (transitionEffect) {
-                                TransitionEffect.None -> ExitTransition.None
-                                TransitionEffect.Expand -> shrinkOut(
-                                    animationSpec = tween(
-                                        350,
-                                        easing = FastOutSlowInEasing
-                                    ), shrinkTowards = Alignment.TopStart
-                                )
-
-                                TransitionEffect.Fade -> fadeOut(animationSpec = tween(350))
-                                TransitionEffect.Scale -> scaleOut(animationSpec = tween(350))
-                                TransitionEffect.SlideVertical -> slideOutOfContainer(
-                                    AnimatedContentTransitionScope.SlideDirection.Down
-                                )
-
-                                TransitionEffect.SlideHorizontal -> slideOutOfContainer(
-                                    AnimatedContentTransitionScope.SlideDirection.Right
-                                )
-                            }
-                        },
-                        popEnterTransition = {
-                            when (transitionEffect) {
-                                TransitionEffect.None -> EnterTransition.None
-                                TransitionEffect.Expand -> expandIn(
-                                    animationSpec = tween(
-                                        350,
-                                        easing = LinearOutSlowInEasing
-                                    ), expandFrom = Alignment.TopStart
-                                )
-
-                                TransitionEffect.Fade -> fadeIn(animationSpec = tween(350))
-                                TransitionEffect.Scale -> scaleIn(animationSpec = tween(350))
-                                TransitionEffect.SlideVertical -> slideIntoContainer(
-                                    AnimatedContentTransitionScope.SlideDirection.Up
-                                )
-
-                                TransitionEffect.SlideHorizontal -> slideIntoContainer(
-                                    AnimatedContentTransitionScope.SlideDirection.Left
-                                )
-                            }
-                        },
-                        popExitTransition = {
-                            when (transitionEffect) {
-                                TransitionEffect.None -> ExitTransition.None
-                                TransitionEffect.Expand -> shrinkOut(
-                                    animationSpec = tween(
-                                        350,
-                                        easing = FastOutSlowInEasing
-                                    ), shrinkTowards = Alignment.TopStart
-                                )
-
-                                TransitionEffect.Fade -> fadeOut(animationSpec = tween(350))
-                                TransitionEffect.Scale -> scaleOut(animationSpec = tween(350))
-                                TransitionEffect.SlideVertical -> slideOutOfContainer(
-                                    AnimatedContentTransitionScope.SlideDirection.Down
-                                )
-
-                                TransitionEffect.SlideHorizontal -> slideOutOfContainer(
-                                    AnimatedContentTransitionScope.SlideDirection.Right
-                                )
-                            }
-                        }
                         ) {
                         composable<HomeScreen> {
                             HomeScreen()
