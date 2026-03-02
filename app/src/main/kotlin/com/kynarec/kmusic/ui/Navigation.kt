@@ -28,6 +28,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
+import com.kynarec.kmusic.data.db.entities.toPlaylistPreview
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.ui.screens.ScreenWithContent
 import com.kynarec.kmusic.ui.screens.StarterScreensContainer
@@ -45,9 +46,13 @@ import com.kynarec.kmusic.ui.screens.settings.DataScreen
 import com.kynarec.kmusic.ui.screens.settings.InterfaceScreen
 import com.kynarec.kmusic.ui.screens.settings.SettingsScreen
 import com.kynarec.kmusic.ui.screens.song.SongListScreen
+import com.kynarec.kmusic.ui.viewModels.PlaylistOfflineDetailViewModel
+import com.kynarec.kmusic.ui.viewModels.PlaylistOnlineDetailViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinActivityViewModel
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -158,6 +163,9 @@ fun Navigation(
 
         composable<PlaylistOfflineDetailScreen> {
             val args = it.toRoute<PlaylistOfflineDetailScreen>()
+            val playlistOfflineDetailViewModel: PlaylistOfflineDetailViewModel = koinViewModel(
+                parameters = { parametersOf(args.playlistId) }
+            )
             ScreenWithContent(
                 navController = navController,
                 currentRoute = currentRoute,
@@ -166,12 +174,16 @@ fun Navigation(
             ) {
                 PlaylistOfflineDetailScreen(
                     playlistId = args.playlistId,
-                    navController = navController
+                    navController = navController,
+                    playlistOfflineDetailViewModel = playlistOfflineDetailViewModel
                 )
             }
         }
         composable<PlaylistOnlineDetailScreen> {
             val args = it.toRoute<PlaylistOnlineDetailScreen>()
+            val playlistOnlineDetailViewModel: PlaylistOnlineDetailViewModel = koinViewModel(
+                parameters = { parametersOf(args.toPlaylistPreview()) }
+            )
             ScreenWithContent(
                 navController = navController,
                 currentRoute = currentRoute,
@@ -179,9 +191,8 @@ fun Navigation(
                 hideVertNavElements = true
             ) {
                 PlaylistOnlineDetailScreen(
-                    playlistId = args.playlistId,
-                    thumbnail = args.thumbnail,
-                    navController = navController
+                    navController = navController,
+                    playlistOnlineDetailViewModel = playlistOnlineDetailViewModel
                 )
             }
         }
@@ -384,8 +395,11 @@ data class PlaylistOfflineDetailScreen(
 
 @Serializable
 data class PlaylistOnlineDetailScreen(
-    val playlistId: String,
-    val thumbnail: String
+    val id: String,
+    val title: String,
+    val author: String,
+    val thumbnail: String,
+    val views : String
 )
 
 

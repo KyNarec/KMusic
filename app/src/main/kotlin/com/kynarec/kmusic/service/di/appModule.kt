@@ -2,11 +2,14 @@ package com.kynarec.kmusic.service.di
 
 import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.data.db.KmusicDatabase
+import com.kynarec.kmusic.data.db.entities.PlaylistPreview
 import com.kynarec.kmusic.service.update.PlatformUpdateManager
 import com.kynarec.kmusic.service.update.UpdateManager
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
+import com.kynarec.kmusic.ui.viewModels.PlaylistOfflineDetailViewModel
+import com.kynarec.kmusic.ui.viewModels.PlaylistOnlineDetailViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
 import eu.anifantakis.lib.ksafe.KSafe
@@ -57,5 +60,13 @@ val appModule = module {
             downloadCache = get(),
             database = get()
         )
+    }
+
+    viewModel { (playlistId: Long) ->
+        PlaylistOfflineDetailViewModel(playlistId = playlistId, database = get(), ksafe = get())
+    }
+
+    viewModel { (playlistPreview: PlaylistPreview) ->
+        PlaylistOnlineDetailViewModel(playlistPreview = playlistPreview, application = get())
     }
 }

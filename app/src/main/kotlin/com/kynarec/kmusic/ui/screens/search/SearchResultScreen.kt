@@ -47,6 +47,7 @@ import com.kynarec.kmusic.data.db.entities.AlbumPreview
 import com.kynarec.kmusic.data.db.entities.ArtistPreview
 import com.kynarec.kmusic.data.db.entities.PlaylistPreview
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.data.db.entities.toPlaylistOnlineDetailScreen
 import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.service.innertube.searchAlbums
 import com.kynarec.kmusic.service.innertube.searchArtists
@@ -54,7 +55,6 @@ import com.kynarec.kmusic.service.innertube.searchCommunityPlaylists
 import com.kynarec.kmusic.service.innertube.searchSongsFlow
 import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.ArtistDetailScreen
-import com.kynarec.kmusic.ui.PlaylistOnlineDetailScreen
 import com.kynarec.kmusic.ui.SearchScreen
 import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.SortSection
@@ -519,10 +519,7 @@ fun SearchResultScreen(
                                             playlistPreview = playlist,
                                             onClick = {
                                                 navController.navigate(
-                                                    PlaylistOnlineDetailScreen(
-                                                        playlist.id,
-                                                        playlist.thumbnail
-                                                    )
+                                                    playlist.toPlaylistOnlineDetailScreen()
                                                 )
                                             },
                                         )
