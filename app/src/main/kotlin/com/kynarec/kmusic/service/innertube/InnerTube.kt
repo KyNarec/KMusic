@@ -394,11 +394,10 @@ class InnerTube(
                 setBody(requestBody)
 
                 headers {
-                    append("Host", "youtubei.googleapis.com")
                     append("Accept", "application/json")
                     append("Accept-Charset", "UTF-8")
                     append("Connection", "keep-alive")
-                    append("User-Agent", clientName.userAgent)
+                    append("X-Goog-Visitor-Id", "CgtxOHNmWXVDQm13OCiYmaHNBjIKCgJERRIEEgAgKA%3D%3D")
                 }
             }
 
