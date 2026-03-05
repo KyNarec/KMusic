@@ -7,7 +7,7 @@ plugins {
     id("kotlin-parcelize")
 }
 
-val appVersion = "0.1.18"
+val appVersion = "0.1.19"
 
 android {
     namespace = "com.kynarec.kmusic"
@@ -51,6 +51,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            namespace = "com.kynarec.kmusic"
+            applicationIdSuffix = ".debug"
         }
     }
     

@@ -138,15 +138,14 @@ suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = w
         .build()
 }
 
-// This function is for creating browsable items. It should not contain the playback URI.
 @OptIn(UnstableApi::class)
 fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
-    // This is a browsable item, it only needs the MediaId and Metadata.
+    Log.i("PlayerService", "createFullMediaItem called for ${song.id}")
+
     val extras = Bundle().apply {
         putString("ALBUM_ID", song.albumId)
         putString("DURATION", song.duration)
         putString("THUMBNAIL", song.thumbnail)
-        // Store artists as a ParcelableArrayList
         putParcelableArrayList("ARTISTS", ArrayList(song.artists))
     }
 
@@ -168,6 +167,7 @@ fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
 
 @OptIn(UnstableApi::class)
 suspend fun MediaItem.createFullMediaItem(): MediaItem {
+    Log.i("PlayerService", "fetching URL for $mediaId")
     val uri = playSongById(this.mediaId)
     return this.buildUpon()
         .setUri(uri)
@@ -256,7 +256,7 @@ fun parseCsvLine(line: String): List<String>? {
             if (i + 1 < line.length && line[i + 1] == '"' && inQuotes) {
                 // Escaped quote: "" becomes " inside the field
                 sb.append('"')
-                // Note: The loop naturally advances i, no need to manually skip in this 'for' structure.
+                // Note: The loop naturally advances i, no need Plato manually skip in this 'for' structure.
             } else {
                 // Toggle quote state
                 inQuotes = !inQuotes

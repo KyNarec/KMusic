@@ -206,21 +206,32 @@ suspend fun playSongByIdWithBestBitrate(videoId: String): String {
 suspend fun playSongById(videoId: String): String {
     val json = json
 
-    val raw = InnerTube(ClientName.Android).player(videoId)
+    val raw = InnerTube(ClientName.AndroidVr).player(videoId)
     try {
         val response = json.decodeFromString<PlayerResponse>(raw)
+//        response.streamingData?.adaptiveFormats?.forEach {
+//            println("Adaptive: itag: ${it.itag}, audioQuality: ${it.audioQuality}, url: ${it.url}")
+//        }
+//        response.streamingData?.formats?.forEach {
+//            println("Format: itag: ${it.itag}, audioQuality: ${it.audioQuality}, url: ${it.url}")
+//        }
 
-        val best = response.streamingData
-            ?.formats?.first { it.itag == 18 }
+        val url: String? =
+            response.streamingData?.adaptiveFormats
+                ?.firstOrNull { it.itag == 251 }
+                ?.url
+                ?: response.streamingData?.formats
+                    ?.firstOrNull { it.itag == 18 }
+                    ?.url
 
 //            ?.adaptiveFormats
 //            ?.filter { it.audioQuality in listOf("AUDIO_QUALITY_HIGH", "AUDIO_QUALITY_MEDIUM") }
 //            ?.filter { it.url != null }
 //            ?.maxByOrNull { it.averageBitrate ?: 0 }
 
-        println("Song URL: ${best?.url}")
+        println("Song URL: $url")
 
-        return best?.url ?: "NA"
+        return url ?: "NA"
     } catch (e: Exception) {
         e.printStackTrace()
         return ""

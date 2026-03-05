@@ -82,8 +82,8 @@ enum class ClientName(val label: String, val version: String, val userAgent: Str
     AndroidLite("ANDROID_LITE", "3.26.1",
         "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Mobile Safari/537.36"
     ),
-    AndroidVr("ANDROID_VR", "1.28.63",
-        "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Mobile Safari/537.36"
+    AndroidVr("ANDROID_VR", "1.64.22",
+        "Mozilla/5.0 (Linux; Android 12; Quest 3 Build/SQ3A.220605.009.A1; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/118.0.5993.111 VR Safari/537.36"
     ),
     AndroidTv("ANDROID_TV", "2.16.032",
         "Mozilla/5.0 (Linux; Android 5.1.1; AFTT Build/LVY48F; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/49.0.2623.10"
