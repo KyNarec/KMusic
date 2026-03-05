@@ -52,6 +52,10 @@ android {
                 "proguard-rules.pro"
             )
         }
+        debug {
+            namespace = "com.kynarec.kmusic"
+            applicationIdSuffix = ".debug"
+        }
     }
     
     dependenciesInfo {
