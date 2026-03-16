@@ -49,7 +49,7 @@ fun MusicPlayerSheet(
     SharedTransitionLayout {
         Column(modifier = Modifier.fillMaxSize()) {
 
-            AnimatedVisibility(visible = playerUiState.currentPlayerState != PlayerSheetMode.MainPlayer && playerUiState.currentPlayerState != PlayerSheetMode.Options,
+            AnimatedVisibility(visible = playerUiState.currentPlayerState != PlayerSheetMode.MainPlayer,
             ) {
                 PlayerControlBar(
                     onBarClick = { playerViewModel.setPlayerState(PlayerSheetMode.MainPlayer) },
