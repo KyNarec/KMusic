@@ -53,8 +53,8 @@ android {
             )
         }
         debug {
-            namespace = "com.kynarec.kmusic"
             applicationIdSuffix = ".debug"
+            resValue("string", "app_name", "KMusic Debug")
         }
     }
     
