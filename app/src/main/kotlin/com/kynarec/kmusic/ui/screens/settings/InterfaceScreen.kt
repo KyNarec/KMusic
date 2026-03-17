@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FormatColorFill
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.PinDrop
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,6 +17,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kynarec.kmusic.enums.PlayerRepeatMode
 import com.kynarec.kmusic.enums.StartDestination
 import com.kynarec.kmusic.ui.components.settings.SettingComponentEnumChoice
 import com.kynarec.kmusic.ui.components.settings.SettingComponentSwitch
@@ -33,6 +35,8 @@ fun InterfaceScreen(
     val scope = rememberCoroutineScope()
 
     val startDestinationFlow by prefs.startDestinationFlow.collectAsStateWithLifecycle(prefs.startDestination)
+    val playerRepeatModeFlow by prefs.playerRepeatModeFlow.collectAsStateWithLifecycle(prefs.playerRepeatMode)
+
 
     val showControlBar = musicViewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
     val bottomPadding = if (showControlBar) 70.dp else 0.dp
@@ -84,6 +88,26 @@ fun InterfaceScreen(
                     prefs = prefs,
                     checkedDefault = { prefs.coloredDownloadIndicator },
                     onCheckedChange = { prefs.coloredDownloadIndicator = it}
+                )
+            }
+        }
+
+        item {
+            Spacer(Modifier.height(16.dp))
+        }
+        item {
+            ElevatedCard {
+                SettingComponentEnumChoice(
+                    icon = Icons.Default.Repeat,
+                    title = "Player repeat mode",
+                    description = "Changes how the player acts at the end of the queue",
+                    enumValues = PlayerRepeatMode.entries,
+                    selected = playerRepeatModeFlow,
+                    onValueSelected = {
+                        prefs.putPlayerRepeatMode(it)
+                        musicViewModel.changePlayerRepeatMode(it)
+                    },
+                    labelMapper = { it.toString() }
                 )
             }
         }

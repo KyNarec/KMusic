@@ -23,6 +23,7 @@ import com.kynarec.kmusic.data.db.entities.Artist
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.data.db.entities.SongAlbumMap
+import com.kynarec.kmusic.enums.PlayerRepeatMode
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.service.innertube.getRadioFlow
 import com.kynarec.kmusic.ui.screens.song.SortOption
@@ -709,6 +710,14 @@ class MusicViewModel
 
     fun setCurrentLyrics(syncedLyrics: SyncedLyrics) {
         _uiState.update { it.copy(currentLyrics = syncedLyrics) }
+    }
+
+    fun changePlayerRepeatMode(repeatMode: PlayerRepeatMode) {
+        mediaController?.repeatMode = when(repeatMode) {
+            PlayerRepeatMode.RepeatModeAll -> Player.REPEAT_MODE_ALL
+            PlayerRepeatMode.RepeatModeOne -> Player.REPEAT_MODE_ONE
+            PlayerRepeatMode.RepeatModeOff -> Player.REPEAT_MODE_OFF
+        }
     }
 
     override fun onCleared() {

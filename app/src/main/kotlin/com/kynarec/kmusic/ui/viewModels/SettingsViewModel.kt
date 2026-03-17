@@ -1,6 +1,7 @@
 package com.kynarec.kmusic.ui.viewModels
 
 import androidx.lifecycle.ViewModel
+import com.kynarec.kmusic.enums.PlayerRepeatMode
 import com.kynarec.kmusic.enums.StartDestination
 import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.utils.Constants.COLORED_DOWNLOAD_INDICATOR_KEY
@@ -8,10 +9,12 @@ import com.kynarec.kmusic.utils.Constants.DARK_MODE_KEY
 import com.kynarec.kmusic.utils.Constants.DEFAULT_COLORED_DOWNLOAD_INDICATOR
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DARK_MODE
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DYNAMIC_COLORS
+import com.kynarec.kmusic.utils.Constants.DEFAULT_PLAYER_REPEAT_MODE
 import com.kynarec.kmusic.utils.Constants.DEFAULT_START_DESTINATION
 import com.kynarec.kmusic.utils.Constants.DEFAULT_TRANSITION_EFFECT
 import com.kynarec.kmusic.utils.Constants.DEFAULT_WAVY_LYRICS_IDLE_INDICATOR
 import com.kynarec.kmusic.utils.Constants.DYNAMIC_COLORS_KEY
+import com.kynarec.kmusic.utils.Constants.PLAYER_REPEAT_MODE_KEY
 import com.kynarec.kmusic.utils.Constants.START_DESTINATION_KEY
 import com.kynarec.kmusic.utils.Constants.TRANSITION_EFFECT_KEY
 import com.kynarec.kmusic.utils.Constants.WAVY_LYRICS_IDLE_INDICATOR_KEY
@@ -39,6 +42,9 @@ class SettingsViewModel(
     val wavyLyricsIdleIndicatorFlow = ksafe.getFlow(WAVY_LYRICS_IDLE_INDICATOR_KEY, DEFAULT_WAVY_LYRICS_IDLE_INDICATOR)
     var coloredDownloadIndicator by ksafe.mutableStateOf(DEFAULT_COLORED_DOWNLOAD_INDICATOR, key = COLORED_DOWNLOAD_INDICATOR_KEY)
 
+    var playerRepeatMode by ksafe.mutableStateOf(DEFAULT_PLAYER_REPEAT_MODE, PLAYER_REPEAT_MODE_KEY)
+    var playerRepeatModeFlow = ksafe.getFlow(PLAYER_REPEAT_MODE_KEY, DEFAULT_PLAYER_REPEAT_MODE)
+
 
     fun putTransitionEffect(value: TransitionEffect) {
         ksafe.putDirect(TRANSITION_EFFECT_KEY, value)
@@ -47,6 +53,11 @@ class SettingsViewModel(
     fun putStartDestination(value: StartDestination) {
         ksafe.putDirect(START_DESTINATION_KEY, value)
     }
+
+    fun putPlayerRepeatMode(value: PlayerRepeatMode) {
+        ksafe.putDirect(PLAYER_REPEAT_MODE_KEY, value)
+    }
+
 
 
     fun getBoolean(key: String, default: Boolean): Boolean {
