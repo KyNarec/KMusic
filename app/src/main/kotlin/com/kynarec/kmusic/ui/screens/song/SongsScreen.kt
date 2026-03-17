@@ -86,7 +86,6 @@ fun SongsScreen(
         }
     }
 
-
     Column(
         Modifier.fillMaxSize()
     ) {
@@ -99,13 +98,14 @@ fun SongsScreen(
         AnimatedContent(
             targetState = selectedSortOption
         ) { targetState ->
+
             when (targetState.text) {
                 "All" -> {
                     LazyColumn(
                         contentPadding = PaddingValues(bottom = bottomPadding)
                     ) {
                         items(
-                            sortedSongs.value,
+                            allSongs.value,
                             key = { song -> song.id }
                         ) { song ->
                             val song = song
@@ -128,11 +128,13 @@ fun SongsScreen(
                 }
 
                 "Favorites" -> {
+                    val favourites = database.songDao().getFavouritesSongFlow()
+                        .collectAsStateWithLifecycle(emptyList())
                     LazyColumn(
                         contentPadding = PaddingValues(bottom = bottomPadding)
                     ) {
                         items(
-                            sortedSongs.value,
+                            favourites.value,
                             key = { song -> song.id }
                         ) { song ->
                             val song = song
@@ -155,11 +157,13 @@ fun SongsScreen(
                 }
 
                 "Listened" -> {
+                    val listenedTo by database.songDao().getSongsFlowWithPlaytime()
+                        .collectAsStateWithLifecycle(emptyList())
                     LazyColumn(
                         contentPadding = PaddingValues(bottom = bottomPadding)
                     ) {
                         items(
-                            sortedSongs.value,
+                            listenedTo,
                             key = { song -> song.id }
                         ) { song ->
                             val song = song
@@ -181,10 +185,11 @@ fun SongsScreen(
                     }
                 }
                 "Downloads" -> {
+                    val downloaded by allSongs
                     LazyColumn(
                         contentPadding = PaddingValues(bottom = bottomPadding)
                     ) {
-                        items(sortedSongs.value.filter { it.id in completedIds }
+                        items(downloaded.filter { it.id in completedIds }
                         ) { song ->
                             val song = song
                             val onSongClick = remember(song.id) {
