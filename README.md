@@ -14,6 +14,8 @@
 ## ✨ Features
 - In-app update checker
 - Android Auto support
+- Youtube music playlist import
+- Synced lyrics from lrclib.net
 
 <!-- ## 📷 Screenshots -->
 
