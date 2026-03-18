@@ -308,7 +308,6 @@ fun PlaylistsScreen(
             LazyVerticalGrid(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
                     .padding(horizontal = 8.dp),
                 contentPadding = PaddingValues(
                     top = 8.dp,
