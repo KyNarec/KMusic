@@ -7,8 +7,8 @@
 
 **KMusic** is an Android Music Player written in Kotlin that allows streaming music from YouTube Music.
 
-## ❗ Warning ❗
-This app is still unstable and database resets are common. Use at your own risk.
+## ~~❗ Warning ❗~~
+~~This app is still unstable and database resets are common. Use at your own risk.~~
 
 
 ## ✨ Features
