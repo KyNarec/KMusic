@@ -1,4 +1,4 @@
-package com.kynarec.kmusic.ui.components.player
+package com.kynarec.kmusic.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column

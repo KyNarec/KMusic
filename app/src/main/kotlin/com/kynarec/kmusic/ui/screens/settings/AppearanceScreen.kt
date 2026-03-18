@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kynarec.kmusic.enums.TransitionEffect
-import com.kynarec.kmusic.ui.components.player.SegmentedColumn
+import com.kynarec.kmusic.ui.components.SegmentedColumn
 import com.kynarec.kmusic.ui.components.settings.SettingComponentEnumChoice
 import com.kynarec.kmusic.ui.components.settings.SettingComponentSwitch
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
