@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material.icons.rounded.LowPriority
 import androidx.compose.material.icons.rounded.MusicNote
@@ -52,6 +53,7 @@ import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.song.BottomSheetItem
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.SmartMessage
+import com.kynarec.kmusic.utils.shareUrl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -234,6 +236,17 @@ fun PlaylistOfflineOptionsBottomSheet(
                                 }
                                 onDismiss()
                             }
+                        }
+                    )
+
+                    BottomSheetItem(
+                        Icons.Default.Share,
+                        "Share",
+                        onClick = {
+                            shareUrl(
+                                context,
+                                "https://music.youtube.com/playlist?list=${playlist!!.browseId?.substringAfter("VL")}"
+                            )
                         }
                     )
                 }
