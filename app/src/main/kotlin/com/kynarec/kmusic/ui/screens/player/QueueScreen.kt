@@ -3,6 +3,7 @@ package com.kynarec.kmusic.ui.screens.player
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -111,6 +112,7 @@ fun QueueScreen(
                         .shadow(elevation)
                         .zIndex(if (isDragging) 1f else 0f)
                 ) {
+
                     QueueSongComponent(
                         song.song,
                         onClick = { viewModel.skipToSong(index) },
@@ -125,7 +127,10 @@ fun QueueScreen(
                         },
                         onDragStopped = {
                             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        }
+                        },
+                        modifier = Modifier.anchoredDraggable(
+                            // https://stackoverflow.com/questions/78991410/how-to-make-a-composable-draggable-using-anchoreddraggablestate
+                        )
                     )
                 }
             }
