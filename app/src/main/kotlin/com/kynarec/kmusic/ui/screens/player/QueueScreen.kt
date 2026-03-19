@@ -10,13 +10,22 @@ import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.overscroll
 import androidx.compose.foundation.rememberOverscrollEffect
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -26,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -131,38 +141,40 @@ fun QueueScreen(
                         .zIndex(if (isDragging) 1f else 0f)
                 ) {
 
-                    val dragState2 = remember {
+                    val queueItemDragState = remember {
                         AnchoredDraggableState(
                             initialValue = QueueItemSwipeState.Resting,
                         )
                     }
                     val density = LocalDensity.current
                     val anchors = remember(density) {
-                        val deleteOffset = with(density) { -48.dp.toPx() }
-                        val playNextOffset = with(density) { 48.dp.toPx() }
+                        val deleteOffset = with(density) { -64.dp.toPx() }
+                        val playNextOffset = with(density) { 64.dp.toPx() }
                         DraggableAnchors {
                             QueueItemSwipeState.Resting at 0f
                             QueueItemSwipeState.Delete at deleteOffset
                             QueueItemSwipeState.PlayNext at playNextOffset
                         }
                     }
-                    SideEffect { dragState2.updateAnchors(anchors) }
+                    SideEffect { queueItemDragState.updateAnchors(anchors) }
 
                     val itemOverscroll = rememberOverscrollEffect()
 
-                    LaunchedEffect(dragState2) {
-                        snapshotFlow { dragState2.settledValue }
+                    LaunchedEffect(queueItemDragState) {
+                        snapshotFlow { queueItemDragState.settledValue }
                             .collectLatest {
                                 when (it) {
                                     QueueItemSwipeState.Delete -> {
+                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                         viewModel.removeSongFromQueue(song.id)
                                     }
                                     QueueItemSwipeState.PlayNext -> {
+                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                         scope.launch {
                                             viewModel.playNext(song.song)
                                         }
                                         delay(50)
-                                        dragState2.animateTo(
+                                        queueItemDragState.animateTo(
                                             QueueItemSwipeState.Resting
                                         )
                                     }
@@ -170,6 +182,7 @@ fun QueueScreen(
                                 }
                             }
                     }
+                    SwipeBackgroundActions(queueItemDragState)
                     QueueSongComponent(
                         song.song,
                         onClick = { viewModel.skipToSong(index) },
@@ -187,7 +200,7 @@ fun QueueScreen(
                         },
                         modifier = Modifier
                             .anchoredDraggable(
-                                state = dragState2,
+                                state = queueItemDragState,
                                 orientation = Orientation.Horizontal,
                                 enabled = true,
                                 overscrollEffect = itemOverscroll,
@@ -196,7 +209,7 @@ fun QueueScreen(
                             .overscroll(itemOverscroll)
                             .offset {
                                 IntOffset(
-                                    x = dragState2
+                                    x = queueItemDragState
                                         .requireOffset()
                                         .roundToInt(),
                                     y = 0
@@ -215,5 +228,39 @@ fun QueueScreen(
             database =  database,
             navController = navController
         )
+    }
+}
+
+@Composable
+fun SwipeBackgroundActions(
+    dragState: AnchoredDraggableState<QueueItemSwipeState>,
+    modifier: Modifier = Modifier
+) {
+    val offset = dragState.offset.takeIf { !it.isNaN() } ?: 0f
+
+    Box(
+        modifier = modifier
+            .height(80.dp)
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        if (offset > 0) {
+            Icon(
+                imageVector = Icons.Rounded.SkipNext,
+                contentDescription = "Play Next",
+                modifier = Modifier.align(Alignment.CenterStart).size(32.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        if (offset < 0) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Delete",
+                modifier = Modifier.align(Alignment.CenterEnd).size(32.dp),
+                tint = MaterialTheme.colorScheme.errorContainer
+            )
+        }
     }
 }
