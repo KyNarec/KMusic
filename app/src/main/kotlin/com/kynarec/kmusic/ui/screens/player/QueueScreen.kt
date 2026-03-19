@@ -3,36 +3,53 @@ package com.kynarec.kmusic.ui.screens.player
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.gestures.AnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
+import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.overscroll
+import androidx.compose.foundation.rememberOverscrollEffect
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
+import com.kynarec.kmusic.enums.QueueItemSwipeState
 import com.kynarec.kmusic.ui.components.player.QueueSongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import kotlin.math.roundToInt
 import kotlin.uuid.ExperimentalUuidApi
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
@@ -44,6 +61,7 @@ fun QueueScreen(
     database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
+    val scope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
 
     val showInfoSheet = remember { mutableStateOf(false) }
@@ -113,6 +131,45 @@ fun QueueScreen(
                         .zIndex(if (isDragging) 1f else 0f)
                 ) {
 
+                    val dragState2 = remember {
+                        AnchoredDraggableState(
+                            initialValue = QueueItemSwipeState.Resting,
+                        )
+                    }
+                    val density = LocalDensity.current
+                    val anchors = remember(density) {
+                        val deleteOffset = with(density) { -48.dp.toPx() }
+                        val playNextOffset = with(density) { 48.dp.toPx() }
+                        DraggableAnchors {
+                            QueueItemSwipeState.Resting at 0f
+                            QueueItemSwipeState.Delete at deleteOffset
+                            QueueItemSwipeState.PlayNext at playNextOffset
+                        }
+                    }
+                    SideEffect { dragState2.updateAnchors(anchors) }
+
+                    val itemOverscroll = rememberOverscrollEffect()
+
+                    LaunchedEffect(dragState2) {
+                        snapshotFlow { dragState2.settledValue }
+                            .collectLatest {
+                                when (it) {
+                                    QueueItemSwipeState.Delete -> {
+                                        viewModel.removeSongFromQueue(song.id)
+                                    }
+                                    QueueItemSwipeState.PlayNext -> {
+                                        scope.launch {
+                                            viewModel.playNext(song.song)
+                                        }
+                                        delay(50)
+                                        dragState2.animateTo(
+                                            QueueItemSwipeState.Resting
+                                        )
+                                    }
+                                    else -> {}
+                                }
+                            }
+                    }
                     QueueSongComponent(
                         song.song,
                         onClick = { viewModel.skipToSong(index) },
@@ -128,9 +185,23 @@ fun QueueScreen(
                         onDragStopped = {
                             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                         },
-                        modifier = Modifier.anchoredDraggable(
-                            // https://stackoverflow.com/questions/78991410/how-to-make-a-composable-draggable-using-anchoreddraggablestate
-                        )
+                        modifier = Modifier
+                            .anchoredDraggable(
+                                state = dragState2,
+                                orientation = Orientation.Horizontal,
+                                enabled = true,
+                                overscrollEffect = itemOverscroll,
+                                // https://www.youtube.com/watch?v=JYtLy4V2x-A
+                            )
+                            .overscroll(itemOverscroll)
+                            .offset {
+                                IntOffset(
+                                    x = dragState2
+                                        .requireOffset()
+                                        .roundToInt(),
+                                    y = 0
+                                )
+                            }
                     )
                 }
             }
