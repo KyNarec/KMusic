@@ -30,6 +30,7 @@ import com.kynarec.kmusic.ui.screens.song.SortOption
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
 import com.kynarec.kmusic.utils.parseDurationToMillis
+import com.kynarec.kmusic.utils.parseMillisToDuration
 import com.kynarec.kmusic.utils.toSeconds
 import com.kynarec.kmusic.utils.toSong
 import com.kynarec.lrclib.LyricsRepository
@@ -700,11 +701,17 @@ class MusicViewModel
 
     suspend fun getSyncedLyrics(song: Song): SyncedLyrics? {
         return try {
+            val duration = if (song.duration.isBlank() || song.duration.isEmpty()) {
+                (mediaController?.duration ?: 0L).parseMillisToDuration()
+            } else {
+                song.duration
+            }
+            Log.i(tag, "getSyncedLyrics duration: $duration")
             LrcParser.parse(
                 lyricsRepository.getLyrics(
                     song.title,
                     artist = song.artists.joinToString(", ") { it.name },
-                    duration = song.duration.toSeconds()
+                    duration = duration.toSeconds()
                 ).first().syncedLyrics ?: ""
             )
         } catch (e: Exception) {
@@ -717,7 +724,7 @@ class MusicViewModel
         _uiState.update { it.copy(isLoadingLyrics = loading) }
     }
 
-    fun setCurrentLyrics(syncedLyrics: SyncedLyrics) {
+    fun setCurrentLyrics(syncedLyrics: SyncedLyrics?) {
         _uiState.update { it.copy(currentLyrics = syncedLyrics) }
     }
 

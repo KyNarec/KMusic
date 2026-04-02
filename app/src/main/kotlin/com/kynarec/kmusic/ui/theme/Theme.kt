@@ -5,7 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -260,6 +262,7 @@ val unspecified_scheme = ColorFamily(
     Color.Unspecified, Color.Unspecified, Color.Unspecified, Color.Unspecified
 )
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun KMusicTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -298,6 +301,7 @@ fun KMusicTheme(
         content = content,
         typography = Typography(),
         shapes = MaterialTheme.shapes, // Pass the default shapes if you don't have custom ones
+        motionScheme = MotionScheme.expressive()
 
     )
 }
