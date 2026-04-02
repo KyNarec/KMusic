@@ -586,6 +586,15 @@ class MusicViewModel
         mediaController?.seekTo(index, 0L)
     }
 
+    fun removeSongFromQueue(id: Long) {
+        Log.i(tag, "removeSongFromQueue index: $id")
+        val indexOfSong = _uiState.value.songsList.indexOfFirst { it.id == id }
+        mediaController?.removeMediaItem(indexOfSong)
+        _uiState.update {
+            it.copy(songsList = it.songsList.filter { songItem -> songItem.id != id })
+        }
+    }
+
     fun toggleFavoriteSong(song: Song) {
         viewModelScope.launch {
             val updated = song.toggleLike()
