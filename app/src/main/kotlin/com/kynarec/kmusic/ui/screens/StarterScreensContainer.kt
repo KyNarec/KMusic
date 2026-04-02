@@ -132,9 +132,9 @@ fun StarterScreensContainer(
 
                                 TransitionEffect.Fade -> fadeIn(animationSpec = tween(350))
                                 TransitionEffect.Scale -> scaleIn(animationSpec = tween(350))
-                                TransitionEffect.SlideVertical -> slideIntoContainer(
-                                    AnimatedContentTransitionScope.SlideDirection.Up
-                                )
+                                TransitionEffect.SlideVertical -> {
+                                    slideInVertically { it } + fadeIn()
+                                }
 
                                 TransitionEffect.SlideHorizontal -> slideIntoContainer(
                                     AnimatedContentTransitionScope.SlideDirection.Left
@@ -153,9 +153,9 @@ fun StarterScreensContainer(
 
                                 TransitionEffect.Fade -> fadeOut(animationSpec = tween(350))
                                 TransitionEffect.Scale -> scaleOut(animationSpec = tween(350))
-                                TransitionEffect.SlideVertical -> slideOutOfContainer(
-                                    AnimatedContentTransitionScope.SlideDirection.Down
-                                )
+                                TransitionEffect.SlideVertical -> {
+                                    slideOutVertically { -it } + fadeOut()
+                                }
 
                                 TransitionEffect.SlideHorizontal -> slideOutOfContainer(
                                     AnimatedContentTransitionScope.SlideDirection.Right
@@ -174,9 +174,9 @@ fun StarterScreensContainer(
 
                                 TransitionEffect.Fade -> fadeIn(animationSpec = tween(350))
                                 TransitionEffect.Scale -> scaleIn(animationSpec = tween(350))
-                                TransitionEffect.SlideVertical -> slideIntoContainer(
-                                    AnimatedContentTransitionScope.SlideDirection.Up
-                                )
+                                TransitionEffect.SlideVertical -> {
+                                    slideInVertically { -it } + fadeIn()
+                                }
 
                                 TransitionEffect.SlideHorizontal -> slideIntoContainer(
                                     AnimatedContentTransitionScope.SlideDirection.Left
@@ -195,9 +195,9 @@ fun StarterScreensContainer(
 
                                 TransitionEffect.Fade -> fadeOut(animationSpec = tween(350))
                                 TransitionEffect.Scale -> scaleOut(animationSpec = tween(350))
-                                TransitionEffect.SlideVertical -> slideOutOfContainer(
-                                    AnimatedContentTransitionScope.SlideDirection.Down
-                                )
+                                TransitionEffect.SlideVertical -> {
+                                    slideOutVertically { it } + fadeOut()
+                                }
 
                                 TransitionEffect.SlideHorizontal -> slideOutOfContainer(
                                     AnimatedContentTransitionScope.SlideDirection.Right

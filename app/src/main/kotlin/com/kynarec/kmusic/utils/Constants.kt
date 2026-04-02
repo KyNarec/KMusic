@@ -26,7 +26,7 @@ object Constants {
     const val THUMBNAIL_ROUNDNESS = 30
     const val MARQUEE_DELAY = 1000L
     const val TRANSITION_EFFECT_KEY = "transitionEffect"
-    val DEFAULT_TRANSITION_EFFECT = TransitionEffect.Fade
+    val DEFAULT_TRANSITION_EFFECT = TransitionEffect.SlideHorizontal
 
     const val START_DESTINATION_KEY = "startDestination"
     val DEFAULT_START_DESTINATION = StartDestination.HomeScreen

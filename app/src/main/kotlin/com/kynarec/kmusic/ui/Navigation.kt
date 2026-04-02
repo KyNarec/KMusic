@@ -14,6 +14,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
@@ -82,13 +86,13 @@ fun Navigation(
 
                 TransitionEffect.Fade -> fadeIn(animationSpec = tween(350))
                 TransitionEffect.Scale -> scaleIn(animationSpec = tween(350))
-                TransitionEffect.SlideVertical -> slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Up
-                )
+                TransitionEffect.SlideVertical -> {
+                    slideInVertically { it } + fadeIn()
+                }
 
-                TransitionEffect.SlideHorizontal -> slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Left
-                )
+                TransitionEffect.SlideHorizontal -> {
+                    slideInHorizontally { it } + fadeIn()
+                }
             }
         },
         exitTransition = {
@@ -103,13 +107,13 @@ fun Navigation(
 
                 TransitionEffect.Fade -> fadeOut(animationSpec = tween(350))
                 TransitionEffect.Scale -> scaleOut(animationSpec = tween(350))
-                TransitionEffect.SlideVertical -> slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Down
-                )
+                TransitionEffect.SlideVertical -> {
+                    slideOutVertically { -it } + fadeOut()
+                }
 
-                TransitionEffect.SlideHorizontal -> slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Right
-                )
+                TransitionEffect.SlideHorizontal -> {
+                    slideOutHorizontally { -it } + fadeOut()
+                }
             }
         },
         popEnterTransition = {
@@ -124,13 +128,13 @@ fun Navigation(
 
                 TransitionEffect.Fade -> fadeIn(animationSpec = tween(350))
                 TransitionEffect.Scale -> scaleIn(animationSpec = tween(350))
-                TransitionEffect.SlideVertical -> slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Up
-                )
+                TransitionEffect.SlideVertical -> {
+                    slideInVertically { -it } + fadeIn()
+                }
 
-                TransitionEffect.SlideHorizontal -> slideIntoContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Left
-                )
+                TransitionEffect.SlideHorizontal -> {
+                    slideInHorizontally { -it } + fadeIn()
+                }
             }
         },
         popExitTransition = {
@@ -145,13 +149,13 @@ fun Navigation(
 
                 TransitionEffect.Fade -> fadeOut(animationSpec = tween(350))
                 TransitionEffect.Scale -> scaleOut(animationSpec = tween(350))
-                TransitionEffect.SlideVertical -> slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Down
-                )
+                TransitionEffect.SlideVertical -> {
+                    slideOutVertically { it } + fadeOut()
+                }
 
-                TransitionEffect.SlideHorizontal -> slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Right
-                )
+                TransitionEffect.SlideHorizontal -> {
+                    slideOutHorizontally { it } + fadeOut()
+                }
             }
         }
     ) {
