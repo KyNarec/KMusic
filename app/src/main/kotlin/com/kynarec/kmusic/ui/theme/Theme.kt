@@ -1,9 +1,7 @@
 package com.kynarec.kmusic.ui.theme
 
+import android.app.Activity
 import android.os.Build
-import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
@@ -14,10 +12,12 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 /**
  * Theme generated in figma with Material Theme Builder plugin
@@ -270,21 +270,17 @@ fun KMusicTheme(
     dynamicColor: Boolean = true,
     content: @Composable() () -> Unit
 ) {
-    val context = LocalContext.current
+    val view = LocalView.current
 
-    DisposableEffect(darkTheme) {
-        (context as ComponentActivity).enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.auto(
-                android.graphics.Color.TRANSPARENT,
-                android.graphics.Color.TRANSPARENT,
-            ) { darkTheme },
-            navigationBarStyle = SystemBarStyle.auto(
-                android.graphics.Color.TRANSPARENT,
-                android.graphics.Color.TRANSPARENT,
-            ) { darkTheme }
-        )
-        onDispose {}
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            val insetsController = WindowCompat.getInsetsController(window, view)
+
+            insetsController.isAppearanceLightStatusBars = !darkTheme
+        }
     }
+
 
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
@@ -300,8 +296,7 @@ fun KMusicTheme(
         colorScheme = colorScheme,
         content = content,
         typography = Typography(),
-        shapes = MaterialTheme.shapes, // Pass the default shapes if you don't have custom ones
+        shapes = MaterialTheme.shapes,
         motionScheme = MotionScheme.expressive()
-
     )
 }
