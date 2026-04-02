@@ -23,12 +23,14 @@ import com.kynarec.kmusic.data.db.entities.Artist
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.data.db.entities.SongAlbumMap
+import com.kynarec.kmusic.enums.PlayerRepeatMode
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.service.innertube.getRadioFlow
 import com.kynarec.kmusic.ui.screens.song.SortOption
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
 import com.kynarec.kmusic.utils.parseDurationToMillis
+import com.kynarec.kmusic.utils.parseMillisToDuration
 import com.kynarec.kmusic.utils.toSeconds
 import com.kynarec.kmusic.utils.toSong
 import com.kynarec.lrclib.LyricsRepository
@@ -585,6 +587,15 @@ class MusicViewModel
         mediaController?.seekTo(index, 0L)
     }
 
+    fun removeSongFromQueue(id: Long) {
+        Log.i(tag, "removeSongFromQueue index: $id")
+        val indexOfSong = _uiState.value.songsList.indexOfFirst { it.id == id }
+        mediaController?.removeMediaItem(indexOfSong)
+        _uiState.update {
+            it.copy(songsList = it.songsList.filter { songItem -> songItem.id != id })
+        }
+    }
+
     fun toggleFavoriteSong(song: Song) {
         viewModelScope.launch {
             val updated = song.toggleLike()
@@ -690,11 +701,17 @@ class MusicViewModel
 
     suspend fun getSyncedLyrics(song: Song): SyncedLyrics? {
         return try {
+            val duration = if (song.duration.isBlank() || song.duration.isEmpty()) {
+                (mediaController?.duration ?: 0L).parseMillisToDuration()
+            } else {
+                song.duration
+            }
+            Log.i(tag, "getSyncedLyrics duration: $duration")
             LrcParser.parse(
                 lyricsRepository.getLyrics(
                     song.title,
                     artist = song.artists.joinToString(", ") { it.name },
-                    duration = song.duration.toSeconds()
+                    duration = duration.toSeconds()
                 ).first().syncedLyrics ?: ""
             )
         } catch (e: Exception) {
@@ -707,8 +724,16 @@ class MusicViewModel
         _uiState.update { it.copy(isLoadingLyrics = loading) }
     }
 
-    fun setCurrentLyrics(syncedLyrics: SyncedLyrics) {
+    fun setCurrentLyrics(syncedLyrics: SyncedLyrics?) {
         _uiState.update { it.copy(currentLyrics = syncedLyrics) }
+    }
+
+    fun changePlayerRepeatMode(repeatMode: PlayerRepeatMode) {
+        mediaController?.repeatMode = when(repeatMode) {
+            PlayerRepeatMode.RepeatModeAll -> Player.REPEAT_MODE_ALL
+            PlayerRepeatMode.RepeatModeOne -> Player.REPEAT_MODE_ONE
+            PlayerRepeatMode.RepeatModeOff -> Player.REPEAT_MODE_OFF
+        }
     }
 
     override fun onCleared() {

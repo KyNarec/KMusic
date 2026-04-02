@@ -40,16 +40,17 @@ fun MusicPlayerSheet(
 
         musicViewModel.setLoadingLyrics(true)
         val syncedLyrics = musicViewModel.getSyncedLyrics(currentSong!!)
-        Log.i("lyrics", "Synced Lyrics: ${syncedLyrics?.lines}")
-        Log.i("lyrics", "Synced Lyrics: ${syncedLyrics?.title}")
-        syncedLyrics?.let { musicViewModel.setCurrentLyrics(it) }
+        Log.i("MusicPlayerSheet", "Fetched Synced Lyrics: ${syncedLyrics?.lines}")
+        Log.i("MusicPlayerSheet", "FetchedSynced Lyrics Title: ${syncedLyrics?.title}")
+        if (syncedLyrics?.lines?.isEmpty() == true) musicViewModel.setCurrentLyrics(null)
+        else syncedLyrics?.let { musicViewModel.setCurrentLyrics(it) }
         musicViewModel.setLoadingLyrics(false)
     }
 
     SharedTransitionLayout {
         Column(modifier = Modifier.fillMaxSize()) {
 
-            AnimatedVisibility(visible = playerUiState.currentPlayerState != PlayerSheetMode.MainPlayer && playerUiState.currentPlayerState != PlayerSheetMode.Options,
+            AnimatedVisibility(visible = playerUiState.currentPlayerState != PlayerSheetMode.MainPlayer,
             ) {
                 PlayerControlBar(
                     onBarClick = { playerViewModel.setPlayerState(PlayerSheetMode.MainPlayer) },

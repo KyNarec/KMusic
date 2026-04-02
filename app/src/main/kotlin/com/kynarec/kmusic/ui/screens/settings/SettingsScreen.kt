@@ -17,6 +17,7 @@ import androidx.compose.material.icons.rounded.Interests
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material.icons.rounded.Update
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +33,7 @@ import androidx.navigation.NavHostController
 import com.kynarec.kmusic.service.update.UpdateManager
 import com.kynarec.kmusic.service.update.getCurrentVersion
 import com.kynarec.kmusic.ui.Settings
+import com.kynarec.kmusic.ui.components.SegmentedColumn
 import com.kynarec.kmusic.ui.components.UpdateDialog
 import com.kynarec.kmusic.ui.components.settings.SettingsFolder
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
@@ -74,20 +76,26 @@ fun SettingsScreen(
                 )
             ) {
                 item {
-                    ElevatedCard(
-                        Modifier.fillMaxWidth()
-                    ) {
-                        SettingsFolder(
-                            title = { Text("Appearance") },
-                            icon = { Icon(Icons.Rounded.Palette, null) },
-                            onClick = { navController.navigate(Settings.Appearance) }
-                        )
-                        SettingsFolder(
-                            title = { Text("Interface") },
-                            icon = { Icon(Icons.Rounded.Interests, null) },
-                            onClick = { navController.navigate(Settings.Interface) }
-                        )
-                    }
+                    SegmentedColumn(
+                        items = listOf(
+                            {
+                                SettingsFolder(
+                                    title = { Text("Appearance") },
+                                    icon = { Icon(Icons.Rounded.Palette, null) },
+                                    onClick = { navController.navigate(Settings.Appearance) }
+                                )
+                            },
+                            {
+                                SettingsFolder(
+                                    title = { Text("Interface") },
+                                    icon = { Icon(Icons.Rounded.Interests, null) },
+                                    onClick = { navController.navigate(Settings.Interface) }
+                                )
+                            }
+                        ),
+                        spacerBackground = MaterialTheme.colorScheme.background,
+                        containerColor = CardDefaults.elevatedCardColors().containerColor
+                    )
                 }
                 item {
                     Spacer(modifier = Modifier.height(16.dp))

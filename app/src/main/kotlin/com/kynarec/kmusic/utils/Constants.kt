@@ -1,5 +1,6 @@
 package com.kynarec.kmusic.utils
 
+import com.kynarec.kmusic.enums.PlayerRepeatMode
 import com.kynarec.kmusic.enums.SortBy
 import com.kynarec.kmusic.enums.SortOrder
 import com.kynarec.kmusic.enums.StartDestination
@@ -50,6 +51,7 @@ object Constants {
     const val PLAYLIST_SORT_ORDER_KEY = "playlistSortOrder"
     val DEFAULT_PLAYLIST_SORT_ORDER = SortOrder.Descending
 
-
+    const val PLAYER_REPEAT_MODE_KEY = "playerRepeatMode"
+    val DEFAULT_PLAYER_REPEAT_MODE = PlayerRepeatMode.RepeatModeAll
 }
 

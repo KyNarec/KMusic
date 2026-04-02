@@ -2,7 +2,6 @@ package com.kynarec.kmusic.ui.screens.player
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -37,10 +36,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.WavyProgressIndicatorDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -212,7 +212,7 @@ fun SyncedLyrics.toUiLyrics(duration: Int): UiLyrics {
             )
         }
                 + LyricsLine.Default(
-            start = this.lines.last().end,
+            start = this.lines.lastOrNull()?.end?: 0,
             end = duration * 1000,
             content = "Source: LrcLib",
             alignment = Alignment.Start
@@ -245,8 +245,8 @@ private fun Modifier.appleMusicLane(
     val blurRadius by animateDpAsState(
         when {
             hovered || !state.isAutoScrolling -> 0.dp
-            state.lastFocusedLine < idx -> 1.5.dp * (idx - state.lastFocusedLine).coerceAtMost(4)
-            else -> 3.dp * (state.firstFocusedLine - idx).coerceAtMost(4)
+            state.lastFocusedLine < idx -> 1.dp * (idx - state.lastFocusedLine).coerceAtMost(4)
+            else -> 2.dp * (state.firstFocusedLine - idx).coerceAtMost(4)
         }, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
     )
 
@@ -311,23 +311,28 @@ private fun WavyLyricsIdleIndicator(
     val startTime = if (index == 0) 0 else state.uiLyrics.lines[index - 1].end
     val endTime = state.uiLyrics.lines[index].start
 
-    val smoothTime = remember { Animatable(state.playbackTime().toFloat()) }
-
-    LaunchedEffect(state.playbackTime(), isPlaying()) {
-        if (isPlaying()) {
-            smoothTime.animateTo(
-                targetValue = state.playbackTime().toFloat(),
-                animationSpec = spring(stiffness = Spring.StiffnessLow)
-            )
+    // Smooth the time by interpolating between position updates
+    val smoothTime by produceState(state.playbackTime().toFloat(), state.playbackTime(), isPlaying()) {
+        if (!isPlaying()) {
+            value = state.playbackTime().toFloat()
         } else {
-            smoothTime.snapTo(state.playbackTime().toFloat())
+            val startPos = state.playbackTime().toFloat()
+            var startFrameTime = -1L
+            while (true) {
+                withFrameMillis { frameTime ->
+                    if (startFrameTime == -1L) startFrameTime = frameTime
+                    // Increment the time based on how many ms have passed since the last update
+                    value = startPos + (frameTime - startFrameTime)
+                }
+            }
         }
     }
 
     val visible by remember(state) {
         derivedStateOf {
             val t = state.playbackTime()
-            t in startTime until endTime &&
+            // Keep visible until smoothTime reaches the end to ensure it finishes the line
+            (t < endTime || smoothTime < endTime - 10) &&
                     index == state.firstFocusedLine &&
                     (endTime - startTime) > 1000
         }
@@ -347,9 +352,8 @@ private fun WavyLyricsIdleIndicator(
         ) {
             LinearWavyProgressIndicator(
                 progress = {
-                    val time = smoothTime.value
                     val total = (endTime - startTime).toFloat()
-                    if (total > 0) ((time - startTime) / total).coerceIn(0f, 1f) else 0f
+                    if (total > 0) ((smoothTime - startTime) / total).coerceIn(0f, 1f) else 0f
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -377,23 +381,28 @@ private fun LinearLyricsIdleIndicator(
     val startTime = if (index == 0) 0 else state.uiLyrics.lines[index - 1].end
     val endTime = state.uiLyrics.lines[index].start
 
-    val smoothTime = remember { Animatable(state.playbackTime().toFloat()) }
-
-    LaunchedEffect(state.playbackTime(), isPlaying()) {
-        if (isPlaying()) {
-            smoothTime.animateTo(
-                targetValue = state.playbackTime().toFloat(),
-                animationSpec = spring(stiffness = Spring.StiffnessLow)
-            )
+    // Smooth the time by interpolating between position updates
+    val smoothTime by produceState(state.playbackTime().toFloat(), state.playbackTime(), isPlaying()) {
+        if (!isPlaying()) {
+            value = state.playbackTime().toFloat()
         } else {
-            smoothTime.snapTo(state.playbackTime().toFloat())
+            val startPos = state.playbackTime().toFloat()
+            var startFrameTime = -1L
+            while (true) {
+                withFrameMillis { frameTime ->
+                    if (startFrameTime == -1L) startFrameTime = frameTime
+                    // Increment the time based on how many ms have passed since the last update
+                    value = startPos + (frameTime - startFrameTime)
+                }
+            }
         }
     }
 
     val visible by remember(state) {
         derivedStateOf {
             val t = state.playbackTime()
-            t in startTime until endTime &&
+            // Keep visible until smoothTime reaches the end to ensure it finishes the line
+            (t < endTime || smoothTime < endTime - 10) &&
                     index == state.firstFocusedLine &&
                     (endTime - startTime) > 1000
         }
@@ -413,10 +422,8 @@ private fun LinearLyricsIdleIndicator(
         ) {
             LinearProgressIndicator(
                 progress = {
-                    // 3. Use the smoothTime value for the progress lambda
-                    val time = smoothTime.value
                     val total = (endTime - startTime).toFloat()
-                    if (total > 0) ((time - startTime) / total).coerceIn(0f, 1f) else 0f
+                    if (total > 0) ((smoothTime - startTime) / total).coerceIn(0f, 1f) else 0f
                 },
                 modifier = Modifier
                     .fillMaxWidth()

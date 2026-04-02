@@ -49,7 +49,8 @@ fun QueueSongComponent(
     onDragStarted: () -> Unit,
     onDragStopped: () -> Unit,
     reorderableCollectionItemScope: ReorderableCollectionItemScope,
-    draggingEnabled: Boolean = true
+    draggingEnabled: Boolean = true,
+    modifier: Modifier = Modifier
 ) {
     val title = song.title
     val artist = song.artists.joinToString(", ") { it.name }
@@ -58,7 +59,8 @@ fun QueueSongComponent(
 
     ElevatedCard(
         colors = if (isPlaying) CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-        else CardDefaults.elevatedCardColors()
+        else CardDefaults.elevatedCardColors(),
+        modifier = modifier
     ) {
         Box(
             modifier = with(reorderableCollectionItemScope) {

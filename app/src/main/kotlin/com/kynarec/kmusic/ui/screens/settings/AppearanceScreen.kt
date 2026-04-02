@@ -8,7 +8,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FormatColorFill
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -16,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kynarec.kmusic.enums.TransitionEffect
+import com.kynarec.kmusic.ui.components.SegmentedColumn
 import com.kynarec.kmusic.ui.components.settings.SettingComponentEnumChoice
 import com.kynarec.kmusic.ui.components.settings.SettingComponentSwitch
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
@@ -48,25 +51,32 @@ fun AppearanceScreen(
             )
     ) {
         item {
-            ElevatedCard() {
-                SettingComponentSwitch(
-                    icon = Icons.Default.DarkMode,
-                    title = "Dark theme",
-                    description = "Use dark theme",
-                    prefs = prefs,
-                    switchId = DARK_MODE_KEY,
-                    defaultValue = DEFAULT_DARK_MODE
+            SegmentedColumn(
+                spacerBackground = MaterialTheme.colorScheme.background,
+                containerColor = CardDefaults.elevatedCardColors().containerColor,
+                items = listOf(
+                    {
+                        SettingComponentSwitch(
+                            icon = Icons.Default.DarkMode,
+                            title = "Dark theme",
+                            description = "Use dark theme",
+                            prefs = prefs,
+                            switchId = DARK_MODE_KEY,
+                            defaultValue = DEFAULT_DARK_MODE
+                        )
+                    },
+                    {
+                        SettingComponentSwitch(
+                            icon = Icons.Default.FormatColorFill,
+                            title = "Dynamic Colors",
+                            description = "Use dynamic android native colors",
+                            prefs = prefs,
+                            switchId = DYNAMIC_COLORS_KEY,
+                            defaultValue = DEFAULT_DYNAMIC_COLORS
+                        )
+                    }
                 )
-                SettingComponentSwitch(
-                    icon = Icons.Default.FormatColorFill,
-                    title = "Dynamic Colors",
-                    description = "Use dynamic android native colors",
-                    prefs = prefs,
-                    switchId = DYNAMIC_COLORS_KEY,
-                    defaultValue = DEFAULT_DYNAMIC_COLORS
-                )
-            }
-
+            )
         }
         item {
             Spacer(Modifier.height(16.dp))

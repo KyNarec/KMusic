@@ -40,7 +40,9 @@ import com.kynarec.kmusic.KMusic
 import com.kynarec.kmusic.MainActivity
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.dao.SongDao
+import com.kynarec.kmusic.enums.PlayerRepeatMode
 import com.kynarec.kmusic.enums.PopupType
+import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.createFullMediaItem
 import com.kynarec.kmusic.utils.createMediaItemFromSong
@@ -62,6 +64,8 @@ class PlayerServiceModern : MediaLibraryService(), KoinComponent {
     private val downloadManager: DownloadManager by inject() // Inject this!
     private val downloadCache: SimpleCache by inject()
     private val httpDataSourceFactory: DefaultHttpDataSource.Factory by inject()
+
+    private val settingsViewModel: SettingsViewModel by inject()
     private val tag = "PlayerServiceModern"
     private var player: ExoPlayer? = null
     private var mediaLibrarySession: MediaLibrarySession? = null
@@ -477,6 +481,12 @@ class PlayerServiceModern : MediaLibraryService(), KoinComponent {
                 .build()
 
             player?.addListener(playerListener)
+
+            player?.repeatMode = when(settingsViewModel.playerRepeatMode) {
+                PlayerRepeatMode.RepeatModeAll -> Player.REPEAT_MODE_ALL
+                PlayerRepeatMode.RepeatModeOne -> Player.REPEAT_MODE_ONE
+                PlayerRepeatMode.RepeatModeOff -> Player.REPEAT_MODE_OFF
+            }
 
             mediaLibrarySession = MediaLibrarySession.Builder(
                 this,

@@ -6,13 +6,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Bedtime
@@ -24,12 +20,11 @@ import androidx.compose.material.icons.filled.LowPriority
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularWavyProgressIndicator
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,23 +35,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
-import coil.imageLoader
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
-import com.kynarec.kmusic.ui.components.MarqueeBox
+import com.kynarec.kmusic.ui.components.SegmentedColumn
 import com.kynarec.kmusic.ui.components.player.SleepTimerDialog
 import com.kynarec.kmusic.ui.components.playlist.AddToPlaylistDialog
-import com.kynarec.kmusic.ui.components.song.BottomSheetItem
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
 import com.kynarec.kmusic.utils.SmartMessage
@@ -106,7 +96,7 @@ fun PlayerOptionsScreen(
     }
     if (dbSong == null) {
         Row(
-            Modifier.fillMaxWidth(),
+            Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -117,252 +107,223 @@ fun PlayerOptionsScreen(
         val isLiked = dbSong!!.isLiked
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(bottom = 32.dp)
                 .padding(horizontal = 8.dp)
         ) {
-            // Song Header
-            ElevatedCard(
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Album Art
-                    AsyncImage(
-                        model = dbSong!!.thumbnail,
-                        contentDescription = "Album art",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(64.dp)
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(8.dp)),
-                        imageLoader = LocalContext.current.imageLoader
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    // Song Info
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 8.dp)
-                    ) {
-                        MarqueeBox(
-                            text = dbSong!!.title,
-                            fontSize = 18.sp,
-                            maxLines = 1,
-                            //overflow = TextOverflow.Ellipsis,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        MarqueeBox(
-                            text = dbSong!!.artists.joinToString(", ") { it.name },
-                            fontSize = 14.sp,
-                            maxLines = 1,
-                            //overflow = TextOverflow.Ellipsis,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    // Duration and Share
-                    Column(
-                        horizontalAlignment = Alignment.End
-                    ) {
-                        Text(
-                            text = dbSong!!.duration,
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = "Share",
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clickable {
-                                    shareUrl(
-                                        context,
-                                        url = "https://music.youtube.com/watch?v=${dbSong!!.id}"
-                                    )
-                                },
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
             Spacer(modifier = Modifier.height(10.dp))
 
-            ElevatedCard(
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                BottomSheetItem(
-                    icon = Icons.Default.Info,
-                    text = "Information",
-                    onClick = {
-                        onInformation()
-                        onDismiss()
-                    }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            ElevatedCard(
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                when {
-                    isDownloading -> {
-                        BottomSheetItem(
-                            icon = painterResource(R.drawable.rounded_downloading_24),
-                            text = "Downloading",
-                            onClick = {}
-                        )
-                    }
-                    isDownloaded -> {
-                        BottomSheetItem(
-                            icon = painterResource(R.drawable.rounded_download_done_24),
-                            text = "Downloaded",
-                            onClick = { dataViewModel.removeDownload(song) }
-                        )
-                    }
-                    else -> {
-                        BottomSheetItem(
-                            icon = painterResource(R.drawable.rounded_download_24),
-                            text = "Download",
-                            onClick = { dataViewModel.addDownload(song) }
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            ElevatedCard(
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-
-                BottomSheetItem(
-                    icon = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    text = if (isLiked) "Remove from favorites" else "Add to favorites",
-                    onClick = {
-                        viewModel.toggleFavoriteSong(dbSong!!)
-                    }
-                )
-            }
-            Spacer(modifier = Modifier.height(6.dp))
-
-            ElevatedCard(
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                BottomSheetItem(
-                    icon = Icons.Default.Radio,
-                    text = "Start radio",
-                    onClick = {
-                        viewModel.playSongByIdWithRadio(dbSong!!)
-                        onDismiss()
-                    }
-                )
-            }
-            Spacer(modifier = Modifier.height(6.dp))
-
-            ElevatedCard(
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                BottomSheetItem(
-                    icon = Icons.Default.SkipNext,
-                    text = "Play next",
-                    onClick = {
-                        viewModel.playNext(dbSong!!)
-                        SmartMessage("Playing ${dbSong!!.title} next", context = context)
-                        onDismiss()
-                    }
-                )
-            }
-            Spacer(modifier = Modifier.height(6.dp))
-
-
-            ElevatedCard(
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                BottomSheetItem(
-                    icon = Icons.Default.LowPriority,
-                    text = "Enqueue",
-                    onClick = {
-                        viewModel.enqueueSong(dbSong!!)
-                        SmartMessage("Added ${dbSong!!.title} to queue", context = context)
-                        onDismiss()
-                    }
-                )
-            }
-            Spacer(modifier = Modifier.height(6.dp))
-
-            ElevatedCard(
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
-                BottomSheetItem(
-                    icon = Icons.AutoMirrored.Filled.PlaylistAdd,
-                    text = "Add to playlist",
-                    onClick = {
-                        showAddToPlaylistDialog = true
-//                        onDismiss()
-                    }
-                )
-            }
-
-            if (isInPlaylistDetailScreen && playlistIdLong != null) {
-                Spacer(modifier = Modifier.height(6.dp))
-                ElevatedCard(
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
-                ) {
-                    BottomSheetItem(
-                        icon = Icons.Default.Delete,
-                        text = "Delete from playlist",
-                        onClick = {
-                            scope.launch {
-                                database.playlistDao()
-                                    .removeSongFromPlaylist(playlistIdLong, dbSong!!.id)
-                            }
+            val listItems: MutableList<@Composable () -> Unit> = mutableListOf(
+                {
+                    ListItem(
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        leadingContent = {
+                            Icon(
+                                Icons.Default.Info,
+                                contentDescription = null
+                            )
+                        },
+                        headlineContent = { Text("Information") },
+                        modifier = Modifier.clickable {
+                            onInformation()
                             onDismiss()
                         }
                     )
-                }
+                },
+                {
+                    ListItem(
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        leadingContent = {
+                            Icon(
+                                Icons.Default.Share,
+                                contentDescription = null
+                            )
+                        },
+                        headlineContent = { Text("Share") },
+                        modifier = Modifier.clickable {
+                            shareUrl(
+                                context,
+                                url = "https://music.youtube.com/watch?v=${dbSong!!.id}"
+                            )
+                        }
+                    )
+                },
+                {
+                    when {
+                        isDownloading -> {
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                leadingContent = {
+                                    Icon(
+                                        painterResource(id = R.drawable.rounded_downloading_24),
+                                        contentDescription = null
+                                    )
+                                },
+                                headlineContent = { Text("Downloading") },
+                            )
+                        }
+
+                        isDownloaded -> {
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                leadingContent = {
+                                    Icon(
+                                        painterResource(R.drawable.rounded_download_done_24),
+                                        contentDescription = null
+                                    )
+                                },
+                                headlineContent = { Text("Downloaded") },
+                                modifier = Modifier.clickable {
+                                    dataViewModel.removeDownload(
+                                        song
+                                    )
+                                }
+                            )
+                        }
+
+                        else -> {
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                                leadingContent = {
+                                    Icon(
+                                        painterResource(R.drawable.rounded_download_24),
+                                        contentDescription = null
+                                    )
+                                },
+                                headlineContent = { Text("Download") },
+                                modifier = Modifier.clickable { dataViewModel.addDownload(song) }
+                            )
+                        }
+                    }
+                },
+                {
+                    ListItem(
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        leadingContent = {
+                            Icon(
+                                if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = null
+                            )
+                        },
+                        headlineContent = { Text(if (isLiked) "Remove from favorites" else "Add to favorites") },
+                        modifier = Modifier.clickable {
+                            viewModel.toggleFavoriteSong(dbSong!!)
+                        }
+                    )
+                },
+                {
+                    ListItem(
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        leadingContent = {
+                            Icon(
+                                Icons.Default.Radio,
+                                contentDescription = null
+                            )
+                        },
+                        headlineContent = { Text("Start radio") },
+                        modifier = Modifier.clickable {
+                            viewModel.playSongByIdWithRadio(dbSong!!)
+                            onDismiss()
+                        }
+                    )
+                },
+                {
+                    ListItem(
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        leadingContent = {
+                            Icon(
+                                Icons.Default.SkipNext,
+                                contentDescription = null
+                            )
+                        },
+                        headlineContent = { Text("Play next") },
+                        modifier = Modifier.clickable {
+                            viewModel.playNext(dbSong!!)
+                            SmartMessage("Playing ${dbSong!!.title} next", context = context)
+                            onDismiss()
+                        }
+                    )
+                },
+                {
+                    ListItem(
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        leadingContent = {
+                            Icon(
+                                Icons.Default.LowPriority,
+                                contentDescription = null
+                            )
+                        },
+                        headlineContent = { Text("Enqueue") },
+                        modifier = Modifier.clickable {
+                            viewModel.enqueueSong(dbSong!!)
+                            SmartMessage("Added ${dbSong!!.title} to queue", context = context)
+                            onDismiss()
+                        }
+                    )
+                },
+                {
+                    ListItem(
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        leadingContent = {
+                            Icon(
+                                Icons.AutoMirrored.Filled.PlaylistAdd,
+                                contentDescription = null
+                            )
+                        },
+                        headlineContent = { Text("Add to playlist") },
+                        modifier = Modifier.clickable {
+                            showAddToPlaylistDialog = true
+                        }
+                    )
+                },
+            )
+
+            if (isInPlaylistDetailScreen && playlistIdLong != null) {
+                listItems.add(
+                    {
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            leadingContent = {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = null
+                                )
+                            },
+                            headlineContent = { Text("Delete from playlist") },
+                            modifier = Modifier.clickable {
+                                scope.launch {
+                                    database.playlistDao()
+                                        .removeSongFromPlaylist(playlistIdLong, dbSong!!.id)
+                                }
+                                onDismiss()
+                            }
+                        )
+                    }
+                )
+            }
+            if ((uiState.currentSong?.id ?: "") == dbSong!!.id) {
+                listItems.add(
+                    {
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            leadingContent = {
+                                Icon(
+                                    Icons.Default.Bedtime,
+                                    contentDescription = null
+                                )
+                            },
+                            headlineContent = { Text(if (sleepTimerTimeLeft > 0) "Timer: ${sleepTimerTimeLeft / 1000 / 60}m remaining" else "Sleep Timer") },
+                            modifier = Modifier.clickable {
+                                showSleepTimerDialog = true
+                            }
+                        )
+                    }
+                )
             }
 
-            if ((uiState.currentSong?.id ?: "") == dbSong!!.id) {
-                Spacer(modifier = Modifier.height(6.dp))
-                ElevatedCard(
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
-                ) {
-                    BottomSheetItem(
-                        icon = Icons.Default.Bedtime,
-                        text = if (sleepTimerTimeLeft > 0) "Timer: ${sleepTimerTimeLeft / 1000 / 60}m remaining" else "Sleep Timer",
-                        onClick = { showSleepTimerDialog = true }
-                    )
-                }
-            }
+            SegmentedColumn(
+                items = listItems
+            )
         }
     }
     if (showAddToPlaylistDialog) {
