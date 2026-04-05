@@ -466,7 +466,7 @@ private fun LazyListScope.albumHeader(
                 )
             }
             Text(
-                text = album?.copyright ?: "NA",
+                text = album.copyright,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(horizontal = 8.dp),
                 color = MaterialTheme.colorScheme.outline

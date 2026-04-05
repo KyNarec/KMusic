@@ -109,7 +109,7 @@ fun List<Song>.formatDuration(): String {
 }
 
 suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = withContext(Dispatchers.IO) {
-    val uri = playSongById(song.id) ?: return@withContext MediaItem.Builder().build()
+    val uri = playSongById(song.id)
 
     val extras = Bundle().apply {
         putString("ALBUM_ID", song.albumId)

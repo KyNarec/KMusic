@@ -96,11 +96,11 @@ abstract class KmusicDatabase : RoomDatabase() {
         }
 
         val MIGRATION_11_12 = object : Migration(11, 12) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
                     "ALTER TABLE Playlist ADD COLUMN isEditable INTEGER NOT NULL DEFAULT 1"
                 )
-                database.execSQL(
+                db.execSQL(
                     "ALTER TABLE Playlist ADD COLUMN isYoutubePlaylist INTEGER NOT NULL DEFAULT 0"
                 )
             }
