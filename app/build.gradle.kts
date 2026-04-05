@@ -2,8 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
-    kotlin("kapt")
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.0"
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
     id("kotlin-parcelize")
 }
 
@@ -21,6 +21,11 @@ android {
         versionName = appVersion
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    }
+
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
     }
 
     signingConfigs {
@@ -79,9 +84,6 @@ android {
     buildFeatures{
         compose = true
         buildConfig = true
-        dataBinding {
-            enable = true
-        }
     }
     applicationVariants.all {
         outputs.all {
@@ -95,74 +97,70 @@ android {
 dependencies {
     implementation(project(":LrcLib"))
     implementation(project(":KLyrics"))
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintlayout)
 
+    // Media 3
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.common)
 
-    implementation(libs.androidx.room.common.jvm)
-    implementation(libs.androidx.room.runtime.android)
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.compose.adaptive)
 
+
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    implementation(libs.androidx.databinding.runtime)
+    // Ktor (Web Requests)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.client.encoding)
     implementation(libs.ktor.client.serialization)
     implementation(libs.ktor.serialization.json)
-    implementation(libs.androidx.recyclerview)
-    implementation (libs.androidx.cardview)
 
-    implementation (libs.glide)
-    implementation (libs.newpipeextractor)
-    implementation (libs.exoplayer)
-    implementation (libs.okhttp)
 
-    kapt(libs.compiler)
-
-    implementation(libs.innertube)
-
+    // Database
+    ksp(libs.androidx.room.compiler)
     implementation( libs.androidx.room.runtime)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    kapt (libs.androidx.room.compiler)
+    implementation(libs.androidx.room.common.jvm)
+    implementation(libs.androidx.room.runtime.android)
 
-    implementation( libs.toasty)
+    // SmartMessages.kt
+    implementation(libs.toasty)
 
+    // Android API
+    implementation(libs.androidx.core.ktx)
+
+    // Compose
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
-//    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.material)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+
+    // Images
     implementation(libs.coil.compose)
-    // Add the Kotlinx Serialization library dependency here
+
+    // Parsing data
     implementation(libs.kotlinx.serialization.json)
 
-    // wavy seekbar
+    // Wavy seekbar
     implementation(libs.wavy.slider)
 
-//    implementation(libs.okhttp)
-    implementation(libs.json)
-
+    // KSafe
     implementation(libs.ksafe)
     implementation(libs.ksafe.compose)
+
+    // Update Notes
     implementation(libs.multiplatform.markdown.renderer.m3)
 
+    // Selecting of Playlist files
     implementation(libs.filekit.dialogs)
 
+    // Reordering of Songs
     implementation(libs.reorderable)
 
     // Koin
