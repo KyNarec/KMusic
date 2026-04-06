@@ -352,7 +352,7 @@ fun SearchResultScreen(
                                 LazyColumn {
                                     items(
                                         count = songs.size,
-                                        key = { index -> songs[index].id } // Add stable key!
+//                                        key = { index -> songs[index].id }
                                     ) { index ->
                                         val song = songs[index]
 
