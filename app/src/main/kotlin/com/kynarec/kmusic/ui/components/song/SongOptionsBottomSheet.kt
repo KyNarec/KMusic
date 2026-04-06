@@ -56,6 +56,7 @@ import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.MarqueeBox
+import com.kynarec.kmusic.ui.components.SongInformation
 import com.kynarec.kmusic.ui.components.player.SleepTimerDialog
 import com.kynarec.kmusic.ui.components.playlist.AddToPlaylistDialog
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
@@ -73,7 +74,6 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 fun SongOptionsBottomSheet(
     song: Song,
     onDismiss: () -> Unit,
-    onInformation: () -> Unit = {},
     onAddToPlaylist: () -> Unit = {},
     viewModel: MusicViewModel = koinActivityViewModel(),
     dataViewModel: DataViewModel = koinActivityViewModel(),
@@ -90,6 +90,7 @@ fun SongOptionsBottomSheet(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val sleepTimerTimeLeft = uiState.timeLeftMillis
     var showSleepTimerDialog by remember { mutableStateOf(false) }
+    var showInformationDialog by remember { mutableStateOf(false) }
 
     val dbSong by database.songDao()
         .getSongFlowById(song.id)
@@ -151,7 +152,9 @@ fun SongOptionsBottomSheet(
 
                     // Song Info
                     Column(
-                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 8.dp)
                     ) {
                         MarqueeBox(
                             text = dbSong!!.title,
@@ -200,11 +203,9 @@ fun SongOptionsBottomSheet(
                 BottomSheetItem(
                     icon = Icons.Default.Info,
                     text = "Information",
-                    onClick = {
-                        onInformation()
-                        onDismiss()
-                    }
+                    onClick = { showInformationDialog = true }
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
 
                 when {
@@ -217,6 +218,7 @@ fun SongOptionsBottomSheet(
                             }
                         )
                     }
+
                     isDownloaded -> {
                         BottomSheetItem(
                             icon = painterResource(R.drawable.rounded_download_done_24),
@@ -226,6 +228,7 @@ fun SongOptionsBottomSheet(
                             }
                         )
                     }
+
                     else -> {
                         BottomSheetItem(
                             icon = painterResource(R.drawable.rounded_download_24),
@@ -293,7 +296,8 @@ fun SongOptionsBottomSheet(
                         text = "Delete from playlist",
                         onClick = {
                             scope.launch {
-                                database.playlistDao().removeSongFromPlaylist(playlistIdLong, dbSong!!.id)
+                                database.playlistDao()
+                                    .removeSongFromPlaylist(playlistIdLong, dbSong!!.id)
                             }
                             onDismiss()
                         }
@@ -330,6 +334,13 @@ fun SongOptionsBottomSheet(
             }
         )
     }
+
+    if (showInformationDialog && dbSong != null) {
+        SongInformation(
+            song = dbSong!!,
+            onDismiss = { showInformationDialog = false }
+        )
+    }
 }
 
 @Composable
@@ -362,6 +373,7 @@ fun BottomSheetItem(
         )
     }
 }
+
 @Composable
 fun BottomSheetItem(
     icon: Painter,
