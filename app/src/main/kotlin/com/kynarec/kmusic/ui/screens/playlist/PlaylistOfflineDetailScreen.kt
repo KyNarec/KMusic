@@ -253,7 +253,7 @@ fun PlaylistOfflineDetailScreen(
                                     },
                                     onNoneDownloadedClick = { dataViewModel.addDownloads(sortedSongs.map { it.song }) },
                                     coloredDownloadIndicator = coloredDownloadIndicator,
-                                    isEditable = sortOrder == SortOrder.Descending && sortBy == SortBy.Position && playlist!!.isEditable,
+                                    isEditable = sortOrder == SortOrder.Descending && sortBy == SortBy.Position && playlist.isEditable,
                                     playlistOfflineDetailAction = playlistOfflineDetailViewModel::onAction,
                                     onShuffleClick = { viewModel.playShuffledPlaylist(sortedSongs.map { it.song }) },
                                 )
@@ -271,7 +271,7 @@ fun PlaylistOfflineDetailScreen(
                                                 .zIndex(if (isDragging) 1f else 0f)
                                         ) {
                                             DraggablePlaylistComponent(
-                                                draggingEnabled = sortOrder == SortOrder.Descending && sortBy == SortBy.Position && playlist!!.isEditable,
+                                                draggingEnabled = sortOrder == SortOrder.Descending && sortBy == SortBy.Position && playlist.isEditable,
                                                 song = playlistItem.song,
                                                 onClick = {
                                                     scope.launch {

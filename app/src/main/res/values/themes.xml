@@ -1,6 +1,6 @@
 <!-- res/values/themes.xml -->
 <resources>
-    <style name="Theme.KMusic" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.KMusic" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/background_splash</item>
     </style>
 </resources>

@@ -457,7 +457,7 @@ class InnerTube(
             .build()
 
         client.newCall(request).execute().use { response: Response ->
-            val bodyString = response.body?.string() ?: ""
+            val bodyString = response.body.string()
             if (!response.isSuccessful) {
                 println("Request failed: ${response.code}")
             } else {

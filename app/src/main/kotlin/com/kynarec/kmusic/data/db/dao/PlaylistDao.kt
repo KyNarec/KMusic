@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Transaction
 import androidx.room.Update
 import com.kynarec.kmusic.data.db.entities.Playlist
@@ -89,6 +90,7 @@ interface PlaylistDao {
     """)
     fun getSongsForPlaylist(playlistId: Long): Flow<List<Song>>
 
+    @RewriteQueriesToDropUnusedColumns
     @Query(
         """
         SELECT * FROM Song

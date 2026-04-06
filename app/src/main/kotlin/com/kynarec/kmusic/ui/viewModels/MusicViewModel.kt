@@ -36,7 +36,7 @@ import com.kynarec.kmusic.utils.toSong
 import com.kynarec.lrclib.LyricsRepository
 import com.kynarec.lrclib.model.Lyrics
 import com.mocharealm.accompanist.lyrics.core.model.SyncedLyrics
-import com.mocharealm.accompanist.lyrics.core.parser.LrcParser
+import com.mocharealm.accompanist.lyrics.core.parser.EnhancedLrcParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -707,7 +707,7 @@ class MusicViewModel
                 song.duration
             }
             Log.i(tag, "getSyncedLyrics duration: $duration")
-            LrcParser.parse(
+            EnhancedLrcParser.parse(
                 lyricsRepository.getLyrics(
                     song.title,
                     artist = song.artists.joinToString(", ") { it.name },
