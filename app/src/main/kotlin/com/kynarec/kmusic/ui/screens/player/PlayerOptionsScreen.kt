@@ -45,6 +45,7 @@ import com.kynarec.kmusic.R
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.SegmentedColumn
+import com.kynarec.kmusic.ui.components.SongInformation
 import com.kynarec.kmusic.ui.components.player.SleepTimerDialog
 import com.kynarec.kmusic.ui.components.playlist.AddToPlaylistDialog
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
@@ -81,6 +82,7 @@ fun PlayerOptionsScreen(
         .collectAsStateWithLifecycle(null)
 
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
+    var showInformationDialog by remember { mutableStateOf(false) }
 
     val downloadingSongs by dataViewModel.downloadingSongs.collectAsStateWithLifecycle()
     val completedIds by dataViewModel.completedDownloadIds.collectAsStateWithLifecycle()
@@ -124,10 +126,7 @@ fun PlayerOptionsScreen(
                             )
                         },
                         headlineContent = { Text("Information") },
-                        modifier = Modifier.clickable {
-                            onInformation()
-                            onDismiss()
-                        }
+                        modifier = Modifier.clickable { showInformationDialog = true }
                     )
                 },
                 {
@@ -343,6 +342,14 @@ fun PlayerOptionsScreen(
                 showSleepTimerDialog = false
                 onDismiss() // Close bottom sheet
             }
+        )
+    }
+
+    if (showInformationDialog && dbSong != null) {
+        SongInformation(
+            song = dbSong!!,
+            onDismiss = { showInformationDialog = false },
+            modifier = Modifier.padding(8.dp)
         )
     }
 }
