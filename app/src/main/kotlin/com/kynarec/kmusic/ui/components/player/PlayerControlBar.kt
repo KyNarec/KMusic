@@ -1,12 +1,11 @@
 package com.kynarec.kmusic.ui.components.player
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -153,18 +153,34 @@ fun PlayerControlBar(
                 modifier = Modifier.size(48.dp),
                 shape = IconButtonDefaults.smallSquareShape,
             ) {
+                val rotation by animateFloatAsState(
+                    targetValue = if (uiState.isPlaying) 90f else 0f,
+                    animationSpec = tween(
+                        durationMillis = 250,
+                        easing = FastOutSlowInEasing
+                    ),
+                    label = "rotationAnim"
+                )
+
                 AnimatedContent(
                     targetState = uiState.isPlaying,
                     transitionSpec = {
-                        (fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.8f))
-                            .togetherWith(fadeOut(animationSpec = tween(220)) + scaleOut(targetScale = 0.8f))
-                    }
+                        fadeIn() togetherWith fadeOut()
+                    },
+                    label = "playPauseButton"
                 ) { isPlaying ->
                     Icon(
                         imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                         contentDescription = if (isPlaying) "Pause" else "Play",
                         tint = MaterialTheme.colorScheme.onSecondaryContainer,
                         modifier = Modifier.size(40.dp)
+                            .graphicsLayer(
+                                rotationZ = rotation
+                            )
+                            .then(
+                                if (isPlaying) Modifier.graphicsLayer{ rotationZ = 90f }
+                                else Modifier
+                            )
                     )
                 }
             }
