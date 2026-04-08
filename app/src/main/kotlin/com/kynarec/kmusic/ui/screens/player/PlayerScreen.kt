@@ -3,11 +3,11 @@ package com.kynarec.kmusic.ui.screens.player
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -509,18 +509,34 @@ fun PlayerScreen(
                     modifier = Modifier.size(70.dp),
                     shape = IconButtonDefaults.mediumSquareShape,
                 ) {
+                    val rotation by animateFloatAsState(
+                        targetValue = if (uiState.isPlaying) 90f else 0f,
+                        animationSpec = tween(
+                            durationMillis = 250,
+                            easing = FastOutSlowInEasing
+                        ),
+                        label = "rotationAnim"
+                    )
+
                     AnimatedContent(
                         targetState = uiState.isPlaying,
                         transitionSpec = {
-                            (fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.8f))
-                                .togetherWith(fadeOut(animationSpec = tween(220)) + scaleOut(targetScale = 0.8f))
-                        }
+                            fadeIn() togetherWith fadeOut()
+                        },
+                        label = "playPauseButton"
                     ) { isPlaying ->
                         Icon(
                             imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                             contentDescription = if (isPlaying) "Pause" else "Play",
                             tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.size(60.dp)
+                                .graphicsLayer(
+                                    rotationZ = rotation
+                                )
+                                .then(
+                                    if (isPlaying) Modifier.graphicsLayer{ rotationZ = 90f }
+                                    else Modifier
+                                )
                         )
                     }
                 }

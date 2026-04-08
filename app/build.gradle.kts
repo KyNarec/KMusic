@@ -180,4 +180,6 @@ dependencies {
     implementation(libs.androidx.compose.adaptive.layout)
     implementation(libs.androidx.compose.adaptive.navigation)
 
+    // Animations
+    implementation(libs.lottie.compose)
 }
