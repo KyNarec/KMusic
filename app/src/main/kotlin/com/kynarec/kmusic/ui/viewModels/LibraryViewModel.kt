@@ -26,6 +26,10 @@ sealed interface LibraryAction {
     data class PlayNext(val song: Song) : LibraryAction
     data class PlayPlaylist(val songs: List<Song>, val startSong: Song) : LibraryAction
     data class PlayShuffled(val songs: List<Song>) : LibraryAction
+    data class PlayNextList(val songs: List<Song>) : LibraryAction
+    data class EnqueueList(val songs: List<Song>) : LibraryAction
+
+    data class MaybeAddSongToDB(val song: Song) : LibraryAction
 
     data class ToggleFavoriteSong(val song: Song) : LibraryAction
     data class ToggleFavoriteAlbum(val album: Album, val songs: List<Song>) : LibraryAction
@@ -60,6 +64,12 @@ class LibraryViewModel(
             is LibraryAction.PlayNext -> playerRepository.playNext(action.song)
             is LibraryAction.PlayPlaylist -> playerRepository.playPlaylist(action.songs, action.startSong)
             is LibraryAction.PlayShuffled -> playerRepository.playShuffledPlaylist(action.songs)
+            is LibraryAction.PlayNextList -> playerRepository.playNextList(action.songs)
+            is LibraryAction.EnqueueList -> playerRepository.enqueueSongList(action.songs)
+            
+            is LibraryAction.MaybeAddSongToDB -> {
+                viewModelScope.launch { libraryRepository.maybeAddSongToDB(action.song) }
+            }
             
             is LibraryAction.ToggleFavoriteSong -> {
                 viewModelScope.launch { libraryRepository.toggleFavoriteSong(action.song) }

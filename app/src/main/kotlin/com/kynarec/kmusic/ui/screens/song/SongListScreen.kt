@@ -221,7 +221,6 @@ fun SongListScreen(
         SongOptionsBottomSheet(
             song = longClickSong!!,
             onDismiss = { showSongDetailBottomSheet.value = false },
-            viewModel = viewModel,
             database = database,
             navController = navController
         )

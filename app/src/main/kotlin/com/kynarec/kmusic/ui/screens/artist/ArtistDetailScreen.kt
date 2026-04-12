@@ -459,7 +459,6 @@ fun ArtistDetailScreen(
         SongOptionsBottomSheet(
             song = longClickSong!!,
             onDismiss = { showSongDetailBottomSheet.value = false },
-            viewModel = viewModel,
             database = database,
             navController = navController
         )
@@ -469,7 +468,6 @@ fun ArtistDetailScreen(
         ArtistOptionsBottomSheet(
             artistId = artist?.id ?: "",
             onDismiss = { showArtistOptionsBottomSheet.value = false },
-            viewModel = viewModel,
             database = database,
             navController = navController
         )

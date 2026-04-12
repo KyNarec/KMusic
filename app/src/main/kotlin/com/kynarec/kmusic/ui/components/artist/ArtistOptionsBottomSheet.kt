@@ -24,14 +24,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.ui.components.song.BottomSheetItem
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.LibraryAction
+import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ArtistOptionsBottomSheet(
     artistId: String,
     onDismiss: () -> Unit,
-    viewModel: MusicViewModel,
+    viewModel: LibraryViewModel = koinActivityViewModel(),
     database: KmusicDatabase,
     navController: NavHostController
 ) {
@@ -69,10 +71,7 @@ fun ArtistOptionsBottomSheet(
                     icon = if (isLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                     text = if (isLiked) "Remove from favorites" else "Add to favorites",
                     onClick = {
-//                        viewModel.deletePlaylist(playlist!!)
-//                        navController.navigate(PlaylistsScreen)
-                        viewModel.toggleFavoriteArtist(artist!!)
-//                        onDismiss()
+                        viewModel.onAction(LibraryAction.ToggleFavoriteArtist(artist!!))
                     }
                 )
             }

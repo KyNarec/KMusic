@@ -51,7 +51,8 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.enums.QueueItemSwipeState
 import com.kynarec.kmusic.ui.components.player.QueueSongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.PlayerScreenAction
+import com.kynarec.kmusic.ui.viewModels.PlayerScreenViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -67,7 +68,7 @@ import kotlin.uuid.ExperimentalUuidApi
 fun QueueScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    viewModel: PlayerScreenViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
@@ -77,7 +78,7 @@ fun QueueScreen(
     val showInfoSheet = remember { mutableStateOf(false) }
     var longClickSong by remember { mutableStateOf<Song?>(null) }
 
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.state.collectAsStateWithLifecycle()
     val songList = uiState.songsList
     var localSongList by remember(uiState.songsList) { mutableStateOf(uiState.songsList) }
 
@@ -109,7 +110,7 @@ fun QueueScreen(
                 Log.i("QueueScreen", "Moving songs from $start to $end")
 
                 if (end != -1 && start != end) {
-                    viewModel.moveSong(start, end)
+                    viewModel.onAction(PlayerScreenAction.MoveQueueItem(start, end))
                 }
             }
             initialDraggingIndex = null
@@ -134,7 +135,7 @@ fun QueueScreen(
         itemsIndexed(localSongList, key = { _, song -> song.id}) { index, song ->
             ReorderableItem(reorderableLazyListState, key = song.id) { isDragging ->
                 val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
-                val isPlaying = song.id == uiState.songsList.get(viewModel.getCurrentPlayingIndex()).id
+                val isPlaying = song.id == uiState.songsList.getOrNull(uiState.currentPlayingIndex)?.id
                 Box(
                     modifier = Modifier
                         .shadow(elevation)
@@ -166,12 +167,12 @@ fun QueueScreen(
                                 when (it) {
                                     QueueItemSwipeState.Delete -> {
                                         hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        viewModel.removeSongFromQueue(song.id)
+                                        viewModel.onAction(PlayerScreenAction.RemoveQueueItem(song.id))
                                     }
                                     QueueItemSwipeState.PlayNext -> {
                                         hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                         scope.launch {
-                                            viewModel.playNext(song.song)
+                                            viewModel.onAction(PlayerScreenAction.PlayNextQueueItem(song.song))
                                         }
                                         delay(50)
                                         queueItemDragState.animateTo(
@@ -185,7 +186,7 @@ fun QueueScreen(
                     SwipeBackgroundActions(queueItemDragState)
                     QueueSongComponent(
                         song.song,
-                        onClick = { viewModel.skipToSong(index) },
+                        onClick = { viewModel.onAction(PlayerScreenAction.SkipToQueueItem(index)) },
                         onLongClick = {
                             longClickSong = song.song
                             showInfoSheet.value = true
@@ -224,7 +225,6 @@ fun QueueScreen(
         SongOptionsBottomSheet(
             song = longClickSong!!,
             onDismiss = { showInfoSheet.value = false },
-            viewModel = viewModel,
             database =  database,
             navController = navController
         )

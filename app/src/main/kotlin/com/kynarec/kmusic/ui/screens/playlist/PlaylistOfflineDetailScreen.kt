@@ -426,7 +426,6 @@ fun PlaylistOfflineDetailScreen(
         SongOptionsBottomSheet(
             song = longClickSong!!,
             onDismiss = { playlistOfflineDetailViewModel.onAction(PlaylistOfflineDetailActions.ToggleSongDetailBottomSheet) },
-            viewModel = viewModel,
             database = database,
             navController = navController,
             isInPlaylistDetailScreen = true,

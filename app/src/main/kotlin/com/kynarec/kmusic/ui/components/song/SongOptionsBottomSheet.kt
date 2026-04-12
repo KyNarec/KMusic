@@ -59,8 +59,11 @@ import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.SongInformation
 import com.kynarec.kmusic.ui.components.player.SleepTimerDialog
 import com.kynarec.kmusic.ui.components.playlist.AddToPlaylistDialog
+import com.kynarec.kmusic.ui.viewModels.AppAction
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.LibraryAction
+import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.shareUrl
 import kotlinx.coroutines.launch
@@ -75,7 +78,8 @@ fun SongOptionsBottomSheet(
     song: Song,
     onDismiss: () -> Unit,
     onAddToPlaylist: () -> Unit = {},
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    libraryViewModel: LibraryViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
     dataViewModel: DataViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController,
@@ -87,8 +91,8 @@ fun SongOptionsBottomSheet(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val sleepTimerTimeLeft = uiState.timeLeftMillis
+    val appState by appViewModel.state.collectAsStateWithLifecycle()
+    val sleepTimerTimeLeft = appState.timeLeftMillis
     var showSleepTimerDialog by remember { mutableStateOf(false) }
     var showInformationDialog by remember { mutableStateOf(false) }
 
@@ -104,7 +108,7 @@ fun SongOptionsBottomSheet(
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        viewModel.maybeAddSongToDB(song)
+        libraryViewModel.onAction(LibraryAction.MaybeAddSongToDB(song))
     }
 
     ModalBottomSheet(
@@ -247,7 +251,7 @@ fun SongOptionsBottomSheet(
                     icon = if (isLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                     text = if (isLiked) "Remove from favorites" else "Add to favorites",
                     onClick = {
-                        viewModel.toggleFavoriteSong(dbSong!!)
+                        libraryViewModel.onAction(LibraryAction.ToggleFavoriteSong(dbSong!!))
                     }
                 )
 
@@ -255,7 +259,7 @@ fun SongOptionsBottomSheet(
                     icon = Icons.Rounded.Radio,
                     text = "Start radio",
                     onClick = {
-                        viewModel.playSongByIdWithRadio(dbSong!!)
+                        libraryViewModel.onAction(LibraryAction.PlaySong(dbSong!!, withRadio = true))
                         onDismiss()
                     }
                 )
@@ -264,7 +268,7 @@ fun SongOptionsBottomSheet(
                     icon = Icons.Rounded.SkipNext,
                     text = "Play next",
                     onClick = {
-                        viewModel.playNext(dbSong!!)
+                        libraryViewModel.onAction(LibraryAction.PlayNext(dbSong!!))
                         SmartMessage("Playing ${dbSong!!.title} next", context = context)
                         onDismiss()
                     }
@@ -274,7 +278,7 @@ fun SongOptionsBottomSheet(
                     icon = Icons.Rounded.LowPriority,
                     text = "Enqueue",
                     onClick = {
-                        viewModel.enqueueSong(dbSong!!)
+                        libraryViewModel.onAction(LibraryAction.EnqueueSong(dbSong!!))
                         SmartMessage("Added ${dbSong!!.title} to queue", context = context)
                         onDismiss()
                     }
@@ -304,7 +308,7 @@ fun SongOptionsBottomSheet(
                     )
                 }
 
-                if ((uiState.currentSong?.id ?: "") == dbSong!!.id) {
+                if ((appState.currentSong?.id ?: "") == dbSong!!.id) {
                     BottomSheetItem(
                         icon = Icons.Default.Bedtime,
                         text = if (sleepTimerTimeLeft > 0) "Timer: ${sleepTimerTimeLeft / 1000 / 60}m remaining" else "Sleep Timer",
@@ -328,7 +332,7 @@ fun SongOptionsBottomSheet(
         SleepTimerDialog(
             onDismiss = { showSleepTimerDialog = false },
             onTimerSelected = { minutes ->
-                viewModel.startSleepTimer(minutes)
+                appViewModel.onAction(AppAction.StartSleepTimer(minutes))
                 showSleepTimerDialog = false
                 onDismiss() // Close bottom sheet
             }

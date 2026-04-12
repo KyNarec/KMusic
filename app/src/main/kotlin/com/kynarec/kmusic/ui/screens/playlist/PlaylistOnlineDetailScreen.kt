@@ -259,7 +259,6 @@ fun PlaylistOnlineDetailScreen(
         SongOptionsBottomSheet(
             song = state.longClickSong!!,
             onDismiss = { playlistOnlineDetailViewModel.onAction(PlaylistOnlineDetailActions.HideSongDetailBottomSheet) },
-            viewModel = viewModel,
             database = database,
             navController = navController,
             isInPlaylistDetailScreen = true,
@@ -279,7 +278,6 @@ fun PlaylistOnlineDetailScreen(
                 focusManager.clearFocus()
                 keyboardController?.hide()
             },
-            viewModel = viewModel,
             database = database,
             navController = navController
         )

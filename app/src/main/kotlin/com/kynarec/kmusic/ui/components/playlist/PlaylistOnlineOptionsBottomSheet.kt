@@ -43,9 +43,11 @@ import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.song.BottomSheetItem
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.LibraryAction
+import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -56,7 +58,7 @@ fun PlaylistOnlineOptionsBottomSheet(
     thumbnail: String,
     songs: List<Song>,
     onDismiss: () -> Unit,
-    viewModel: MusicViewModel,
+    viewModel: LibraryViewModel = koinActivityViewModel(),
     database: KmusicDatabase,
     navController: NavHostController
 ) {
@@ -161,7 +163,7 @@ fun PlaylistOnlineOptionsBottomSheet(
                 icon = Icons.Rounded.SkipNext,
                 text = "Play next",
                 onClick = {
-                    viewModel.playNextList(songs)
+                    viewModel.onAction(LibraryAction.PlayNextList(songs))
                     SmartMessage("Playing ${playlist.name} next", context = context)
                     onDismiss()
                 }
@@ -171,7 +173,7 @@ fun PlaylistOnlineOptionsBottomSheet(
                 icon = Icons.Rounded.LowPriority,
                 text = "Enqueue",
                 onClick = {
-                    viewModel.enqueueSongList(songs)
+                    viewModel.onAction(LibraryAction.EnqueueList(songs))
                     SmartMessage("Added ${playlist.name} to queue", context = context)
                     onDismiss()
                 }

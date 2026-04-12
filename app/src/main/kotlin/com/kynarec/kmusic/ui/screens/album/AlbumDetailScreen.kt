@@ -349,7 +349,6 @@ fun AlbumDetailScreen(
         SongOptionsBottomSheet(
             song = longClickSong!!,
             onDismiss = { showSongDetailBottomSheet.value = false },
-            viewModel = viewModel,
             database = database,
             navController = navController
         )
@@ -359,7 +358,6 @@ fun AlbumDetailScreen(
             album = album,
             albumSongs = songs,
             onDismiss = { showAlbumOptionsBottomSheet.value = false },
-            viewModel = viewModel,
         )
     }
 }

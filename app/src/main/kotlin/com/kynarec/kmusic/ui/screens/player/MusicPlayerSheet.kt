@@ -87,7 +87,6 @@ fun MusicPlayerSheet(
 
                     PlayerSheetMode.Queue -> QueueScreen(
                         onClose = { playerViewModel.setPlayerState(PlayerSheetMode.MainPlayer) },
-                        viewModel = musicViewModel,
                         navController = navController
                     )
 

@@ -546,7 +546,6 @@ fun SearchResultScreen(
                     SongOptionsBottomSheet(
                         song = longClickSong!!,
                         onDismiss = { showBottomSheet.value = false },
-                        viewModel = viewModel,
                         database = database,
                         navController = navController
                     )

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.data.repository.LibraryRepository
 import com.kynarec.kmusic.data.repository.PlayerRepository
+import com.kynarec.kmusic.data.repository.PlaylistItem
 import com.kynarec.kmusic.enums.PlayerRepeatMode
 import com.kynarec.kmusic.utils.parseMillisToDuration
 import com.kynarec.kmusic.utils.toSeconds
@@ -27,7 +28,9 @@ data class PlayerScreenState(
     val shuffleModeEnabled: Boolean = false,
     val repeatModeInt: Int = 0,
     val currentLyrics: SyncedLyrics? = null,
-    val isLoadingLyrics: Boolean = false
+    val isLoadingLyrics: Boolean = false,
+    val songsList: List<PlaylistItem> = emptyList(),
+    val currentPlayingIndex: Int = 0
 )
 
 sealed interface PlayerScreenAction {
@@ -38,6 +41,10 @@ sealed interface PlayerScreenAction {
     data class ToggleRepeatMode(val mode: PlayerRepeatMode) : PlayerScreenAction
     data class ToggleFavorite(val song: Song) : PlayerScreenAction
     data class FetchLyrics(val song: Song) : PlayerScreenAction
+    data class MoveQueueItem(val from: Int, val to: Int) : PlayerScreenAction
+    data class RemoveQueueItem(val songId: Long) : PlayerScreenAction
+    data class SkipToQueueItem(val index: Int) : PlayerScreenAction
+    data class PlayNextQueueItem(val song: Song) : PlayerScreenAction
 }
 
 class PlayerScreenViewModel(
@@ -60,7 +67,9 @@ class PlayerScreenViewModel(
             shuffleModeEnabled = playerState.shuffleModeEnabled,
             repeatModeInt = playerState.repeatMode,
             currentLyrics = lyricsState.syncedLyrics,
-            isLoadingLyrics = lyricsState.isLoading
+            isLoadingLyrics = lyricsState.isLoading,
+            songsList = playerState.songsList,
+            currentPlayingIndex = playerRepository.getCurrentPlayingIndex()
         )
     }.stateIn(
         scope = viewModelScope,
@@ -84,6 +93,10 @@ class PlayerScreenViewModel(
                 }
             }
             is PlayerScreenAction.FetchLyrics -> fetchLyrics(action.song)
+            is PlayerScreenAction.MoveQueueItem -> playerRepository.moveSong(action.from, action.to)
+            is PlayerScreenAction.RemoveQueueItem -> playerRepository.removeSongFromQueue(action.songId)
+            is PlayerScreenAction.SkipToQueueItem -> playerRepository.skipToSong(action.index)
+            is PlayerScreenAction.PlayNextQueueItem -> playerRepository.playNext(action.song)
         }
     }
 
