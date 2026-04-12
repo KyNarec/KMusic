@@ -33,7 +33,7 @@ import com.kynarec.kmusic.utils.parseDurationToMillis
 import com.kynarec.kmusic.utils.parseMillisToDuration
 import com.kynarec.kmusic.utils.toSeconds
 import com.kynarec.kmusic.utils.toSong
-import com.kynarec.lrclib.LyricsRepository
+import com.kynarec.lrclib.LrcLibRepository
 import com.kynarec.lrclib.model.Lyrics
 import com.mocharealm.accompanist.lyrics.core.model.SyncedLyrics
 import com.mocharealm.accompanist.lyrics.core.parser.EnhancedLrcParser
@@ -83,7 +83,7 @@ class MusicViewModel
     private val playlistDao: PlaylistDao,
     private val albumDao: AlbumDao,
     private val artistDao: ArtistDao,
-    private val lyricsRepository: LyricsRepository,
+    private val lyricsRepository: LrcLibRepository,
 ) : ViewModel() {
     private val tag = "MusicViewModel"
 

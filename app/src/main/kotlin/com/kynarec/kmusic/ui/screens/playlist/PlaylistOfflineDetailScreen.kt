@@ -90,8 +90,10 @@ import com.kynarec.kmusic.ui.components.playlist.PlaylistSortByBottomSheet
 import com.kynarec.kmusic.ui.components.playlist.TwoByTwoImageGrid
 import com.kynarec.kmusic.ui.components.song.SongComponentSkeleton
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.LibraryAction
+import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
 import com.kynarec.kmusic.ui.viewModels.PlaylistOfflineDetailActions
 import com.kynarec.kmusic.ui.viewModels.PlaylistOfflineDetailViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
@@ -100,6 +102,7 @@ import com.kynarec.kmusic.utils.shimmerEffect
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -108,7 +111,8 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3AdaptiveApi::class)
 fun PlaylistOfflineDetailScreen(
     playlistId: Long,
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
+    libraryViewModel: LibraryViewModel = koinViewModel(),
     dataViewModel: DataViewModel = koinActivityViewModel(),
     settingsViewModel: SettingsViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
@@ -128,7 +132,7 @@ fun PlaylistOfflineDetailScreen(
 
     var longClickSong by retain { mutableStateOf<Song?>(null) }
 
-    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
 
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -255,7 +259,7 @@ fun PlaylistOfflineDetailScreen(
                                     coloredDownloadIndicator = coloredDownloadIndicator,
                                     isEditable = sortOrder == SortOrder.Descending && sortBy == SortBy.Position && playlist.isEditable,
                                     playlistOfflineDetailAction = playlistOfflineDetailViewModel::onAction,
-                                    onShuffleClick = { viewModel.playShuffledPlaylist(sortedSongs.map { it.song }) },
+                                    onShuffleClick = { libraryViewModel.onAction(LibraryAction.PlayShuffled(sortedSongs.map { it.song })) },
                                 )
                                 itemsIndexed(
                                     localSongList,
@@ -275,10 +279,10 @@ fun PlaylistOfflineDetailScreen(
                                                 song = playlistItem.song,
                                                 onClick = {
                                                     scope.launch {
-                                                        viewModel.playPlaylist(
+                                                        libraryViewModel.onAction(LibraryAction.PlayPlaylist(
                                                             sortedSongs.map { it.song },
                                                             playlistItem.song
-                                                        )
+                                                        ))
                                                     }
                                                 },
                                                 onLongClick = {
@@ -361,7 +365,7 @@ fun PlaylistOfflineDetailScreen(
                                     coloredDownloadIndicator = coloredDownloadIndicator,
                                     isEditable = sortOrder == SortOrder.Descending && sortBy == SortBy.Position && playlist!!.isEditable,
                                     playlistOfflineDetailAction = playlistOfflineDetailViewModel::onAction,
-                                    onShuffleClick = { viewModel.playShuffledPlaylist(sortedSongs.map { it.song }) },
+                                    onShuffleClick = { libraryViewModel.onAction(LibraryAction.PlayShuffled(sortedSongs.map { it.song })) },
                                 )
                                 itemsIndexed(
                                     localSongList,
@@ -381,10 +385,10 @@ fun PlaylistOfflineDetailScreen(
                                                 song = playlistItem.song,
                                                 onClick = {
                                                     scope.launch {
-                                                        viewModel.playPlaylist(
+                                                        libraryViewModel.onAction(LibraryAction.PlayPlaylist(
                                                             sortedSongs.map { it.song },
                                                             playlistItem.song
-                                                        )
+                                                        ))
                                                     }
                                                 },
                                                 onLongClick = {
@@ -441,7 +445,7 @@ fun PlaylistOfflineDetailScreen(
                 focusManager.clearFocus()
                 keyboardController?.hide()
             },
-            viewModel = viewModel,
+            libraryViewModel = libraryViewModel,
             database = database,
             navController = navController
         )

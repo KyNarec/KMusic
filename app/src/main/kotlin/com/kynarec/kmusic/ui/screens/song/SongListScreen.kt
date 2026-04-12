@@ -45,7 +45,9 @@ import com.kynarec.kmusic.service.innertube.browseSongs
 import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongComponentSkeleton
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
+import com.kynarec.kmusic.ui.viewModels.LibraryAction
+import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import com.kynarec.kmusic.utils.SmartMessage
 import kotlinx.coroutines.Dispatchers
@@ -60,7 +62,8 @@ fun SongListScreen(
     modifier: Modifier = Modifier,
     browseId: String,
     browseParams: String,
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
+    libraryViewModel: LibraryViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController,
     backIconButton: (@Composable () -> Unit)? = null
@@ -71,7 +74,7 @@ fun SongListScreen(
     var longClickSong by retain { mutableStateOf<Song?>(null) }
     val showSongDetailBottomSheet = retain { mutableStateOf(false) }
 
-    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
     var songs by retain { mutableStateOf(emptyList<Song>()) }
     var isLoading by retain { mutableStateOf(false) }
     var isRefreshing by retain { mutableStateOf(false) }
@@ -168,7 +171,7 @@ fun SongListScreen(
                         Spacer(Modifier.weight(1f))
                         IconButton(
                             onClick = {
-                                viewModel.playShuffledPlaylist(songs)
+                                libraryViewModel.onAction(LibraryAction.PlayShuffled(songs))
                             }
                         ) {
                             Icon(
@@ -196,7 +199,7 @@ fun SongListScreen(
                                 song = it,
                                 onClick = {
                                     scope.launch {
-                                        viewModel.playPlaylist(songs, it)
+                                        libraryViewModel.onAction(LibraryAction.PlayPlaylist(songs, it))
                                     }
                                 },
                                 onLongClick = {

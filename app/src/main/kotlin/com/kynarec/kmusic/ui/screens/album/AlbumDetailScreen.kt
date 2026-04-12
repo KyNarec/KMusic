@@ -70,8 +70,10 @@ import com.kynarec.kmusic.ui.components.album.AlbumOptionsBottomSheet
 import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongComponentSkeleton
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.LibraryAction
+import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import com.kynarec.kmusic.utils.SmartMessage
@@ -87,7 +89,8 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 fun AlbumDetailScreen(
     modifier: Modifier = Modifier,
     albumId: String,
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
+    libraryViewModel: LibraryViewModel = koinActivityViewModel(),
     dataViewModel: DataViewModel = koinActivityViewModel(),
     settingsViewModel: SettingsViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
@@ -114,7 +117,7 @@ fun AlbumDetailScreen(
 
     var readMore by retain { mutableStateOf(false) }
 
-    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
     val downloadingSongs by dataViewModel.downloadingSongs.collectAsStateWithLifecycle()
     val completedIds by dataViewModel.completedDownloadIds.collectAsStateWithLifecycle()
 
@@ -277,7 +280,7 @@ fun AlbumDetailScreen(
                                     albumContent(
                                         songs = songs,
                                         albumDownloadStatus = albumDownloadStatus,
-                                        musicViewModel = viewModel,
+                                        libraryViewModel = libraryViewModel,
                                         dataViewModel = dataViewModel,
                                         coloredDownloadIndicator = coloredDownloadIndicator,
                                         setLongClickSong = { longClickSong = it },
@@ -318,7 +321,7 @@ fun AlbumDetailScreen(
                                     albumContent(
                                         songs = songs,
                                         albumDownloadStatus = albumDownloadStatus,
-                                        musicViewModel = viewModel,
+                                        libraryViewModel = libraryViewModel,
                                         dataViewModel = dataViewModel,
                                         coloredDownloadIndicator = coloredDownloadIndicator,
                                         setLongClickSong = { longClickSong = it },
@@ -580,7 +583,7 @@ private fun LazyListScope.albumHeaderSkeleton(
 private fun LazyListScope.albumContent(
     songs: List<Song>,
     albumDownloadStatus: AlbumDownloadStatus,
-    musicViewModel: MusicViewModel,
+    libraryViewModel: LibraryViewModel,
     dataViewModel: DataViewModel,
     coloredDownloadIndicator: Boolean,
     setLongClickSong: (Song) -> Unit,
@@ -654,7 +657,7 @@ private fun LazyListScope.albumContent(
 
             IconButton(
                 onClick = {
-                    musicViewModel.playShuffledPlaylist(songs)
+                    libraryViewModel.onAction(LibraryAction.PlayShuffled(songs))
                 }
             ) {
                 Icon(
@@ -682,7 +685,7 @@ private fun LazyListScope.albumContent(
             song = it,
             onClick = {
                 scope.launch {
-                    musicViewModel.playPlaylist(songs, it)
+                    libraryViewModel.onAction(LibraryAction.PlayPlaylist(songs, it))
                 }
             },
             onLongClick = {

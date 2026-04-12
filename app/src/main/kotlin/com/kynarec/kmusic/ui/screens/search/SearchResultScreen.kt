@@ -68,7 +68,9 @@ import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongComponentSkeleton
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.screens.song.SortOption
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
+import com.kynarec.kmusic.ui.viewModels.LibraryAction
+import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.rememberColumnCount
 import kotlinx.coroutines.Dispatchers
@@ -77,6 +79,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(
     UnstableApi::class, ExperimentalMaterial3ExpressiveApi::class
@@ -84,7 +87,8 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 @Composable
 fun SearchResultScreen(
     query: String,
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
+    libraryViewModel: LibraryViewModel = koinViewModel(),
     navController: NavHostController,
     database: KmusicDatabase = koinInject()
 ) {
@@ -101,9 +105,9 @@ fun SearchResultScreen(
 
     val showBottomSheet = retain { mutableStateOf(false) }
     var longClickSong by retain { mutableStateOf<Song?>(null) }
-    val selectedSearchParam = viewModel.uiState.collectAsStateWithLifecycle().value.searchParam
+    val selectedSearchParam = libraryViewModel.state.collectAsStateWithLifecycle().value.searchParam
 
-    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
     val bottomPadding = if (showControlBar) 70.dp else 0.dp
 
     val searchParams = listOf(
@@ -320,7 +324,7 @@ fun SearchResultScreen(
                 sortOptions = searchParams,
                 selectedSortOption = selectedSearchParam,
                 onOptionSelected = {
-                    viewModel.setSearchParam(it)
+                    libraryViewModel.onAction(LibraryAction.SetSearchParam(it))
                 }
             )
             AnimatedContent(
@@ -360,7 +364,7 @@ fun SearchResultScreen(
                                             song = song,
                                             onClick = {
                                                 Log.d("SongClick", "Song clicked: ${song.title}")
-                                                viewModel.playSongByIdWithRadio(song)
+                                                libraryViewModel.onAction(LibraryAction.PlaySong(song, withRadio = true))
                                             },
                                             onLongClick = {
                                                 longClickSong = song
@@ -542,7 +546,7 @@ fun SearchResultScreen(
                 if (showBottomSheet.value && longClickSong != null) {
                     Log.i("SongsScreen", "Showing bottom sheet")
                     Log.i("SongsScreen", "Title = ${longClickSong!!.title}")
-                    viewModel.maybeAddSongToDB(longClickSong!!)
+                    libraryViewModel.onAction(LibraryAction.MaybeAddSongToDB(longClickSong!!))
                     SongOptionsBottomSheet(
                         song = longClickSong!!,
                         onDismiss = { showBottomSheet.value = false },

@@ -31,7 +31,7 @@ import com.kynarec.kmusic.ui.components.TopBarComponent
 import com.kynarec.kmusic.ui.components.player.PlayerControlBar
 import com.kynarec.kmusic.ui.screens.player.MusicPlayerSheet
 import com.kynarec.kmusic.ui.screens.player.PlayerSheetMode
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinActivityViewModel
@@ -42,7 +42,7 @@ fun ScreenWithContent(
     navController: NavHostController,
     currentRoute: String?,
     isSearchScreen: Boolean,
-    musicViewModel: MusicViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
     playerViewModel: PlayerViewModel = koinActivityViewModel(),
     hideVertNavElements: Boolean,
     isSettingsScreen: Boolean = false,
@@ -52,7 +52,7 @@ fun ScreenWithContent(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val showBottomSheet = retain { mutableStateOf(false) }
 
-    val showControlBar = musicViewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
 
     LaunchedEffect(sheetState.isVisible) {
         if (!sheetState.isVisible) {

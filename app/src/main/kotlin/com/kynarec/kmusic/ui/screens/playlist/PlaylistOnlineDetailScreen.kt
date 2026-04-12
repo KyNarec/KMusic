@@ -59,8 +59,10 @@ import com.kynarec.kmusic.ui.components.playlist.TwoByTwoImageGrid
 import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongComponentSkeleton
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.LibraryAction
+import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
 import com.kynarec.kmusic.ui.viewModels.PlaylistOnlineDetailActions
 import com.kynarec.kmusic.ui.viewModels.PlaylistOnlineDetailViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
@@ -69,11 +71,13 @@ import com.kynarec.kmusic.utils.shimmerEffect
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun PlaylistOnlineDetailScreen(
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
+    libraryViewModel: LibraryViewModel = koinViewModel(),
     dataViewModel: DataViewModel = koinActivityViewModel(),
     settingsViewModel: SettingsViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
@@ -88,7 +92,7 @@ fun PlaylistOnlineDetailScreen(
     val playlist = state.playlist
     val isRefreshing = state.isRefreshing
 
-    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
 
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -159,14 +163,14 @@ fun PlaylistOnlineDetailScreen(
                                         onNoneDownloadedClick = { dataViewModel.addDownloads(songs) },
                                         coloredDownloadIndicator = coloredDownloadIndicator,
                                         playlistOfflineDetailAction = playlistOnlineDetailViewModel::onAction,
-                                        onShuffleClick = { viewModel.playShuffledPlaylist(songs) },
+                                        onShuffleClick = { libraryViewModel.onAction(LibraryAction.PlayShuffled(songs)) },
                                     )
                                     items(songs) { song ->
                                         SongComponent(
                                             song = song,
                                             onClick = {
                                                 scope.launch {
-                                                    viewModel.playPlaylist(songs, song)
+                                                    libraryViewModel.onAction(LibraryAction.PlayPlaylist(songs, song))
                                                 }
                                             },
                                             onLongClick = {
@@ -224,14 +228,14 @@ fun PlaylistOnlineDetailScreen(
                                         onNoneDownloadedClick = { dataViewModel.addDownloads(songs) },
                                         coloredDownloadIndicator = coloredDownloadIndicator,
                                         playlistOfflineDetailAction = playlistOnlineDetailViewModel::onAction,
-                                        onShuffleClick = { viewModel.playShuffledPlaylist(songs) },
+                                        onShuffleClick = { libraryViewModel.onAction(LibraryAction.PlayShuffled(songs)) },
                                     )
                                     items(songs) { song ->
                                         SongComponent(
                                             song = song,
                                             onClick = {
                                                 scope.launch {
-                                                    viewModel.playPlaylist(songs, song)
+                                                    libraryViewModel.onAction(LibraryAction.PlayPlaylist(songs, song))
                                                 }
                                             },
                                             onLongClick = {

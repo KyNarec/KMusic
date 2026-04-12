@@ -23,7 +23,7 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.ArtistPreview
 import com.kynarec.kmusic.ui.ArtistDetailScreen
 import com.kynarec.kmusic.ui.components.artist.ArtistComponent
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.utils.rememberColumnCount
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
@@ -33,13 +33,13 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 fun ArtistsScreen(
     modifier: Modifier = Modifier,
     database: KmusicDatabase = koinInject(),
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
     navController: NavHostController
 ) {
     val artists by database.artistDao().getFavouritesArtistsFlow().collectAsStateWithLifecycle(null)
     val isLoading by remember { mutableStateOf(false) }
 
-    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
     val bottomPadding = if (showControlBar) 70.dp else 0.dp
 
     Column(

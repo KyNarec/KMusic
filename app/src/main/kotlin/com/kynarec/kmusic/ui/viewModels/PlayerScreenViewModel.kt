@@ -9,7 +9,7 @@ import com.kynarec.kmusic.data.repository.PlaylistItem
 import com.kynarec.kmusic.enums.PlayerRepeatMode
 import com.kynarec.kmusic.utils.parseMillisToDuration
 import com.kynarec.kmusic.utils.toSeconds
-import com.kynarec.lrclib.LyricsRepository
+import com.kynarec.lrclib.LrcLibRepository
 import com.mocharealm.accompanist.lyrics.core.model.SyncedLyrics
 import com.mocharealm.accompanist.lyrics.core.parser.EnhancedLrcParser
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,12 +45,13 @@ sealed interface PlayerScreenAction {
     data class RemoveQueueItem(val songId: Long) : PlayerScreenAction
     data class SkipToQueueItem(val index: Int) : PlayerScreenAction
     data class PlayNextQueueItem(val song: Song) : PlayerScreenAction
+    data object Resume: PlayerScreenAction
 }
 
 class PlayerScreenViewModel(
     private val playerRepository: PlayerRepository,
     private val libraryRepository: LibraryRepository,
-    private val lyricsRepository: LyricsRepository
+    private val lyricsRepository: LrcLibRepository
 ) : ViewModel() {
 
     private val _lyricsState = MutableStateFlow<LyricsState>(LyricsState())
@@ -97,6 +98,7 @@ class PlayerScreenViewModel(
             is PlayerScreenAction.RemoveQueueItem -> playerRepository.removeSongFromQueue(action.songId)
             is PlayerScreenAction.SkipToQueueItem -> playerRepository.skipToSong(action.index)
             is PlayerScreenAction.PlayNextQueueItem -> playerRepository.playNext(action.song)
+            is PlayerScreenAction.Resume -> playerRepository.resume()
         }
     }
 

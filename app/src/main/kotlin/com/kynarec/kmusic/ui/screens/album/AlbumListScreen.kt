@@ -39,7 +39,7 @@ import com.kynarec.kmusic.service.innertube.browseAlbums
 import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.components.album.AlbumComponent
 import com.kynarec.kmusic.ui.components.album.AlbumComponentSkeleton
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.utils.ConditionalMarqueeText
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.rememberColumnCount
@@ -57,7 +57,7 @@ fun AlbumListScreen(
     navController: NavHostController,
     backIconButton: (@Composable () -> Unit)? = null,
     title: String? = null,
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel()
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -66,7 +66,7 @@ fun AlbumListScreen(
     var isLoading by remember { mutableStateOf(true) }
     var isRefreshing by remember { mutableStateOf(false) }
 
-    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
     val bottomPadding = if (showControlBar) 70.dp else 0.dp
 
     LaunchedEffect(Unit) {

@@ -27,8 +27,10 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.SortSection
 import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.LibraryAction
+import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
 import kotlinx.parcelize.Parcelize
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
@@ -47,14 +49,15 @@ data class SortOption(
 @Composable
 fun SongsScreen(
     modifier: Modifier = Modifier,
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    libraryViewModel: LibraryViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
     dataViewModel: DataViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
     val context = LocalContext.current
 
-    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
     val bottomPadding = if (showControlBar) 70.dp else 0.dp
 
     val showBottomSheet = remember { mutableStateOf(false) }
@@ -68,7 +71,7 @@ fun SongsScreen(
         SortOption("Listened"),
         SortOption("Downloads"),
     )
-    val selectedSortOption = viewModel.uiState.collectAsStateWithLifecycle().value.songsSortOption
+    val selectedSortOption = libraryViewModel.state.collectAsStateWithLifecycle().value.songsSortOption
 
     val allSongs = database.songDao().getAllSongsFlow().collectAsStateWithLifecycle(emptyList())
 
@@ -92,7 +95,7 @@ fun SongsScreen(
         SortSection(
             sortOptions = sortOptions,
             selectedSortOption = selectedSortOption,
-            onOptionSelected = { viewModel.setSortOption(it) }
+            onOptionSelected = { libraryViewModel.onAction(LibraryAction.SetSortOption(it)) }
         )
 
         AnimatedContent(
@@ -111,7 +114,7 @@ fun SongsScreen(
                             val song = song
                             val onSongClick = remember(song.id) {
                                 {
-                                    viewModel.playPlaylist(sortedSongs.value, song)
+                                    libraryViewModel.onAction(LibraryAction.PlayPlaylist(sortedSongs.value, song))
                                 }
                             }
 
@@ -140,7 +143,7 @@ fun SongsScreen(
                             val song = song
                             val onSongClick = remember(song.id) {
                                 {
-                                    viewModel.playPlaylist(sortedSongs.value, song)
+                                    libraryViewModel.onAction(LibraryAction.PlayPlaylist(sortedSongs.value, song))
                                 }
                             }
 
@@ -169,7 +172,7 @@ fun SongsScreen(
                             val song = song
                             val onSongClick = remember(song.id) {
                                 {
-                                    viewModel.playPlaylist(sortedSongs.value, song)
+                                    libraryViewModel.onAction(LibraryAction.PlayPlaylist(sortedSongs.value, song))
                                 }
                             }
 
@@ -194,7 +197,7 @@ fun SongsScreen(
                             val song = song
                             val onSongClick = remember(song.id) {
                                 {
-                                    viewModel.playPlaylist(sortedSongs.value, song)
+                                    libraryViewModel.onAction(LibraryAction.PlayPlaylist(sortedSongs.value, song))
                                 }
                             }
 

@@ -38,20 +38,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kynarec.kmusic.R
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
-import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import org.koin.compose.viewmodel.koinActivityViewModel
 
 @Composable
 fun DataScreen(
-    prefs: SettingsViewModel = koinActivityViewModel(),
-    musicViewModel: MusicViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
     dataViewModel: DataViewModel = koinActivityViewModel(),
 ) {
     val scope = rememberCoroutineScope()
 
-    val showControlBar = musicViewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
     val bottomPadding = if (showControlBar) 70.dp else 0.dp
 
     var showDeleteDatabaseDialog by remember { mutableStateOf(false) }

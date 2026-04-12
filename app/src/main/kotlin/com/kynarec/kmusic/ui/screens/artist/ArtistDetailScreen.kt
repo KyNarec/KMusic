@@ -83,7 +83,9 @@ import com.kynarec.kmusic.ui.components.song.SongComponentSkeleton
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.screens.album.AlbumListScreen
 import com.kynarec.kmusic.ui.screens.song.SongListScreen
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
+import com.kynarec.kmusic.ui.viewModels.LibraryAction
+import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.shimmerEffect
 import kotlinx.coroutines.Dispatchers
@@ -97,7 +99,8 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 fun ArtistDetailScreen(
     modifier: Modifier = Modifier,
     artistId: String,
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
+    libraryViewModel: LibraryViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
@@ -132,7 +135,7 @@ fun ArtistDetailScreen(
 
     var readMore by retain { mutableStateOf(false) }
 
-    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
@@ -272,7 +275,7 @@ fun ArtistDetailScreen(
                                 if (isSinglePane) {
                                     artistContentList(
                                         navController = navController,
-                                        viewModel = viewModel,
+                                        libraryViewModel = libraryViewModel,
                                         songs = songs,
                                         albums = albums,
                                         singlesAndEps = singlesAndEps,
@@ -344,7 +347,7 @@ fun ArtistDetailScreen(
                                         } else {
                                             artistContentList(
                                                 navController = navController,
-                                                viewModel = viewModel,
+                                                libraryViewModel = libraryViewModel,
                                                 songs = songs,
                                                 albums = albums,
                                                 singlesAndEps = singlesAndEps,
@@ -662,7 +665,7 @@ private fun LazyListScope.artistHeaderSkeleton() {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun LazyListScope.artistContentList(
     navController: NavHostController,
-    viewModel: MusicViewModel,
+    libraryViewModel: LibraryViewModel,
     songs: List<Song>,
     albums: List<AlbumPreview>,
     singlesAndEps: List<AlbumPreview>,
@@ -693,7 +696,7 @@ private fun LazyListScope.artistContentList(
 
             IconButton(
                 onClick = {
-                    viewModel.playShuffledPlaylist(songs)
+                    libraryViewModel.onAction(LibraryAction.PlayShuffled(songs))
                 }
             ) {
                 Icon(
@@ -734,7 +737,7 @@ private fun LazyListScope.artistContentList(
             song = it,
             onClick = {
                 scope.launch {
-                    viewModel.playPlaylist(songs, it)
+                    libraryViewModel.onAction(LibraryAction.PlayPlaylist(songs, it))
                 }
             },
             onLongClick = {

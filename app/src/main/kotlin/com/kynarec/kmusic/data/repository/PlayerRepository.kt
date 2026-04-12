@@ -67,7 +67,7 @@ class PlayerRepository(private val context: Context) {
             _playerState.update {
                 it.copy(
                     currentSong = currentSong,
-                    currentDurationLong = currentSong?.duration?.parseDurationToMillis() ?: 0L,
+                    currentDurationLong = currentSong?.duration?.parseDurationToMillis() ?: mediaController?.duration ?: 0L,
                 )
             }
         }

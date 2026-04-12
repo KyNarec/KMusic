@@ -36,7 +36,7 @@ import com.kynarec.kmusic.ui.Settings
 import com.kynarec.kmusic.ui.components.SegmentedColumn
 import com.kynarec.kmusic.ui.components.UpdateDialog
 import com.kynarec.kmusic.ui.components.settings.SettingsFolder
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import kotlinx.coroutines.launch
@@ -47,14 +47,14 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 @Composable
 fun SettingsScreen(
     navController: NavHostController,
-    musicViewModel: MusicViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
     updateManager: UpdateManager = koinInject(),
     updateViewModel: UpdateViewModel = koinActivityViewModel(),
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val showControlBar = musicViewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
     val bottomPadding = if (showControlBar) 70.dp else 0.dp
 
     if (updateViewModel.showDialog && updateViewModel.updateInfo != null) {

@@ -1,6 +1,5 @@
 package com.kynarec.kmusic.ui.screens.player
 
-import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -14,38 +13,26 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.ui.components.player.PlayerControlBar
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.PlayerScreenViewModel
 import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
 import org.koin.compose.viewmodel.koinActivityViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun MusicPlayerSheet(
     onClose: () -> Unit,
     navController: NavHostController,
-    musicViewModel: MusicViewModel = koinActivityViewModel(),
+    playerScreenViewModel: PlayerScreenViewModel = koinViewModel(),
     playerViewModel: PlayerViewModel = koinActivityViewModel()
 ) {
-    val uiState by musicViewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by playerScreenViewModel.state.collectAsStateWithLifecycle()
     val playerUiState by playerViewModel.uiState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(Unit, uiState.currentSong) {
-        val currentSong = uiState.currentSong
-
-        musicViewModel.setLoadingLyrics(true)
-        val syncedLyrics = musicViewModel.getSyncedLyrics(currentSong!!)
-        Log.i("MusicPlayerSheet", "Fetched Synced Lyrics: ${syncedLyrics?.lines}")
-        Log.i("MusicPlayerSheet", "FetchedSynced Lyrics Title: ${syncedLyrics?.title}")
-        if (syncedLyrics?.lines?.isEmpty() == true) musicViewModel.setCurrentLyrics(null)
-        else syncedLyrics?.let { musicViewModel.setCurrentLyrics(it) }
-        musicViewModel.setLoadingLyrics(false)
-    }
 
     SharedTransitionLayout {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -77,12 +64,14 @@ fun MusicPlayerSheet(
                             onQueueClick = { playerViewModel.setPlayerState(PlayerSheetMode.Queue) },
                             onMoreClick = { playerViewModel.setPlayerState(PlayerSheetMode.Options) },
                             navController = navController,
-                            onClose = onClose
+                            onClose = onClose,
+                            viewModel = playerScreenViewModel,
                         )
                     }
 
                     PlayerSheetMode.Lyrics -> LyricsScreen(
-                        onDismiss = { playerViewModel.setPlayerState(PlayerSheetMode.MainPlayer) }
+                        onDismiss = { playerViewModel.setPlayerState(PlayerSheetMode.MainPlayer) },
+                        playerScreenViewModel = playerScreenViewModel
                     )
 
                     PlayerSheetMode.Queue -> QueueScreen(

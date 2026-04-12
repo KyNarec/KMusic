@@ -48,9 +48,6 @@ class LibraryViewModel(
     private val _state = MutableStateFlow(LibraryState())
     val state: StateFlow<LibraryState> = _state.asStateFlow()
 
-    // Note: Usually, songs list is observed directly from DB Layer (Flows exposed by DAO)
-    // using koinViewModel() in respective screens.
-
     fun onAction(action: LibraryAction) {
         when (action) {
             is LibraryAction.PlaySong -> {
