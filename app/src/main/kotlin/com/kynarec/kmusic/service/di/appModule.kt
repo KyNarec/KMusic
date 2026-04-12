@@ -5,8 +5,11 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.PlaylistPreview
 import com.kynarec.kmusic.service.update.PlatformUpdateManager
 import com.kynarec.kmusic.service.update.UpdateManager
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
+import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
 import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.PlayerScreenViewModel
 import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
 import com.kynarec.kmusic.ui.viewModels.PlaylistOfflineDetailViewModel
 import com.kynarec.kmusic.ui.viewModels.PlaylistOnlineDetailViewModel
@@ -24,6 +27,13 @@ val appModule = module {
     single { get<KmusicDatabase>().albumDao() }
     single { get<KmusicDatabase>().artistDao() }
 
+    single { com.kynarec.kmusic.data.repository.LibraryRepository(get(), get(), get(), get()) }
+    single { com.kynarec.kmusic.data.repository.PlayerRepository(androidApplication()) }
+
+    viewModel { AppViewModel(get()) }
+    viewModel { PlayerScreenViewModel(get(), get(), get()) }
+    viewModel { LibraryViewModel(get(), get()) }
+    
     viewModel {
         MusicViewModel(
             application = androidApplication(),
@@ -34,6 +44,7 @@ val appModule = module {
             lyricsRepository = get(), // This comes from LrcLib module
         )
     }
+
 
     single { KSafe(androidApplication()) }
     viewModel {

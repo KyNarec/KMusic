@@ -53,8 +53,7 @@ fun MusicPlayerSheet(
             AnimatedVisibility(visible = playerUiState.currentPlayerState != PlayerSheetMode.MainPlayer,
             ) {
                 PlayerControlBar(
-                    onBarClick = { playerViewModel.setPlayerState(PlayerSheetMode.MainPlayer) },
-                    viewModel = musicViewModel
+                    onBarClick = { playerViewModel.setPlayerState(PlayerSheetMode.MainPlayer) }
                 )
             }
 

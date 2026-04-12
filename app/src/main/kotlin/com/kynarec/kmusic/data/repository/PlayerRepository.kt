@@ -61,7 +61,8 @@ class PlayerRepository(private val context: Context) {
             Log.i(tag, "onMediaItemTransition called with reason: $reason")
 
             val songsList = _playerState.value.songsList
-            val currentSong = songsList.find { it.song.id == mediaItem?.mediaId }?.song
+            val currentSong = songsList.find { it.song.id == mediaItem?.mediaId }?.song 
+                ?: mediaItem?.toSong()
 
             _playerState.update {
                 it.copy(

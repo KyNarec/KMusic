@@ -47,7 +47,8 @@ import coil.request.ImageRequest
 import coil.transform.RoundedCornersTransformation
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.ui.components.MarqueeBox
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.AppAction
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.utils.Constants.THUMBNAIL_ROUNDNESS
 import org.koin.compose.viewmodel.koinActivityViewModel
 
@@ -55,9 +56,9 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 @Composable
 fun PlayerControlBar(
     onBarClick: () -> Unit,
-    viewModel: MusicViewModel = koinActivityViewModel()
+    viewModel: AppViewModel = koinActivityViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.state.collectAsStateWithLifecycle()
 
     val progress = if (uiState.currentDurationLong != 0L) {
         uiState.currentPosition.toFloat() / uiState.currentDurationLong.toFloat()
@@ -134,7 +135,7 @@ fun PlayerControlBar(
 //            modifier = Modifier.height(50.dp)
         ) {
             IconButton(
-                onClick = { viewModel.skipToPrevious() },
+                onClick = { viewModel.onAction(AppAction.SkipPrevious) },
                 shape = IconButtonDefaults.smallSquareShape,
                 modifier = Modifier.size(48.dp),
                 ) {
@@ -148,7 +149,7 @@ fun PlayerControlBar(
             }
             IconButton(
                 onClick = {
-                    if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
+                    viewModel.onAction(AppAction.TogglePlayPause)
                 },
                 modifier = Modifier.size(48.dp),
                 shape = IconButtonDefaults.smallSquareShape,
@@ -169,7 +170,7 @@ fun PlayerControlBar(
                 }
             }
             IconButton(
-                onClick = { viewModel.skipToNext() },
+                onClick = { viewModel.onAction(AppAction.SkipNext) },
                 modifier = Modifier.size(48.dp),
                 shape = IconButtonDefaults.smallSquareShape,
             ) {
