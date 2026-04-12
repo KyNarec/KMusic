@@ -5,6 +5,8 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
+import coil.request.CachePolicy
+import coil.util.DebugLogger
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.service.di.appModule
 import com.kynarec.kmusic.service.di.lrcLibModule
@@ -24,16 +26,20 @@ class KMusic : Application(), ImageLoaderFactory {
 
     override fun newImageLoader(): ImageLoader {
         return ImageLoader.Builder(this)
+            .memoryCachePolicy(CachePolicy.ENABLED)
             .memoryCache {
                 MemoryCache.Builder(this)
                     .maxSizePercent(0.25) // Use 25% of the app's available memory
+                    .strongReferencesEnabled(true)
                     .build()
             }
+            .diskCachePolicy(CachePolicy.ENABLED)
             .diskCache {
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("image_cache"))
                     .build()
             }
+            .logger(DebugLogger())
             .crossfade(true)
             .build()
     }
