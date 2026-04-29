@@ -1,8 +1,14 @@
 package com.kynarec.kmusic.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.visible
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MusicNote
@@ -10,8 +16,6 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,9 +23,13 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.kynarec.kmusic.R
@@ -34,7 +42,7 @@ import com.kynarec.kmusic.ui.screens.SongsScreen
 // Define data for navigation destinations
 data class NavigationDestination(
     val title: String,
-    val icon: @Composable () -> Unit,
+    val icon: @Composable (visible: Boolean) -> Unit,
     val navigationScreen: Any
 )
 
@@ -44,14 +52,79 @@ fun MyNavigationRailComponent(
     navController: NavHostController,
     currentRoute: String?
 ) {
-
     val destinations = listOf(
-        NavigationDestination("Home", { Icon(Icons.Default.Home, contentDescription = "Home") }, HomeScreen),
-        NavigationDestination("Songs", { Icon(Icons.Default.MusicNote, contentDescription = "Songs") }, SongsScreen),
-        NavigationDestination("Artists", { Icon(Icons.Default.People, contentDescription = "Artists") }, ArtistsScreen),
-        NavigationDestination("Albums", { Icon(painterResource(R.drawable.album), contentDescription = "Albums") }, AlbumsScreen),
-        NavigationDestination("Playlists", { Icon(painterResource(R.drawable.library), contentDescription = "Playlists") }, PlaylistsScreen)
+        NavigationDestination(
+            "Home",
+            { visible ->
+                Icon(
+                    Icons.Default.Home, contentDescription = "Home", modifier = Modifier
+                        .vertical()
+                        .rotate(-90f)
+                        .padding(horizontal = 16.dp)
+                        .visible(visible)
+                )
+            },
+            HomeScreen
+        ),
+        NavigationDestination(
+            "Songs",
+            { visible ->
+                Icon(
+                    Icons.Default.MusicNote, contentDescription = "Songs", modifier = Modifier
+                        .vertical()
+                        .rotate(-90f)
+                        .padding(horizontal = 16.dp)
+                        .visible(visible)
+                )
+            },
+            SongsScreen
+        ),
+        NavigationDestination(
+            "Artists",
+            { visible ->
+                Icon(
+                    Icons.Default.People, contentDescription = "Artists", modifier = Modifier
+                        .vertical()
+                        .rotate(-90f)
+                        .padding(horizontal = 16.dp)
+                        .visible(visible)
+                )
+            },
+            ArtistsScreen
+        ),
+        NavigationDestination(
+            "Albums",
+            { visible ->
+                Icon(
+                    painterResource(R.drawable.album),
+                    contentDescription = "Albums",
+                    modifier = Modifier
+                        .vertical()
+                        .rotate(-90f)
+                        .padding(horizontal = 16.dp)
+                        .visible(visible)
+
+                )
+            },
+            AlbumsScreen
+        ),
+        NavigationDestination(
+            "Playlists",
+            { visible ->
+                Icon(
+                    painterResource(R.drawable.library),
+                    contentDescription = "Playlists",
+                    modifier = Modifier
+                        .vertical()
+                        .rotate(-90f)
+                        .padding(horizontal = 16.dp)
+                        .visible(visible)
+                )
+            },
+            PlaylistsScreen
+        )
     )
+
 
     var selectedDestination by rememberSaveable { mutableIntStateOf(0) }
 
@@ -80,43 +153,56 @@ fun MyNavigationRailComponent(
     }
     if (isPlaylistsScreen) selectedDestination = 4
 
-
-    Column {
-        NavigationRail(
-            containerColor = MaterialTheme.colorScheme.background,
-            contentColor = MaterialTheme.colorScheme.onBackground
-        ) {
-            destinations.forEachIndexed { index, destination ->
-                NavigationRailItem(
-                    modifier = Modifier
-                        .graphicsLayer { rotationZ = 270f }
-                        .padding(0.dp, 14.dp),
-                    selected = selectedDestination == index,
-                    onClick = {
+    LazyColumn(
+        Modifier.background(MaterialTheme.colorScheme.background)
+    ) {
+        itemsIndexed(destinations) { index, destination ->
+            Row(
+                modifier = Modifier
+                    .padding(top = 8.dp, start = 6.dp, end = 0.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .clickable(onClick = {
                         if (selectedDestination != index) {
                             selectedDestination = index
                             navController.navigate(destination.navigationScreen)
                         }
-                    },
-                    icon = {
-//                         Conditionally display the icon
-                        if (selectedDestination == index) {
-                            Box {
-                                destination.icon()
-                            }
-                        }
-                    },
-                    label = {
-                        Text(
-                            text = destination.title,
-//                            modifier = Modifier.graphicsLayer {
-//                                rotationZ = 270f
-//                            }
-                        )
-                    }
+                    }),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Box(
+                    Modifier
+                        .padding(2.dp)
+                        .clip(RoundedCornerShape(6.dp))
+//                            .background(NavigationBarItemDefaults.colors().selectedIconColor)
+                ) {
+                    destination.icon(selectedDestination == index)
+                }
+
+                Text(
+                    destination.title, modifier = Modifier
+                        .vertical()
+                        .rotate(-90f)
+                        .padding(horizontal = 16.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
         }
     }
 }
 
+fun Modifier.vertical(enabled: Boolean = true) =
+    if (enabled)
+        layout { measurable, constraints ->
+            val c: Constraints = constraints.copy(maxWidth = Int.MAX_VALUE)
+            val placeable = measurable.measure(c)
+
+            layout(placeable.height, placeable.width) {
+                placeable.place(
+                    x = -(placeable.width / 2 - placeable.height / 2),
+                    y = -(placeable.height / 2 - placeable.width / 2)
+                )
+            }
+        }
+    else this
