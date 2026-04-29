@@ -1,15 +1,15 @@
 package com.kynarec.kmusic.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.visible
@@ -23,6 +23,7 @@ import androidx.compose.material.icons.rounded.People
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,9 +37,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.kynarec.kmusic.R
 import com.kynarec.kmusic.ui.screens.AlbumsScreen
 import com.kynarec.kmusic.ui.screens.ArtistsScreen
@@ -183,7 +187,7 @@ fun MyNavigationRailComponent(
             Row(
                 modifier = Modifier
                     .padding(top = 12.dp, start = 6.dp, end = 0.dp)
-                    .clip(RoundedCornerShape(6.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .clickable(onClick = {
                         if (selectedDestination != index) {
                             selectedDestination = index
@@ -195,10 +199,8 @@ fun MyNavigationRailComponent(
 
                 Box(
                     Modifier
-                        .size(34.dp, 56.dp)
+                        .size(24.dp, 24.dp)
                         .padding(2.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(MaterialTheme.colorScheme.secondaryContainer)
                         .visible(selected),
                     contentAlignment = Alignment.Center
                 ) {
@@ -214,6 +216,23 @@ fun MyNavigationRailComponent(
                     color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun NavRailPreview() {
+    Scaffold() { paddingValues ->
+        val navController = rememberNavController()
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentRoute = navBackStackEntry?.destination?.route
+        Row(
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            MyNavigationRailComponent(navController, currentRoute)
         }
     }
 }
@@ -240,8 +259,8 @@ fun AnimatedNavIcon(
 ) {
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(tween(200)) + scaleIn(initialScale = 0.7f),
-        exit = fadeOut(tween(200)) + scaleOut(targetScale = 0.7f)
+        enter = slideInHorizontally { -it } + fadeIn(),
+        exit = slideOutHorizontally { it } + fadeOut()
     ) {
         content()
     }
