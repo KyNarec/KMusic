@@ -1,18 +1,25 @@
 package com.kynarec.kmusic.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.visible
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.People
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -56,70 +63,85 @@ fun MyNavigationRailComponent(
         NavigationDestination(
             "Home",
             { visible ->
-                Icon(
-                    Icons.Default.Home, contentDescription = "Home", modifier = Modifier
-                        .vertical()
-                        .rotate(-90f)
-                        .padding(horizontal = 16.dp)
-                        .visible(visible)
-                )
+                AnimatedNavIcon(visible) {
+                    Icon(
+                        Icons.Rounded.Home, contentDescription = "Home", modifier = Modifier
+                            .vertical()
+                            .rotate(-90f)
+                            .padding(horizontal = 16.dp)
+                            .visible(visible),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
             },
             HomeScreen
         ),
         NavigationDestination(
             "Songs",
             { visible ->
-                Icon(
-                    Icons.Default.MusicNote, contentDescription = "Songs", modifier = Modifier
-                        .vertical()
-                        .rotate(-90f)
-                        .padding(horizontal = 16.dp)
-                        .visible(visible)
-                )
+                AnimatedNavIcon(visible) {
+                    Icon(
+                        Icons.Rounded.MusicNote, contentDescription = "Songs", modifier = Modifier
+                            .vertical()
+                            .rotate(-90f)
+                            .padding(horizontal = 16.dp)
+                            .visible(visible),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
             },
             SongsScreen
         ),
         NavigationDestination(
             "Artists",
             { visible ->
-                Icon(
-                    Icons.Default.People, contentDescription = "Artists", modifier = Modifier
-                        .vertical()
-                        .rotate(-90f)
-                        .padding(horizontal = 16.dp)
-                        .visible(visible)
-                )
+                AnimatedNavIcon(visible) {
+                    Icon(
+                        Icons.Rounded.People, contentDescription = "Artists", modifier = Modifier
+                            .vertical()
+                            .rotate(-90f)
+                            .padding(horizontal = 16.dp)
+                            .visible(visible),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
             },
             ArtistsScreen
         ),
         NavigationDestination(
             "Albums",
             { visible ->
-                Icon(
-                    painterResource(R.drawable.album),
-                    contentDescription = "Albums",
-                    modifier = Modifier
-                        .vertical()
-                        .rotate(-90f)
-                        .padding(horizontal = 16.dp)
-                        .visible(visible)
+                AnimatedNavIcon(visible) {
+                    Icon(
+                        painterResource(R.drawable.album),
+                        contentDescription = "Albums",
+                        modifier = Modifier
+                            .vertical()
+                            .rotate(-90f)
+                            .padding(horizontal = 16.dp)
+                            .visible(visible),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer
 
-                )
+                    )
+                }
             },
             AlbumsScreen
         ),
         NavigationDestination(
             "Playlists",
             { visible ->
-                Icon(
-                    painterResource(R.drawable.library),
-                    contentDescription = "Playlists",
-                    modifier = Modifier
-                        .vertical()
-                        .rotate(-90f)
-                        .padding(horizontal = 16.dp)
-                        .visible(visible)
-                )
+                AnimatedNavIcon(visible) {
+                    Icon(
+                        painterResource(R.drawable.library),
+                        contentDescription = "Playlists",
+                        modifier = Modifier
+                            .vertical()
+                            .rotate(-90f)
+                            .padding(horizontal = 16.dp)
+                            .visible(visible),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
             },
             PlaylistsScreen
         )
@@ -157,9 +179,10 @@ fun MyNavigationRailComponent(
         Modifier.background(MaterialTheme.colorScheme.background)
     ) {
         itemsIndexed(destinations) { index, destination ->
+            val selected = selectedDestination == index
             Row(
                 modifier = Modifier
-                    .padding(top = 8.dp, start = 6.dp, end = 0.dp)
+                    .padding(top = 12.dp, start = 6.dp, end = 0.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .clickable(onClick = {
                         if (selectedDestination != index) {
@@ -172,11 +195,14 @@ fun MyNavigationRailComponent(
 
                 Box(
                     Modifier
+                        .size(34.dp, 56.dp)
                         .padding(2.dp)
-                        .clip(RoundedCornerShape(6.dp))
-//                            .background(NavigationBarItemDefaults.colors().selectedIconColor)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                        .visible(selected),
+                    contentAlignment = Alignment.Center
                 ) {
-                    destination.icon(selectedDestination == index)
+                    destination.icon(selected)
                 }
 
                 Text(
@@ -184,8 +210,8 @@ fun MyNavigationRailComponent(
                         .vertical()
                         .rotate(-90f)
                         .padding(horizontal = 16.dp),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onBackground
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -206,3 +232,17 @@ fun Modifier.vertical(enabled: Boolean = true) =
             }
         }
     else this
+
+@Composable
+fun AnimatedNavIcon(
+    visible: Boolean,
+    content: @Composable () -> Unit
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(tween(200)) + scaleIn(initialScale = 0.7f),
+        exit = fadeOut(tween(200)) + scaleOut(targetScale = 0.7f)
+    ) {
+        content()
+    }
+}
