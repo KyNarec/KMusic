@@ -26,7 +26,7 @@ import com.kynarec.kmusic.data.db.entities.SongAlbumMap
 import com.kynarec.kmusic.enums.PlayerRepeatMode
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.service.innertube.getRadioFlow
-import com.kynarec.kmusic.ui.screens.song.SortOption
+import com.kynarec.kmusic.ui.screens.song.FilterOption
 import com.kynarec.kmusic.utils.createMediaItemFromSong
 import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
 import com.kynarec.kmusic.utils.parseDurationToMillis
@@ -60,8 +60,8 @@ data class MusicUiState(
     val currentPosition: Long = 0,
     val currentDurationLong: Long = 0,
     val showControlBar: Boolean = false,
-    val songsSortOption: SortOption = SortOption("All"),
-    val searchParam: SortOption = SortOption("Song"),
+    val songsFilterOption: FilterOption = FilterOption("All"),
+    val searchParam: FilterOption = FilterOption("Song"),
     val timeLeftMillis: Long = 0,
     val currentLyrics: SyncedLyrics? = null,
     val isLoadingLyrics: Boolean = true,
@@ -637,13 +637,13 @@ class MusicViewModel
         }
     }
 
-    fun setSortOption(sortOption: SortOption) {
+    fun setSortOption(filterOption: FilterOption) {
         viewModelScope.launch {
-            _uiState.update { it.copy(songsSortOption = sortOption) }
+            _uiState.update { it.copy(songsFilterOption = filterOption) }
         }
     }
 
-    fun setSearchParam(searchParam: SortOption) {
+    fun setSearchParam(searchParam: FilterOption) {
         viewModelScope.launch {
             _uiState.update { it.copy(searchParam = searchParam) }
         }

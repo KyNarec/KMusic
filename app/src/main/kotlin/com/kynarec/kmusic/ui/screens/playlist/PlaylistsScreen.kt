@@ -108,20 +108,6 @@ fun PlaylistsScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
 
     Scaffold(
-//        topBar = {
-//            Row(
-//                Modifier
-//                    .fillMaxWidth()
-//                    .padding(horizontal = 16.dp, vertical = 8.dp),
-//                horizontalArrangement = Arrangement.SpaceBetween,
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-//                Text(
-//                    "Playlists",
-//                    style = MaterialTheme.typography.headlineMedium
-//                )
-//            }
-//        },
         floatingActionButton = {
             if (showFAB) {
                 FloatingActionButtonMenu(
@@ -310,7 +296,6 @@ fun PlaylistsScreen(
                     .fillMaxSize()
                     .padding(horizontal = 8.dp),
                 contentPadding = PaddingValues(
-                    top = 8.dp,
                     bottom = if (showControlBar) 70.dp else 0.dp
                 ),
                 columns = GridCells.Fixed(rememberColumnCount())

@@ -53,5 +53,11 @@ object Constants {
 
     const val PLAYER_REPEAT_MODE_KEY = "playerRepeatMode"
     val DEFAULT_PLAYER_REPEAT_MODE = PlayerRepeatMode.RepeatModeAll
+
+    const val SONGS_SORT_ORDER_KEY = "songsSortOrder"
+    val DEFAULT_SONGS_SORT_ORDER = SortOrder.Descending
+
+    const val SONGS_SORT_BY_KEY = "songsSortBy"
+    val DEFAULT_SONGS_SORT_BY = SortBy.Position
 }
 

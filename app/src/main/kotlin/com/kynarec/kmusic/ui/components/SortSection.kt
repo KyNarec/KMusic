@@ -23,31 +23,31 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.kynarec.kmusic.ui.screens.song.SortOption
+import com.kynarec.kmusic.ui.screens.song.FilterOption
 import com.kynarec.kmusic.ui.theme.KMusicTheme
 
 @ExperimentalMaterial3ExpressiveApi
 @Composable
 fun SortSection(
-    sortOptions: List<SortOption>,
-    selectedSortOption: SortOption,
-    onOptionSelected: (SortOption) -> Unit
+    filterOptions: List<FilterOption>,
+    selectedFilterOption: FilterOption,
+    onOptionSelected: (FilterOption) -> Unit
 ) {
     LazyRow (
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
     ) {
-        itemsIndexed(sortOptions, key = { _, sortOption -> sortOption.text }) { index, sortOption ->
+        itemsIndexed(filterOptions, key = { _, sortOption -> sortOption.text }) { index, sortOption ->
             ToggleButton(
                 shapes =  when (index) {
                     0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                    sortOptions.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                    filterOptions.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
                     else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                 },
                 onCheckedChange = { onOptionSelected(sortOption) },
-                checked = selectedSortOption == sortOption,
+                checked = selectedFilterOption == sortOption,
                 modifier = Modifier.semantics { role = Role.RadioButton },
                 ) {
                 Text(
@@ -71,18 +71,18 @@ fun PreviewSortSelection() {
         Scaffold { paddingValues ->
             Box(Modifier.padding(paddingValues)) {
 
-                val sortOptions = listOf(
-                    SortOption("Song"),
-                    SortOption("Album"),
-                    SortOption("Artist"),
-                    SortOption("Playlist"),
-                    SortOption("Videos"),
-                    SortOption("Podcasts"),
+                val filterOptions = listOf(
+                    FilterOption("Song"),
+                    FilterOption("Album"),
+                    FilterOption("Artist"),
+                    FilterOption("Playlist"),
+                    FilterOption("Videos"),
+                    FilterOption("Podcasts"),
                 )
-                var selectedSortOption by remember { mutableStateOf(sortOptions[2])}
+                var selectedSortOption by remember { mutableStateOf(filterOptions[2])}
                 SortSection(
-                    sortOptions = sortOptions,
-                    selectedSortOption = selectedSortOption,
+                    filterOptions = filterOptions,
+                    selectedFilterOption = selectedSortOption,
                     onOptionSelected = { selectedSortOption = it }
                 )
             }

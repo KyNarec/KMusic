@@ -1,4 +1,4 @@
-package com.kynarec.kmusic.ui.components.playlist
+package com.kynarec.kmusic.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,19 +21,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.kynarec.kmusic.enums.SortBy
-import com.kynarec.kmusic.ui.viewModels.PlaylistOfflineDetailActions
 
 @Preview
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun PlaylistSortByBottomSheet(
+fun SortByBottomSheet(
     onClick: (SortBy) -> Unit = {},
-    onDismiss: (PlaylistOfflineDetailActions) -> Unit = {},
+    onDismiss: () -> Unit = {},
 ) {
     val sheetState = rememberModalBottomSheetState()
 
     ModalBottomSheet(
-        onDismissRequest = { onDismiss(PlaylistOfflineDetailActions.TogglePlaylistSortByBottomSheet) },
+        onDismissRequest = { onDismiss() },
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
@@ -49,7 +48,7 @@ fun PlaylistSortByBottomSheet(
                 Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     .clickable(onClick = {
                         onClick(sortBy)
-                        onDismiss(PlaylistOfflineDetailActions.TogglePlaylistSortByBottomSheet)
+                        onDismiss()
                     }),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
