@@ -2,6 +2,7 @@ package com.kynarec.kmusic.service.innertube
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -16,6 +17,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
@@ -599,14 +601,20 @@ class InnerTube(
                 }
             }
 
-            if (!response.status.isSuccess()) {
+            if (response.status == HttpStatusCode.BadRequest) {
+                return NetworkResult.Failure.NotFound
+            } else if (!response.status.isSuccess()) {
                 return NetworkResult.Failure.NetworkError
             }
 
             return NetworkResult.Success(response.bodyAsText())
 
-        } catch (e: Exception) {
+        } catch (e: ResponseException) {
             e.printStackTrace()
+
+            if (e.response.status == HttpStatusCode.BadRequest) {
+                return NetworkResult.Failure.NotFound
+            }
             return NetworkResult.Failure.NetworkError
         }
     }
