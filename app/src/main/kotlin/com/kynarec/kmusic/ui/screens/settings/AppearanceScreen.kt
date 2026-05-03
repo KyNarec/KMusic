@@ -21,7 +21,7 @@ import com.kynarec.kmusic.enums.TransitionEffect
 import com.kynarec.kmusic.ui.components.SegmentedColumn
 import com.kynarec.kmusic.ui.components.settings.SettingComponentEnumChoice
 import com.kynarec.kmusic.ui.components.settings.SettingComponentSwitch
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.utils.Constants.DARK_MODE_KEY
 import com.kynarec.kmusic.utils.Constants.DEFAULT_DARK_MODE
@@ -33,14 +33,14 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 @Composable
 fun AppearanceScreen(
     prefs: SettingsViewModel = koinActivityViewModel(),
-    musicViewModel: MusicViewModel = koinActivityViewModel()
+    appViewModel: AppViewModel = koinActivityViewModel(),
 
-) {
+    ) {
     val scope = rememberCoroutineScope()
 
     val transitionEffectFlow by prefs.transitionEffectFlow.collectAsStateWithLifecycle(prefs.transitionEffect)
 
-    val showControlBar = musicViewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
     val bottomPadding = if (showControlBar) 70.dp else 0.dp
 
     LazyColumn(

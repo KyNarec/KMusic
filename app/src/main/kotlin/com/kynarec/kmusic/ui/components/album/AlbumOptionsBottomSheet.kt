@@ -29,9 +29,11 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.ui.components.song.BottomSheetItem
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.LibraryAction
+import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -39,7 +41,7 @@ fun AlbumOptionsBottomSheet(
     album: Album?,
     albumSongs: List<Song>,
     onDismiss: () -> Unit,
-    viewModel: MusicViewModel,
+    viewModel: LibraryViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject()
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -77,17 +79,14 @@ fun AlbumOptionsBottomSheet(
                     icon = if (isLiked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                     text = if (isLiked) "Remove from favorites" else "Add to favorites",
                     onClick = {
-//                        viewModel.deletePlaylist(playlist!!)
-//                        navController.navigate(PlaylistsScreen)
-                        viewModel.toggleFavoriteAlbum(activeAlbum, albumSongs)
-//                        onDismiss()
+                        viewModel.onAction(LibraryAction.ToggleFavoriteAlbum(activeAlbum, albumSongs))
                     }
                 )
                 BottomSheetItem(
                     icon = Icons.Rounded.SkipNext,
                     text = "Play next",
                     onClick = {
-                        viewModel.playNextList(albumSongs)
+                        viewModel.onAction(LibraryAction.PlayNextList(albumSongs))
                         SmartMessage("Playing ${activeAlbum.title} next", context = context)
                         onDismiss()
                     }
@@ -97,7 +96,7 @@ fun AlbumOptionsBottomSheet(
                     icon = Icons.Rounded.LowPriority,
                     text = "Enqueue",
                     onClick = {
-                        viewModel.enqueueSongList(albumSongs)
+                        viewModel.onAction(LibraryAction.EnqueueList(albumSongs))
                         SmartMessage("Added ${activeAlbum.title} to queue", context = context)
                         onDismiss()
                     }

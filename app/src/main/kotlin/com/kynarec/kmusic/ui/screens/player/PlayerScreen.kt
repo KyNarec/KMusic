@@ -95,14 +95,14 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.ArtistDetailScreen
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.PlayerScreenAction
+import com.kynarec.kmusic.ui.viewModels.PlayerScreenViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import com.mocharealm.accompanist.lyrics.ui.composable.lyrics.KaraokeBreathingDotsDefaults
 import com.mocharealm.accompanist.lyrics.ui.composable.lyrics.KaraokeLyricsView
 import ir.mahozad.multiplatform.wavyslider.WaveDirection
 import ir.mahozad.multiplatform.wavyslider.material.WavySlider
 import org.koin.compose.koinInject
-import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -110,14 +110,14 @@ fun PlayerScreen(
     onLyricsClick: () -> Unit,
     onQueueClick: () -> Unit,
     onMoreClick: () -> Unit,
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    viewModel: PlayerScreenViewModel,
     database: KmusicDatabase = koinInject(),
     navController: NavHostController,
     onClose: () -> Unit
 ) {
     val context = LocalContext.current
 
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.state.collectAsStateWithLifecycle()
 
     val isLoadingLyrics = remember { mutableStateOf(false) }
     val lyricsToggled = remember { mutableStateOf(false) }
@@ -256,7 +256,7 @@ fun PlayerScreen(
                                 lyrics = uiState.currentLyrics!!,
                                 currentPosition = { uiState.currentPosition.toInt() },
                                 onLineClicked = { line ->
-                                    viewModel.seekTo(line.start.toLong())
+                                    viewModel.onAction(PlayerScreenAction.SeekTo(line.start.toLong()))
                                 },
                                 onLinePressed = {},
                                 normalLineTextStyle = LocalTextStyle.current.copy(
@@ -296,8 +296,10 @@ fun PlayerScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Song title
-            val isLiked = database.songDao().getSongFlowById(uiState.currentSong!!.id)
-                .collectAsStateWithLifecycle(null).value?.isLiked ?: false
+            val isLiked = uiState.currentSong?.let {
+                database.songDao().getSongFlowById(it.id)
+                    .collectAsStateWithLifecycle(null).value?.isLiked
+            } ?: false
             Box(
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -308,7 +310,7 @@ fun PlayerScreen(
                     onClick = {
                         if (uiState.currentSong?.albumId != "" && uiState.currentSong?.albumId != null) {
                             onClose()
-                            navController.navigate(AlbumDetailScreen(uiState.currentSong?.albumId!!))
+                            navController.navigate(AlbumDetailScreen(uiState.currentSong?.albumId ?: ""))
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
@@ -352,7 +354,7 @@ fun PlayerScreen(
                 }
 
                 IconButton(
-                    onClick = { viewModel.toggleFavoriteSong(uiState.currentSong!!) },
+                    onClick = { uiState.currentSong?.let { viewModel.onAction(PlayerScreenAction.ToggleFavorite(it)) } },
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
                         .padding(end = 8.dp)
@@ -436,7 +438,7 @@ fun PlayerScreen(
                         newSliderValue.floatValue = newValue
                     },
                     onValueChangeFinished = {
-                        viewModel.seekTo((newSliderValue.floatValue * uiState.currentDurationLong).toLong())
+                        viewModel.onAction(PlayerScreenAction.SeekTo((newSliderValue.floatValue * uiState.currentDurationLong).toLong()))
                         isDragging.value = false
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -491,7 +493,7 @@ fun PlayerScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
-                    onClick = { viewModel.skipToPrevious() },
+                    onClick = { viewModel.onAction(PlayerScreenAction.SkipPrevious) },
                     modifier = Modifier.size(50.dp),
                     shape = IconButtonDefaults.mediumSquareShape,
                 ) {
@@ -504,7 +506,7 @@ fun PlayerScreen(
                 }
                 IconButton(
                     onClick = {
-                        if (uiState.isPlaying) viewModel.pause() else viewModel.resume()
+                        viewModel.onAction(PlayerScreenAction.TogglePlayPause)
                     },
                     modifier = Modifier.size(70.dp),
                     shape = IconButtonDefaults.mediumSquareShape,
@@ -541,7 +543,7 @@ fun PlayerScreen(
                     }
                 }
                 IconButton(
-                    onClick = { viewModel.skipToNext() },
+                    onClick = { viewModel.onAction(PlayerScreenAction.SkipNext) },
                     modifier = Modifier.size(50.dp),
                     shape = IconButtonDefaults.mediumSquareShape,
                 ) {

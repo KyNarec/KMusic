@@ -25,7 +25,7 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.AlbumPreview
 import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.components.album.AlbumComponent
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.utils.rememberColumnCount
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
@@ -34,7 +34,7 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 @Composable
 fun AlbumsScreen(
     modifier: Modifier = Modifier,
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
@@ -44,7 +44,7 @@ fun AlbumsScreen(
     val albums by database.albumDao().getFavouritesAlbumsFlow().collectAsStateWithLifecycle(null)
     val isLoading by remember { mutableStateOf(false) }
 
-    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
     val bottomPadding = if (showControlBar) 70.dp else 0.dp
 
     Column(

@@ -21,16 +21,20 @@ import com.kynarec.kmusic.enums.PlayerRepeatMode
 import com.kynarec.kmusic.enums.StartDestination
 import com.kynarec.kmusic.ui.components.settings.SettingComponentEnumChoice
 import com.kynarec.kmusic.ui.components.settings.SettingComponentSwitch
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
+import com.kynarec.kmusic.ui.viewModels.PlayerScreenAction
+import com.kynarec.kmusic.ui.viewModels.PlayerScreenViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.utils.Constants.DEFAULT_WAVY_LYRICS_IDLE_INDICATOR
 import com.kynarec.kmusic.utils.Constants.WAVY_LYRICS_IDLE_INDICATOR_KEY
+import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.viewmodel.koinActivityViewModel
 
 @Composable
 fun InterfaceScreen(
     prefs: SettingsViewModel = koinActivityViewModel(),
-    musicViewModel: MusicViewModel = koinActivityViewModel()
+    appViewModel: AppViewModel = koinActivityViewModel(),
+    playerScreenViewModel: PlayerScreenViewModel = koinViewModel(),
 ) {
     val scope = rememberCoroutineScope()
 
@@ -38,7 +42,7 @@ fun InterfaceScreen(
     val playerRepeatModeFlow by prefs.playerRepeatModeFlow.collectAsStateWithLifecycle(prefs.playerRepeatMode)
 
 
-    val showControlBar = musicViewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
     val bottomPadding = if (showControlBar) 70.dp else 0.dp
     LazyColumn(
         Modifier.fillMaxSize()
@@ -105,7 +109,7 @@ fun InterfaceScreen(
                     selected = playerRepeatModeFlow,
                     onValueSelected = {
                         prefs.putPlayerRepeatMode(it)
-                        musicViewModel.changePlayerRepeatMode(it)
+                        playerScreenViewModel.onAction(PlayerScreenAction.ToggleRepeatMode(it))
                     },
                     labelMapper = { it.toString() }
                 )

@@ -55,7 +55,7 @@ import com.kynarec.kmusic.ui.screens.player.MusicPlayerSheet
 import com.kynarec.kmusic.ui.screens.player.PlayerSheetMode
 import com.kynarec.kmusic.ui.screens.playlist.PlaylistsScreen
 import com.kynarec.kmusic.ui.screens.song.SongsScreen
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import kotlinx.coroutines.launch
@@ -66,7 +66,7 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 @Composable
 fun StarterScreensContainer(
     rootNavController: NavHostController,
-    musicViewModel: MusicViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
     settingsViewModel: SettingsViewModel = koinActivityViewModel(),
     playerViewModel: PlayerViewModel = koinActivityViewModel()
 ) {
@@ -78,7 +78,7 @@ fun StarterScreensContainer(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val showBottomSheet = retain { mutableStateOf(false) }
 
-    val showControlBar = musicViewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
 
     val transitionEffect by settingsViewModel.transitionEffectFlow.collectAsStateWithLifecycle(settingsViewModel.transitionEffect)
     val startDestination by settingsViewModel.startDestinationFlow.collectAsStateWithLifecycle(settingsViewModel.startDestination)

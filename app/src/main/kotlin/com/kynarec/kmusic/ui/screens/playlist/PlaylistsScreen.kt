@@ -59,7 +59,7 @@ import com.kynarec.kmusic.ui.PlaylistOfflineDetailScreen
 import com.kynarec.kmusic.ui.components.playlist.PlaylistComponent
 import com.kynarec.kmusic.ui.components.playlist.PlaylistCreateNewDialog
 import com.kynarec.kmusic.ui.components.playlist.PlaylistImportFromOnlineDialog
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.importPlaylistFromCsv
 import com.kynarec.kmusic.utils.rememberColumnCount
@@ -78,7 +78,7 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 @Composable
 fun PlaylistsScreen(
     modifier: Modifier = Modifier,
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController,
     ) {
@@ -95,7 +95,7 @@ fun PlaylistsScreen(
     val currentLine = remember { mutableIntStateOf(0) }
     val isImportingPlaylist = remember { mutableStateOf(false) }
 
-    val showControlBar = viewModel.uiState.collectAsStateWithLifecycle().value.showControlBar
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
 
     // Used for dimming the screen, not yet implemented
     var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }

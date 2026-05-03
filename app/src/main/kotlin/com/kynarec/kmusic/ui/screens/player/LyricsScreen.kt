@@ -61,30 +61,27 @@ import com.kynarec.klyrics.LyricsLine
 import com.kynarec.klyrics.LyricsState
 import com.kynarec.klyrics.UiLyrics
 import com.kynarec.klyrics.rememberLyricsState
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.LyricsViewModel
+import com.kynarec.kmusic.ui.viewModels.PlayerScreenAction
+import com.kynarec.kmusic.ui.viewModels.PlayerScreenViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.utils.Constants.DEFAULT_WAVY_LYRICS_IDLE_INDICATOR
-import com.kynarec.kmusic.utils.toSeconds
 import com.mocharealm.accompanist.lyrics.core.model.SyncedLyrics
 import com.mocharealm.accompanist.lyrics.core.model.synced.SyncedLine
 import org.koin.compose.viewmodel.koinActivityViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LyricsScreen(
     onDismiss: () -> Unit,
-    musicViewModel: MusicViewModel = koinActivityViewModel(),
+    lyricsViewModel: LyricsViewModel = koinViewModel(),
+    playerScreenViewModel: PlayerScreenViewModel,
     settingsViewModel: SettingsViewModel = koinActivityViewModel()
 ) {
-    val uiState by musicViewModel.uiState.collectAsStateWithLifecycle()
+    val lyricsUiState by lyricsViewModel.uiState.collectAsStateWithLifecycle()
+    val playerUiState by playerScreenViewModel.state.collectAsStateWithLifecycle()
     val wavyLyricsIdleIndicator by settingsViewModel.wavyLyricsIdleIndicatorFlow.collectAsStateWithLifecycle(DEFAULT_WAVY_LYRICS_IDLE_INDICATOR)
-
-    val currentUiLyrics = remember(uiState.currentSong?.id, uiState.currentLyrics) {
-//        uiState.currentLyrics?.toUiLyrics(uiState.currentDurationLong.toSeconds())?.lines?.forEach {
-//            println("LyricsScreen $it")
-//        }
-        uiState.currentLyrics?.toUiLyrics(uiState.currentDurationLong.toSeconds())
-    }
 
     BackHandler {
         onDismiss()
@@ -94,7 +91,7 @@ fun LyricsScreen(
         Modifier.fillMaxSize()
     )
     { contentPadding ->
-        if (uiState.isLoadingLyrics) {
+        if (lyricsUiState.isLoading) {
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -105,11 +102,12 @@ fun LyricsScreen(
                 CircularWavyProgressIndicator()
             }
         }
-        if (currentUiLyrics != null && !uiState.isLoadingLyrics) {
+        if (lyricsUiState.currentUiLyrics != null && !lyricsUiState.isLoading) {
+            val currentUiLyrics = lyricsUiState.currentUiLyrics!!
             val lyricsState = rememberLyricsState(
                 uiLyrics = currentUiLyrics,
-                isPlaying = { uiState.isPlaying },
-                playbackTime = { uiState.currentPosition.toInt() }
+                isPlaying = { playerUiState.isPlaying },
+                playbackTime = { playerUiState.currentPosition.toInt() }
             )
             val focusedColor = LocalContentColor.current
 
@@ -147,8 +145,8 @@ fun LyricsScreen(
                                 constraints = constraints,
                                 singleArtist = currentUiLyrics.lines.all { it.alignment == Alignment.Start },
                                 onClick = {
-                                    musicViewModel.seekTo(line.start.toLong())
-                                    if (!uiState.isPlaying) musicViewModel.resume()
+                                    playerScreenViewModel.onAction(PlayerScreenAction.SeekTo(line.start.toLong()))
+                                    if (!playerUiState.isPlaying) playerScreenViewModel.onAction(PlayerScreenAction.Resume)
                                 }
                             )
                     },
@@ -165,8 +163,8 @@ fun LyricsScreen(
                                 state = lyricsState,
                                 focusedColor = focusedColor,
                                 unfocusedColor = unfocusedColor,
-                                waveSpeed = if (uiState.isPlaying) 10.dp else 0.dp,
-                                isPlaying = { uiState.isPlaying }
+                                waveSpeed = if (playerUiState.isPlaying) 10.dp else 0.dp,
+                                isPlaying = { playerUiState.isPlaying }
                             )
                         else
                             LinearLyricsIdleIndicator(
@@ -174,12 +172,12 @@ fun LyricsScreen(
                                 state = lyricsState,
                                 focusedColor = focusedColor,
                                 unfocusedColor = unfocusedColor,
-                                isPlaying = { uiState.isPlaying }
+                                isPlaying = { playerUiState.isPlaying }
                             )
                     }
                 )
             }
-        } else if(currentUiLyrics == null && !uiState.isLoadingLyrics) {
+        } else if(lyricsUiState.currentUiLyrics == null && !lyricsUiState.isLoading) {
             ElevatedCard(
                 Modifier
                     .fillMaxWidth()

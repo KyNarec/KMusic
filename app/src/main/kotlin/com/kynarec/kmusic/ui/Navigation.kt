@@ -2,7 +2,6 @@ package com.kynarec.kmusic.ui
 
 import android.content.Intent
 import android.util.Log
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -39,7 +38,6 @@ import com.kynarec.kmusic.ui.screens.StarterScreensContainer
 import com.kynarec.kmusic.ui.screens.album.AlbumDetailScreen
 import com.kynarec.kmusic.ui.screens.album.AlbumListScreen
 import com.kynarec.kmusic.ui.screens.artist.ArtistDetailScreen
-import com.kynarec.kmusic.ui.screens.player.LyricsScreen
 import com.kynarec.kmusic.ui.screens.playlist.PlaylistOfflineDetailScreen
 import com.kynarec.kmusic.ui.screens.playlist.PlaylistOnlineDetailScreen
 import com.kynarec.kmusic.ui.screens.search.SearchResultScreen
@@ -359,34 +357,6 @@ fun Navigation(
                     navController = navController,
                 )
             }
-        }
-
-        composable<LyricsScreen>(
-            enterTransition = {
-                slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Left
-                )
-            },
-            exitTransition = {
-                slideOutOfContainer(
-                    AnimatedContentTransitionScope.SlideDirection.Right
-                )
-            },
-            popEnterTransition = {
-                slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Left
-                )
-            },
-            popExitTransition = {
-                slideOutOfContainer(
-                AnimatedContentTransitionScope.SlideDirection.Right
-                )
-            }
-        ) {
-            Log.i("Navigation", "LyricsScreen")
-            LyricsScreen(
-                onDismiss = {}
-            )
         }
     }
 }

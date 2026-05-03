@@ -48,8 +48,11 @@ import com.kynarec.kmusic.ui.components.SegmentedColumn
 import com.kynarec.kmusic.ui.components.SongInformation
 import com.kynarec.kmusic.ui.components.player.SleepTimerDialog
 import com.kynarec.kmusic.ui.components.playlist.AddToPlaylistDialog
+import com.kynarec.kmusic.ui.viewModels.AppAction
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.LibraryAction
+import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.shareUrl
 import kotlinx.coroutines.launch
@@ -62,8 +65,9 @@ fun PlayerOptionsScreen(
     song: Song,
     onDismiss: () -> Unit,
     onInformation: () -> Unit = {},
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    libraryViewModel: LibraryViewModel = koinActivityViewModel(),
     dataViewModel: DataViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController,
     isInPlaylistDetailScreen: Boolean = false,
@@ -73,8 +77,8 @@ fun PlayerOptionsScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val sleepTimerTimeLeft = uiState.timeLeftMillis
+    val appState by appViewModel.state.collectAsStateWithLifecycle()
+    val sleepTimerTimeLeft = appState.timeLeftMillis
     var showSleepTimerDialog by remember { mutableStateOf(false) }
 
     val dbSong by database.songDao()
@@ -94,7 +98,7 @@ fun PlayerOptionsScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.maybeAddSongToDB(song)
+        libraryViewModel.onAction(LibraryAction.MaybeAddSongToDB(song))
     }
     if (dbSong == null) {
         Row(
@@ -206,7 +210,7 @@ fun PlayerOptionsScreen(
                         },
                         headlineContent = { Text(if (isLiked) "Remove from favorites" else "Add to favorites") },
                         modifier = Modifier.clickable {
-                            viewModel.toggleFavoriteSong(dbSong!!)
+                            libraryViewModel.onAction(LibraryAction.ToggleFavoriteSong(dbSong!!))
                         }
                     )
                 },
@@ -221,7 +225,7 @@ fun PlayerOptionsScreen(
                         },
                         headlineContent = { Text("Start radio") },
                         modifier = Modifier.clickable {
-                            viewModel.playSongByIdWithRadio(dbSong!!)
+                            libraryViewModel.onAction(LibraryAction.PlaySong(dbSong!!, withRadio = true))
                             onDismiss()
                         }
                     )
@@ -237,7 +241,7 @@ fun PlayerOptionsScreen(
                         },
                         headlineContent = { Text("Play next") },
                         modifier = Modifier.clickable {
-                            viewModel.playNext(dbSong!!)
+                            libraryViewModel.onAction(LibraryAction.PlayNext(dbSong!!))
                             SmartMessage("Playing ${dbSong!!.title} next", context = context)
                             onDismiss()
                         }
@@ -254,7 +258,7 @@ fun PlayerOptionsScreen(
                         },
                         headlineContent = { Text("Enqueue") },
                         modifier = Modifier.clickable {
-                            viewModel.enqueueSong(dbSong!!)
+                            libraryViewModel.onAction(LibraryAction.EnqueueSong(dbSong!!))
                             SmartMessage("Added ${dbSong!!.title} to queue", context = context)
                             onDismiss()
                         }
@@ -300,7 +304,7 @@ fun PlayerOptionsScreen(
                     }
                 )
             }
-            if ((uiState.currentSong?.id ?: "") == dbSong!!.id) {
+            if ((appState.currentSong?.id ?: "") == dbSong!!.id) {
                 listItems.add(
                     {
                         ListItem(
@@ -338,7 +342,7 @@ fun PlayerOptionsScreen(
         SleepTimerDialog(
             onDismiss = { showSleepTimerDialog = false },
             onTimerSelected = { minutes ->
-                viewModel.startSleepTimer(minutes)
+                appViewModel.onAction(AppAction.StartSleepTimer(minutes))
                 showSleepTimerDialog = false
                 onDismiss() // Close bottom sheet
             }

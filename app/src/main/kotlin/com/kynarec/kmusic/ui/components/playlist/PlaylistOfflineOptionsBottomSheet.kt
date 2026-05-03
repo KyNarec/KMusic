@@ -51,7 +51,8 @@ import com.kynarec.kmusic.service.innertube.getPlaylistAndSongs
 import com.kynarec.kmusic.ui.StarterScreens
 import com.kynarec.kmusic.ui.components.MarqueeBox
 import com.kynarec.kmusic.ui.components.song.BottomSheetItem
-import com.kynarec.kmusic.ui.viewModels.MusicViewModel
+import com.kynarec.kmusic.ui.viewModels.LibraryAction
+import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.shareUrl
 import kotlinx.coroutines.Dispatchers
@@ -64,7 +65,7 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 fun PlaylistOfflineOptionsBottomSheet(
     playlistId: Long,
     onDismiss: () -> Unit,
-    viewModel: MusicViewModel = koinActivityViewModel(),
+    libraryViewModel: LibraryViewModel = koinActivityViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController
 ) {
@@ -175,7 +176,7 @@ fun PlaylistOfflineOptionsBottomSheet(
                     icon = Icons.Rounded.SkipNext,
                     text = "Play next",
                     onClick = {
-                        viewModel.playNextList(songs)
+                        libraryViewModel.onAction(LibraryAction.PlayNextList(songs))
                         SmartMessage("Playing ${playlist!!.name} next", context = context)
                         onDismiss()
                     }
@@ -185,7 +186,7 @@ fun PlaylistOfflineOptionsBottomSheet(
                     icon = Icons.Rounded.LowPriority,
                     text = "Enqueue",
                     onClick = {
-                        viewModel.enqueueSongList(songs)
+                        libraryViewModel.onAction(LibraryAction.EnqueueList(songs))
                         SmartMessage("Added ${playlist!!.name} to queue", context = context)
                         onDismiss()
                     }
@@ -255,7 +256,7 @@ fun PlaylistOfflineOptionsBottomSheet(
                     icon = Icons.Default.Delete,
                     text = "Delete",
                     onClick = {
-                        viewModel.deletePlaylist(playlist!!)
+                        libraryViewModel.onAction(LibraryAction.DeletePlaylist(playlist!!))
                         navController.navigate(StarterScreens)
                         SmartMessage(
                             "Playlist deleted successfully",
