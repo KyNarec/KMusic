@@ -87,7 +87,8 @@ val appModule = module {
     viewModel {
         SongsScreenViewModel(
             kSafe = get(),
-            database = get()
+            database = get(),
+            dataViewModel = get()
         )
     }
 }

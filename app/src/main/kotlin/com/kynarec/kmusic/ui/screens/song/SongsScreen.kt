@@ -21,7 +21,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.LowPriority
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -50,7 +52,6 @@ import com.kynarec.kmusic.ui.components.SortSection
 import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
 import com.kynarec.kmusic.ui.viewModels.AppViewModel
-import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.LibraryAction
 import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
 import com.kynarec.kmusic.ui.viewModels.SongsScreenAction
@@ -76,7 +77,6 @@ fun SongsScreen(
     modifier: Modifier = Modifier,
     libraryViewModel: LibraryViewModel = koinActivityViewModel(),
     appViewModel: AppViewModel = koinActivityViewModel(),
-    dataViewModel: DataViewModel = koinActivityViewModel(),
     songsScreenViewModel: SongsScreenViewModel = koinViewModel(),
     database: KmusicDatabase = koinInject(),
     navController: NavHostController
@@ -89,8 +89,6 @@ fun SongsScreen(
     val showBottomSheet = remember { mutableStateOf(false) }
     var longClickSong by remember { mutableStateOf<Song?>(null) }
 
-    val completedIds by dataViewModel.completedDownloadIds.collectAsStateWithLifecycle()
-
     val filterOptions = listOf(
         FilterOption("All"),
         FilterOption("Favorites"),
@@ -101,14 +99,7 @@ fun SongsScreen(
     val state by songsScreenViewModel.state.collectAsStateWithLifecycle()
 
     val selectedFilterOption = state.songsFilterOption
-    val downloadedSongs = state.allSongs.filter { it.id in completedIds }
-
-    val sortedSongs = when (selectedFilterOption.text) {
-        "Downloads" -> downloadedSongs
-        else -> state.sortedSongs
-    }
-
-
+    val sortedSongs = state.sortedSongs
 
     Column(
         Modifier.fillMaxSize()
@@ -150,6 +141,24 @@ fun SongsScreen(
                 )
             }
             Spacer(Modifier.weight(1f))
+
+            IconButton(
+                onClick = { libraryViewModel.onAction(LibraryAction.PlayNextList(sortedSongs)) }
+            ) {
+                Icon(
+                    Icons.Rounded.SkipNext,
+                    contentDescription = "Play next"
+                )
+            }
+
+            IconButton(
+                onClick = { libraryViewModel.onAction(LibraryAction.EnqueueList(sortedSongs)) }
+            ) {
+                Icon(
+                    Icons.Rounded.LowPriority,
+                    contentDescription = "Enqueue"
+                )
+            }
 
             IconButton(
                 onClick = { libraryViewModel.onAction(LibraryAction.PlayShuffled(sortedSongs))}

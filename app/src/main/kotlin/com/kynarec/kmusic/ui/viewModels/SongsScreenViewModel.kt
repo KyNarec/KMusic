@@ -43,7 +43,8 @@ sealed interface SongsScreenAction {
 
 class SongsScreenViewModel(
     private val kSafe: KSafe,
-    private val database: KmusicDatabase
+    private val database: KmusicDatabase,
+    private val dataViewModel: DataViewModel
 ) : ViewModel() {
     private val tag = "SongsScreenViewModel"
     private val _state = MutableStateFlow(SongsScreenState())
@@ -92,6 +93,7 @@ class SongsScreenViewModel(
                         "All" -> allSongs
                         "Favorites" -> allSongs.filter { song -> song.isLiked }
                         "Listened" -> allSongs.filter { song -> song.totalPlayTimeMs > 0 }
+                        "Downloads" ->allSongs.filter { song -> song.id in dataViewModel.completedDownloadIds.value }
                         else -> allSongs
                     }
                 )
