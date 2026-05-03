@@ -277,7 +277,7 @@ fun getRadioFlow(
             val title = renderer.title?.runs?.firstOrNull()?.text ?: "Unknown Title"
 
             val artistRuns = renderer.shortBylineText?.runs.orEmpty()
-            var albumId = "Unknown AlbumId"
+            var albumId : String? = null
             val artistsList = mutableListOf<SongArtist>()
             var dotCount = 0
             for (index in 0..<artistRuns.size) {
@@ -1594,7 +1594,7 @@ suspend fun getPlaylistAndSongs(browseId: String): NetworkResult<PlaylistWithSon
                     ?.getPlaylistAndSongsText ?: ""
             }
 
-            var albumId = ""
+            var albumId : String? = null
             val artistList = mutableListOf<SongArtist>()
             for (flexColumn in song?.getPlaylistAndSongsFlexColumns.orEmpty()) {
                 val artistRuns = flexColumn
@@ -1643,7 +1643,7 @@ suspend fun getPlaylistAndSongs(browseId: String): NetworkResult<PlaylistWithSon
                         ?.getPlaylistAndSongsBrowseEndpointContextMusicConfig
                         ?.getPlaylistAndSongsPageType == "MUSIC_PAGE_TYPE_ALBUM"
                 ) {
-                    albumId = browseEndpoint.getPlaylistAndSongsBrowseId ?: ""
+                    albumId = browseEndpoint.getPlaylistAndSongsBrowseId
                 }
             }
 
@@ -1769,7 +1769,7 @@ suspend fun browsePlaylistSongsContinuation(
                     ?.browsePlaylistSongsContinuationText ?: ""
 
                 var title = ""
-                var albumId = ""
+                var albumId : String? = null
                 val artistList = mutableListOf<SongArtist>()
 
                 songRenderer.browsePlaylistSongsContinuationFlexColumns?.forEachIndexed { index, flexColumn ->
@@ -1801,7 +1801,7 @@ suspend fun browsePlaylistSongsContinuation(
                                 }
 
                                 "MUSIC_PAGE_TYPE_ALBUM" -> {
-                                    albumId = nav.browsePlaylistSongsContinuationBrowseId ?: ""
+                                    albumId = nav.browsePlaylistSongsContinuationBrowseId
                                 }
                             }
                         }
