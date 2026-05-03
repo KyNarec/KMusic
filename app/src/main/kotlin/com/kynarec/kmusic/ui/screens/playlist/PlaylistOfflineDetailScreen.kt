@@ -85,8 +85,8 @@ import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.enums.SortBy
 import com.kynarec.kmusic.enums.SortOrder
 import com.kynarec.kmusic.ui.components.MarqueeBox
+import com.kynarec.kmusic.ui.components.SortByBottomSheet
 import com.kynarec.kmusic.ui.components.playlist.PlaylistOfflineOptionsBottomSheet
-import com.kynarec.kmusic.ui.components.playlist.PlaylistSortByBottomSheet
 import com.kynarec.kmusic.ui.components.playlist.TwoByTwoImageGrid
 import com.kynarec.kmusic.ui.components.song.SongComponentSkeleton
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
@@ -452,9 +452,9 @@ fun PlaylistOfflineDetailScreen(
     }
 
     if (state.showPlaylistSortByBottomSheet) {
-        PlaylistSortByBottomSheet(
+        SortByBottomSheet(
             onClick = playlistOfflineDetailViewModel::putPlaylistSortBy,
-            onDismiss = playlistOfflineDetailViewModel::onAction
+            onDismiss = { playlistOfflineDetailViewModel.onAction(PlaylistOfflineDetailActions.TogglePlaylistSortByBottomSheet) }
         )
     }
 }

@@ -36,7 +36,7 @@ data class PlaylistOfflineDetailState(
     val showPlaylistSortByBottomSheet: Boolean = false,
 )
 
-sealed interface PlaylistOfflineDetailActions{
+sealed interface PlaylistOfflineDetailActions {
     data object Sync: PlaylistOfflineDetailActions
     data object LockCLick: PlaylistOfflineDetailActions
     data object ToggleSongDetailBottomSheet: PlaylistOfflineDetailActions

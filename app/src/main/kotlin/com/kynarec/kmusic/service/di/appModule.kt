@@ -17,6 +17,7 @@ import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
 import com.kynarec.kmusic.ui.viewModels.PlaylistOfflineDetailViewModel
 import com.kynarec.kmusic.ui.viewModels.PlaylistOnlineDetailViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
+import com.kynarec.kmusic.ui.viewModels.SongsScreenViewModel
 import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
 import eu.anifantakis.lib.ksafe.KSafe
 import kotlinx.coroutines.CoroutineScope
@@ -81,5 +82,13 @@ val appModule = module {
 
     viewModel { (playlistPreview: PlaylistPreview) ->
         PlaylistOnlineDetailViewModel(playlistPreview = playlistPreview, application = get())
+    }
+
+    viewModel {
+        SongsScreenViewModel(
+            kSafe = get(),
+            database = get(),
+            dataViewModel = get()
+        )
     }
 }

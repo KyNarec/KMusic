@@ -8,7 +8,7 @@ import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.data.repository.LibraryRepository
 import com.kynarec.kmusic.data.repository.PlayerRepository
-import com.kynarec.kmusic.ui.screens.song.SortOption
+import com.kynarec.kmusic.ui.screens.song.FilterOption
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,8 +16,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class LibraryState(
-    val songsSortOption: SortOption = SortOption("All"),
-    val searchParam: SortOption = SortOption("Song")
+    val songsFilterOption: FilterOption = FilterOption("All"),
+    val searchParam: FilterOption = FilterOption("Song")
 )
 
 sealed interface LibraryAction {
@@ -36,8 +36,8 @@ sealed interface LibraryAction {
     data class ToggleFavoriteArtist(val artist: Artist) : LibraryAction
     data class DeletePlaylist(val playlist: Playlist) : LibraryAction
 
-    data class SetSortOption(val option: SortOption) : LibraryAction
-    data class SetSearchParam(val param: SortOption) : LibraryAction
+    data class SetSortOption(val option: FilterOption) : LibraryAction
+    data class SetSearchParam(val param: FilterOption) : LibraryAction
 }
 
 class LibraryViewModel(
@@ -81,7 +81,7 @@ class LibraryViewModel(
                 viewModelScope.launch { libraryRepository.deletePlaylist(action.playlist) }
             }
             
-            is LibraryAction.SetSortOption -> _state.update { it.copy(songsSortOption = action.option) }
+            is LibraryAction.SetSortOption -> _state.update { it.copy(songsFilterOption = action.option) }
             is LibraryAction.SetSearchParam -> _state.update { it.copy(searchParam = action.param) }
         }
     }

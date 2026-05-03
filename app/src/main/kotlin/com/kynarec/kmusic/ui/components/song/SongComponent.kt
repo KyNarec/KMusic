@@ -50,6 +50,7 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SongComponent(
+    modifier: Modifier = Modifier,
     song: Song,
     onClick: () -> Unit,
     onLongClick: () -> Unit = {},
@@ -69,7 +70,7 @@ fun SongComponent(
 
     val coloredDownloadIndicator = settingsViewModel.coloredDownloadIndicator
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(80.dp)
             .combinedClickable(

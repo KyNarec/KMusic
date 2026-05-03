@@ -67,7 +67,7 @@ import com.kynarec.kmusic.ui.components.playlist.PlaylistComponentSkeleton
 import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongComponentSkeleton
 import com.kynarec.kmusic.ui.components.song.SongOptionsBottomSheet
-import com.kynarec.kmusic.ui.screens.song.SortOption
+import com.kynarec.kmusic.ui.screens.song.FilterOption
 import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.LibraryAction
 import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
@@ -111,12 +111,12 @@ fun SearchResultScreen(
     val bottomPadding = if (showControlBar) 70.dp else 0.dp
 
     val searchParams = listOf(
-        SortOption("Song"),
-        SortOption("Album"),
-        SortOption("Artist"),
-        SortOption("Playlist"),
-        SortOption("Videos"),
-        SortOption("Podcasts"),
+        FilterOption("Song"),
+        FilterOption("Album"),
+        FilterOption("Artist"),
+        FilterOption("Playlist"),
+        FilterOption("Videos"),
+        FilterOption("Podcasts"),
     )
 
     val columnCount = rememberColumnCount()
@@ -321,8 +321,8 @@ fun SearchResultScreen(
                 }
             }
             SortSection(
-                sortOptions = searchParams,
-                selectedSortOption = selectedSearchParam,
+                filterOptions = searchParams,
+                selectedFilterOption = selectedSearchParam,
                 onOptionSelected = {
                     libraryViewModel.onAction(LibraryAction.SetSearchParam(it))
                 }

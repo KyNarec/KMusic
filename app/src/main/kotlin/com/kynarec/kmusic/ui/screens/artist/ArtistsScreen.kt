@@ -59,7 +59,7 @@ fun ArtistsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 8.dp),
-                contentPadding = PaddingValues(top = 8.dp, bottom = bottomPadding),
+                contentPadding = PaddingValues(bottom = bottomPadding),
                 columns = GridCells.Fixed(rememberColumnCount())
             ) {
                 items(artists!!, key = { it.id }) { artist ->
