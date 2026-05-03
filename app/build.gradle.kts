@@ -1,6 +1,7 @@
+import com.android.build.api.variant.impl.VariantOutputImpl
+
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.serialization)
@@ -84,11 +85,15 @@ android {
     buildFeatures{
         compose = true
         buildConfig = true
+        resValues = true
     }
-    applicationVariants.all {
-        outputs.all {
-            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-            output.outputFileName = "KMusic_v${appVersion}.apk"
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            val apkName = "KMusic_v${appVersion}.apk"
+            (output as VariantOutputImpl).outputFileName = apkName
         }
     }
 }
