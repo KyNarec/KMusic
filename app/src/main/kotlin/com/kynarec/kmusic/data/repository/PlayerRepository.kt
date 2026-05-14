@@ -61,13 +61,14 @@ class PlayerRepository(private val context: Context) {
             Log.i(tag, "onMediaItemTransition called with reason: $reason")
 
             val songsList = _playerState.value.songsList
-            val currentSong = songsList.find { it.song.id == mediaItem?.mediaId }?.song 
+            val currentSong = songsList.find { it.song.id == mediaItem?.mediaId }?.song
                 ?: mediaItem?.toSong()
 
             _playerState.update {
                 it.copy(
                     currentSong = currentSong,
-                    currentDurationLong = currentSong?.duration?.parseDurationToMillis() ?: mediaController?.duration ?: 0L,
+                    currentDurationLong = currentSong?.duration?.parseDurationToMillis()
+                        ?: mediaController?.duration ?: 0L,
                 )
             }
         }
@@ -75,7 +76,7 @@ class PlayerRepository(private val context: Context) {
         override fun onTimelineChanged(timeline: Timeline, reason: Int) {
             // Update queue on timeline changes if needed, but typically we handle via logic
         }
-        
+
         override fun onRepeatModeChanged(repeatMode: Int) {
             _playerState.update { it.copy(repeatMode = repeatMode) }
         }
@@ -90,7 +91,8 @@ class PlayerRepository(private val context: Context) {
     }
 
     private fun initializeController() {
-        val sessionToken = SessionToken(context, ComponentName(context, PlayerServiceModern::class.java))
+        val sessionToken =
+            SessionToken(context, ComponentName(context, PlayerServiceModern::class.java))
         val future = MediaController.Builder(context, sessionToken).buildAsync()
         mediaControllerFuture = future
 
@@ -106,13 +108,15 @@ class PlayerRepository(private val context: Context) {
 
                 val currentSong = controller.currentMediaItem?.toSong()
 
-                _playerState.update { it.copy(
-                    songsList = itemsInQueue,
-                    currentSong = currentSong,
-                    isPlaying = controller.isPlaying,
-                    repeatMode = controller.repeatMode,
-                    shuffleModeEnabled = controller.shuffleModeEnabled
-                ) }
+                _playerState.update {
+                    it.copy(
+                        songsList = itemsInQueue,
+                        currentSong = currentSong,
+                        isPlaying = controller.isPlaying,
+                        repeatMode = controller.repeatMode,
+                        shuffleModeEnabled = controller.shuffleModeEnabled
+                    )
+                }
 
                 controller.addListener(playerListener)
                 updatePosition()
@@ -145,7 +149,7 @@ class PlayerRepository(private val context: Context) {
 
     fun playSong(song: Song) {
         val controller = mediaController ?: return
-        
+
         _playerState.update { it.copy(currentSong = song) }
         val alreadyInQueue = _playerState.value.songsList.any { it.song.id == song.id }
 
@@ -243,7 +247,7 @@ class PlayerRepository(private val context: Context) {
         playPlaylist(shuffledSongs, shuffledSongs.first())
     }
 
-    fun playSongByIdWithRadio(song: Song, removeViewModelList: Boolean = true) {
+    fun playSongWithRadio(song: Song, removeViewModelList: Boolean = true) {
         if (removeViewModelList) {
             _playerState.update { it.copy(songsList = emptyList()) }
         }
@@ -268,13 +272,50 @@ class PlayerRepository(private val context: Context) {
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
-                val nextMediaItem = createMediaItemFromSong(_playerState.value.songsList[1].song, context)
+                val nextMediaItem =
+                    createMediaItemFromSong(_playerState.value.songsList[1].song, context)
                 withContext(Dispatchers.Main) {
                     mediaController?.replaceMediaItem(1, nextMediaItem)
                 }
             }
         }
     }
+
+
+    fun playSongByIdWithRadio(id: String, removeViewModelList: Boolean = true) {
+        if (removeViewModelList) {
+            _playerState.update { it.copy(songsList = emptyList()) }
+        }
+
+        repositoryScope.launch {
+            try {
+                getRadioFlow(id)
+                    .flowOn(Dispatchers.IO)
+                    .collect { radioSong ->
+                        if (radioSong.id == id) {
+                            playSong(radioSong)
+                        } else {
+                            val mediaItem = createPartialMediaItemFromSong(radioSong, context)
+                            _playerState.update {
+                                it.copy(songsList = it.songsList + radioSong.toPlaylistItem())
+                            }
+                            withContext(Dispatchers.Main) {
+                                mediaController?.addMediaItem(mediaItem)
+                            }
+                        }
+                    }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                val nextMediaItem =
+                    createMediaItemFromSong(_playerState.value.songsList[1].song, context)
+                withContext(Dispatchers.Main) {
+                    mediaController?.replaceMediaItem(1, nextMediaItem)
+                }
+            }
+        }
+    }
+
 
     fun playNext(song: Song) {
         repositoryScope.launch {
@@ -418,7 +459,7 @@ class PlayerRepository(private val context: Context) {
                 _playerState.update {
                     it.copy(timeLeftMillis = endTime - System.currentTimeMillis())
                 }
-                delay(1000) 
+                delay(1000)
             }
             _playerState.update { it.copy(timeLeftMillis = 0L) }
             pause()
@@ -431,7 +472,7 @@ class PlayerRepository(private val context: Context) {
     }
 
     fun changePlayerRepeatMode(repeatMode: PlayerRepeatMode) {
-        mediaController?.repeatMode = when(repeatMode) {
+        mediaController?.repeatMode = when (repeatMode) {
             PlayerRepeatMode.RepeatModeAll -> Player.REPEAT_MODE_ALL
             PlayerRepeatMode.RepeatModeOne -> Player.REPEAT_MODE_ONE
             PlayerRepeatMode.RepeatModeOff -> Player.REPEAT_MODE_OFF

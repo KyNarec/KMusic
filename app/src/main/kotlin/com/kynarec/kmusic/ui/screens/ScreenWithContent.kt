@@ -17,9 +17,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.retain.retain
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
@@ -31,6 +29,7 @@ import com.kynarec.kmusic.ui.components.TopBarComponent
 import com.kynarec.kmusic.ui.components.player.PlayerControlBar
 import com.kynarec.kmusic.ui.screens.player.MusicPlayerSheet
 import com.kynarec.kmusic.ui.screens.player.PlayerSheetMode
+import com.kynarec.kmusic.ui.viewModels.AppAction
 import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
 import kotlinx.coroutines.launch
@@ -50,13 +49,14 @@ fun ScreenWithContent(
     ) {
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val showBottomSheet = retain { mutableStateOf(false) }
 
-    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
+    val appState by appViewModel.state.collectAsStateWithLifecycle()
+    val showControlBar = appState.showControlBar
+    val showBottomSheet = appState.showPlayerSheet
 
     LaunchedEffect(sheetState.isVisible) {
         if (!sheetState.isVisible) {
-            showBottomSheet.value = false
+            appViewModel.onAction(AppAction.ClosePlayerSheet)
         }
     }
 
@@ -110,7 +110,7 @@ fun ScreenWithContent(
                 ) {
                     PlayerControlBar(
                         onBarClick = {
-                            showBottomSheet.value = true
+                            appViewModel.onAction(AppAction.OpenPlayerSheet)
                         },
                     )
                 }
@@ -119,10 +119,10 @@ fun ScreenWithContent(
 
             val playerViewModelState by playerViewModel.uiState.collectAsStateWithLifecycle()
 
-            if (showBottomSheet.value) {
+            if (showBottomSheet) {
                 ModalBottomSheet(
                     onDismissRequest = {
-                        showBottomSheet.value = false
+                        appViewModel.onAction(AppAction.ClosePlayerSheet)
                     },
                     dragHandle = null,
                     shape = RectangleShape,
@@ -133,7 +133,7 @@ fun ScreenWithContent(
                         onClose = {
                             scope.launch { sheetState.hide() }.invokeOnCompletion {
                                 if (!sheetState.isVisible) {
-                                    showBottomSheet.value = false
+                                    appViewModel.onAction(AppAction.ClosePlayerSheet)
                                 }
                             }
                         },

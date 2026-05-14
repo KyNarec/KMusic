@@ -52,7 +52,7 @@ class LibraryViewModel(
         when (action) {
             is LibraryAction.PlaySong -> {
                 if (action.withRadio) {
-                    playerRepository.playSongByIdWithRadio(action.song)
+                    playerRepository.playSongWithRadio(action.song)
                 } else {
                     playerRepository.playSong(action.song)
                 }
