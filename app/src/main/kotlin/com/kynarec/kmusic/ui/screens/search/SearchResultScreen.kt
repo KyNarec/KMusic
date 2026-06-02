@@ -53,6 +53,7 @@ import com.kynarec.kmusic.service.innertube.searchAlbums
 import com.kynarec.kmusic.service.innertube.searchArtists
 import com.kynarec.kmusic.service.innertube.searchCommunityPlaylists
 import com.kynarec.kmusic.service.innertube.searchSongsFlow
+import com.kynarec.kmusic.service.innertube.searchVideosFlow
 import com.kynarec.kmusic.ui.AlbumDetailScreen
 import com.kynarec.kmusic.ui.ArtistDetailScreen
 import com.kynarec.kmusic.ui.SearchScreen
@@ -99,6 +100,7 @@ fun SearchResultScreen(
     var albums by retain { mutableStateOf(emptyList<AlbumPreview>()) }
     var artists by retain { mutableStateOf(emptyList<ArtistPreview>()) }
     var playlists by retain { mutableStateOf(emptyList<PlaylistPreview>()) }
+    var videos by retain { mutableStateOf(emptyList<Song>()) }
 
     var isLoading by retain { mutableStateOf(true) }
     var isRefreshing by retain { mutableStateOf(false) }
@@ -200,6 +202,25 @@ fun SearchResultScreen(
                     }
                 }
             }
+
+            "Videos" -> {
+                if (videos.isEmpty()) {
+                    isLoading = true
+                    Log.i("SearchResultScreen", "isLoading is now true")
+                    videos = emptyList()
+
+                    searchVideosFlow(query)
+                        .flowOn(Dispatchers.IO)
+                        .collect {
+                            videos = videos + it
+                            isLoading = false
+                        }
+                    if (videos.isEmpty()) {
+                        Log.w("SearchResultScreen", "No results found for Videos '$query'.")
+                        SmartMessage("No results found for Videos '$query'", PopupType.Error, false, context)
+                    }
+                }
+            }
         }
     }
 
@@ -282,6 +303,26 @@ fun SearchResultScreen(
                     if (!playlists.isEmpty()) isLoading = false
                 } else {
                     playlists = refreshedPlaylistList
+                    isLoading = false
+                }
+            }
+
+            "Videos" -> {
+                isLoading = true
+                val refreshedSongsList = mutableListOf<Song>()
+
+                searchVideosFlow(query)
+                    .flowOn(Dispatchers.IO)
+                    .collect { song ->
+                        refreshedSongsList += song
+                    }
+
+                if (refreshedSongsList.isEmpty()) {
+                    SmartMessage("No results found for query: '$query'", PopupType.Error, false, context)
+                    delay(500)
+                    if (!videos.isEmpty()) isLoading = false
+                } else {
+                    videos = refreshedSongsList
                     isLoading = false
                 }
             }
@@ -528,6 +569,56 @@ fun SearchResultScreen(
                                             },
                                         )
                                     }
+                                }
+                            }
+                        }
+                    }
+
+                    "Videos" -> {
+                        Crossfade(
+                            targetState = isLoading,
+                            animationSpec = tween(durationMillis = 400),
+                            label = "SongCrossfade"
+                        ) { loading ->
+                            if (loading) {
+                                LazyColumn(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .padding(vertical = 8.dp)
+                                ) {
+                                    items(30) {
+                                        SongComponentSkeleton()
+                                    }
+
+                                    if (showControlBar)
+                                        item {
+                                            Spacer(Modifier.height(70.dp))
+                                        }
+                                }
+                            } else {
+                                LazyColumn {
+                                    items(
+                                        count = videos.size,
+//                                        key = { index -> songs[index].id }
+                                    ) { index ->
+                                        val video = videos[index]
+
+                                        SongComponent(
+                                            song = video,
+                                            onClick = {
+                                                Log.d("SongClick", "Videos clicked: ${video.title}")
+                                                libraryViewModel.onAction(LibraryAction.PlaySong(video, withRadio = true))
+                                            },
+                                            onLongClick = {
+                                                longClickSong = video
+                                                showBottomSheet.value = true
+                                            }
+                                        )
+                                    }
+                                    if (showControlBar)
+                                        item {
+                                            Spacer(Modifier.height(70.dp))
+                                        }
                                 }
                             }
                         }
