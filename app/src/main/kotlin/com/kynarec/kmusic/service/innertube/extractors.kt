@@ -362,15 +362,27 @@ suspend fun getAlbumAndSongs(browseId: String): NetworkResult<AlbumWithSongsAndI
 
     var songList = emptyList<Song>()
 
-    val albumItems = parsed
-        .contents
-        ?.twoColumnBrowseResultsRenderer
-        ?.secondaryContents
-        ?.sectionListRenderer
-        ?.contents
-        ?.firstOrNull()
-        ?.musicShelfRenderer
-        ?.contents
+    val albumItems = if (browseId.length < 20) {
+        parsed
+            .contents
+            ?.twoColumnBrowseResultsRenderer
+            ?.secondaryContents
+            ?.sectionListRenderer
+            ?.contents
+            ?.firstOrNull()
+            ?.musicShelfRenderer
+            ?.contents
+    } else {
+        parsed
+            .contents
+            ?.twoColumnBrowseResultsRenderer
+            ?.secondaryContents
+            ?.sectionListRenderer
+            ?.contents
+            ?.firstOrNull()
+            ?.musicPlaylistShelfRenderer
+            ?.contents
+    }
 
     val album = parsed
         .contents
@@ -516,11 +528,25 @@ suspend fun getAlbumAndSongs(browseId: String): NetworkResult<AlbumWithSongsAndI
             }
         }
 
+        val albumId = if (browseId.length > 20) {
+            item.musicResponsiveListItemRenderer
+                .flexColumns
+                ?.get(2)
+                ?.musicResponsiveListItemFlexColumnRenderer
+                ?.text
+                ?.runs
+                ?.firstOrNull()
+                ?.navigationEndpoint
+                ?.browseEndpoint
+                ?.browseId
+        } else browseId
+
+
         songList = songList + Song(
             id = songId,
             title = songTitle ?: "",
             artists = artistsList,
-            albumId = browseId,
+            albumId = albumId,
             duration = songDuration ?: "",
             thumbnail = thumbnailURL ?: ""
         )

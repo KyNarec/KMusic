@@ -17,11 +17,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import com.kynarec.kmusic.data.repository.PlayerRepository
+import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.service.PlayerServiceModern
+import com.kynarec.kmusic.service.innertube.NetworkResult
+import com.kynarec.kmusic.service.innertube.getAlbumAndSongs
 import com.kynarec.kmusic.service.update.PlatformContext
 import com.kynarec.kmusic.ui.screens.MainScreen
 import com.kynarec.kmusic.ui.viewModels.AppAction
 import com.kynarec.kmusic.ui.viewModels.AppViewModel
+import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.setJustStartedUp
 import com.kynarec.kmusic.utils.setPlayerOpen
 import io.github.vinceglb.filekit.FileKit
@@ -29,6 +33,7 @@ import io.github.vinceglb.filekit.dialogs.init
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -37,7 +42,7 @@ class MainActivity : ComponentActivity() {
     private val tag = "MainActivity"
     private var mediaController: MediaController? = null
 
-    private val playerRepository : PlayerRepository by inject()
+    private val playerRepository: PlayerRepository by inject()
     private val appViewModel: AppViewModel by viewModel()
 
 
@@ -102,6 +107,38 @@ class MainActivity : ComponentActivity() {
         if (Intent.ACTION_VIEW == action && uri != null) {
 
             when (val path = uri.pathSegments.firstOrNull()) {
+                "playlist" -> uri.getQueryParameter("list")?.let { playlistId ->
+                    val browseId = "VL$playlistId"
+
+                    if (playlistId.startsWith("OLAK5uy_")) {
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            when(val res = getAlbumAndSongs(browseId)) {
+                                is NetworkResult.Success -> withContext(Dispatchers.Main) {
+                                    if (res.data.songs.isEmpty())
+                                        appViewModel.onAction(AppAction.OpenPlaylistOnlineDetailScreen(browseId))
+                                    else
+                                        appViewModel.onAction(AppAction.OpenAlbumDetailScreen(res.data.songs.first().albumId!!))
+                                }
+                                else -> withContext(Dispatchers.Main) {
+                                    SmartMessage(
+                                        "NetworkError",
+                                        PopupType.Error,
+                                        false,
+                                        this@MainActivity
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        appViewModel.onAction(AppAction.OpenPlaylistOnlineDetailScreen(browseId))
+                    }
+                }
+
+                // Todo: Handle @Metallica e.g.
+                "channel", "c" -> uri.lastPathSegment?.let { channelId ->
+                    appViewModel.onAction(AppAction.OpenArtistDetailScreen(artistId = channelId))
+                }
+
                 else -> when {
                     path == "watch" -> uri.getQueryParameter("v")
                     else -> null
@@ -123,80 +160,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-/**
- *                 LaunchedEffect(intentUriData) {
- *                     val uri = intentUriData ?: return@LaunchedEffect
- *
- *                     SmartMessage(
- *                         message = "${"RiMusic "}${getString(R.string.opening_url)}",
- *                         durationLong = true,
- *                         context = this@MainActivity
- *                     )
- *
- *                     lifecycleScope.launch(Dispatchers.Main) {
- *                         when (val path = uri.pathSegments.firstOrNull()) {
- *                             "playlist" -> uri.getQueryParameter("list")?.let { playlistId ->
- *                                 val browseId = "VL$playlistId"
- *
- *                                 if (playlistId.startsWith("OLAK5uy_")) {
- *                                     Environment.playlistPage(BrowseBody(browseId = browseId))
- *                                         ?.getOrNull()?.let {
- *                                             it.songsPage?.items?.firstOrNull()?.album?.endpoint?.browseId?.let { browseId ->
- *                                                 navController.navigate(route = "${NavRoutes.album.name}/$browseId")
- *
- *                                             }
- *                                         }
- *                                 } else {
- *                                     navController.navigate(route = "${NavRoutes.playlist.name}/$browseId")
- *                                 }
- *                             }
- *
- *                             "channel", "c" -> uri.lastPathSegment?.let { channelId ->
- *                                 try {
- *                                     navController.navigate(route = "${NavRoutes.artist.name}/$channelId")
- *                                 } catch (e: Exception) {
- *                                     Timber.e("MainActivity.onCreate intentUriData ${e.stackTraceToString()}")
- *                                 }
- *                             }
- *
- *                             "search" -> uri.getQueryParameter("q")?.let { query ->
- *                                 navController.navigate(route = "${NavRoutes.searchResults.name}/$query")
- *                             }
- *
- *                             else -> when {
- *                                 path == "watch" -> uri.getQueryParameter("v")
- *                                 uri.host == "youtu.be" -> path
- *                                 else -> null
- *                             }?.let { videoId ->
- *                                 Environment.song(videoId)?.getOrNull()?.let { song ->
- *                                     val binder = snapshotFlow { binder }.filterNotNull().first()
- *                                     withContext(Dispatchers.Main) {
- *                                         if (!song.explicit && !preferences.getBoolean(
- *                                                 parentalControlEnabledKey,
- *                                                 false
- *                                             )
- *                                         )
- *                                             binder?.player?.forcePlay(song.asMediaItem)
- *                                         else
- *                                             SmartMessage(
- *                                                 "Parental control is enabled",
- *                                                 PopupType.Warning,
- *                                                 context = this@MainActivity
- *                                             )
- *                                     }
- *                                 }
- *                             }
- *                         }
- *                     }
- *                     intentUriData = null
- *                 }
- *
- *
- *                 //throw RuntimeException("This is a simulated exception to crash");
- *             //}
- *         }
- *     }
- *
- *
- */
