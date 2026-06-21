@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import kotlin.time.Duration.Companion.milliseconds
 
 class MainActivity : ComponentActivity() {
 
@@ -143,7 +144,8 @@ class MainActivity : ComponentActivity() {
                     path == "watch" -> uri.getQueryParameter("v")
                     else -> null
                 }?.let { videoId ->
-                    playerRepository.playSongByIdWithRadio(videoId)
+                    val time = uri.getQueryParameter("t")?.toLong()?.times(1000) ?: 0
+                    playerRepository.playSongByIdWithRadio(videoId, startAt = time)
                     appViewModel.onAction(AppAction.OpenPlayerSheet)
 
                     /**
@@ -151,7 +153,7 @@ class MainActivity : ComponentActivity() {
                      * because of a timing issue.
                      */
                     lifecycleScope.launch(Dispatchers.IO) {
-                        delay(500)
+                        delay(500.milliseconds)
                         appViewModel.onAction(AppAction.OpenPlayerSheet)
 
                     }

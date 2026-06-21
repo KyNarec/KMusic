@@ -29,10 +29,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -142,14 +144,13 @@ class PlayerRepository(private val context: Context) {
                         it
                     }
                 }
-                delay(16L) // 60 fps
+                delay(16L.milliseconds) // 60 fps
             }
         }
     }
 
     fun playSong(song: Song) {
         val controller = mediaController ?: return
-
         _playerState.update { it.copy(currentSong = song) }
         val alreadyInQueue = _playerState.value.songsList.any { it.song.id == song.id }
 
@@ -282,35 +283,45 @@ class PlayerRepository(private val context: Context) {
     }
 
 
-    fun playSongByIdWithRadio(id: String, removeViewModelList: Boolean = true) {
+    fun playSongByIdWithRadio(id: String, removeViewModelList: Boolean = true, startAt: Long = 0) {
         if (removeViewModelList) {
             _playerState.update { it.copy(songsList = emptyList()) }
         }
 
         repositoryScope.launch {
             try {
-                getRadioFlow(id)
+                val radioSongs = getRadioFlow(id)
                     .flowOn(Dispatchers.IO)
-                    .collect { radioSong ->
-                        if (radioSong.id == id) {
-                            playSong(radioSong)
-                        } else {
-                            val mediaItem = createPartialMediaItemFromSong(radioSong, context)
-                            _playerState.update {
-                                it.copy(songsList = it.songsList + radioSong.toPlaylistItem())
+                    .toList()
+                val mediaItems = radioSongs.mapIndexed { index, song ->
+                    if (index == 0) {
+                        _playerState.update { it.copy(currentSong = song, songsList = listOf(song.toPlaylistItem())) }
+                        createMediaItemFromSong(song, context)
+                    } else {
+                        _playerState.update {
+                                it.copy(songsList = it.songsList + song.toPlaylistItem())
                             }
-                            withContext(Dispatchers.Main) {
-                                mediaController?.addMediaItem(mediaItem)
-                            }
-                        }
+                        createPartialMediaItemFromSong(song, context)
                     }
+                }
+
+                withContext(Dispatchers.Main) {
+                    val controller = mediaController ?: return@withContext
+
+                    controller.setMediaItems(mediaItems, 0, startAt)
+                    controller.prepare()
+                    controller.play()
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
-            } finally {
-                val nextMediaItem =
-                    createMediaItemFromSong(_playerState.value.songsList[1].song, context)
-                withContext(Dispatchers.Main) {
-                    mediaController?.replaceMediaItem(1, nextMediaItem)
+            }
+            finally {
+                if(_playerState.value.songsList.size > 2) {
+                    val nextMediaItem =
+                        createMediaItemFromSong(_playerState.value.songsList[1].song, context)
+                    withContext(Dispatchers.Main) {
+                        mediaController?.replaceMediaItem(1, nextMediaItem)
+                    }
                 }
             }
         }
