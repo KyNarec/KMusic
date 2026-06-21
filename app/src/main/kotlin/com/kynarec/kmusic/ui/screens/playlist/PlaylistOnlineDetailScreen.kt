@@ -270,21 +270,37 @@ fun PlaylistOnlineDetailScreen(
     }
 
     if (state.showPlaylistOptionsBottomSheet) {
-        PlaylistOnlineOptionsBottomSheet(
-//            playlistId = playlistId,
-            thumbnail = state.playlistPreview.thumbnail,
-            playlist = playlist?.playlist ?: Playlist(
-                name = "Cannot load playlist name"
-            ),
-            songs = songs,
-            onDismiss = {
-                playlistOnlineDetailViewModel.onAction(PlaylistOnlineDetailActions.TogglePlaylistOptionsBottomSheet)
-                focusManager.clearFocus()
-                keyboardController?.hide()
-            },
-            database = database,
-            navController = navController
-        )
+        if (state.playlistPreview == null) {
+            PlaylistOnlineOptionsBottomSheet(
+                songsThumbnailList = state.songs.take(4).map { it.thumbnail },
+                playlist = playlist?.playlist ?: Playlist(
+                    name = "Cannot load playlist name"
+                ),
+                songs = songs,
+                onDismiss = {
+                    playlistOnlineDetailViewModel.onAction(PlaylistOnlineDetailActions.TogglePlaylistOptionsBottomSheet)
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
+                },
+                database = database,
+                navController = navController
+            )
+        } else {
+            PlaylistOnlineOptionsBottomSheet(
+                thumbnail = state.playlistPreview!!.thumbnail,
+                playlist = playlist?.playlist ?: Playlist(
+                    name = "Cannot load playlist name"
+                ),
+                songs = songs,
+                onDismiss = {
+                    playlistOnlineDetailViewModel.onAction(PlaylistOnlineDetailActions.TogglePlaylistOptionsBottomSheet)
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
+                },
+                database = database,
+                navController = navController
+            )
+        }
     }
 }
 fun LazyListScope.playlistHeader(

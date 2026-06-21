@@ -335,6 +335,7 @@ data class SectionListRendererAlbum(
 @Serializable
 data class SectionContentAlbum(
     val musicShelfRenderer: MusicShelfRendererAlbum? = null,
+    val musicPlaylistShelfRenderer: MusicShelfRendererAlbum? = null,
     val musicCarouselShelfRenderer: MusicCarouselShelfRenderer? = null
 )
 

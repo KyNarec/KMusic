@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 data class PlaylistOnlineDetailState(
-    val playlistPreview: PlaylistPreview,
+    val playlistPreview: PlaylistPreview? = null,
     val songs: List<Song> = emptyList(),
     val playlist: PlaylistWithSongsAndIndices? = null,
     val isLoading: Boolean = true,
@@ -39,7 +39,8 @@ sealed interface PlaylistOnlineDetailActions{
 }
 
 class PlaylistOnlineDetailViewModel(
-    private val playlistPreview: PlaylistPreview,
+    private val playlistPreview: PlaylistPreview? = null,
+    id: String? = null,
     private val application: Application,
 ) : ViewModel() {
     val tag = "PlaylistOnlineDetailViewModel"
@@ -47,16 +48,21 @@ class PlaylistOnlineDetailViewModel(
     val state: StateFlow<PlaylistOnlineDetailState> = _state.asStateFlow()
 
     init {
+        require(playlistPreview != null || id != null) {
+            "Either playlistPreview or id must be provided"
+        }
         Log.i(tag, "PlaylistOnlineDetailViewModel initialized")
         onAction(PlaylistOnlineDetailActions.Fetch)
     }
+
+    private val playlistId: String = id ?: playlistPreview!!.id
 
     fun onAction(action: PlaylistOnlineDetailActions) {
         when (action) {
             PlaylistOnlineDetailActions.Fetch -> {
                 val context = application.applicationContext
                 viewModelScope.launch(Dispatchers.IO) {
-                    when (val result = getPlaylistAndSongs(playlistPreview.id)) {
+                    when (val result = getPlaylistAndSongs(playlistId)) {
                         is NetworkResult.Failure.NetworkError -> {
                             SmartMessage("No Internet", PopupType.Error, false, context)
                         }
@@ -86,7 +92,7 @@ class PlaylistOnlineDetailViewModel(
                 val context = application.applicationContext
                 _state.update { it.copy(isRefreshing = true) }
                 viewModelScope.launch(Dispatchers.IO) {
-                    when (val result = getPlaylistAndSongs(playlistPreview.id)) {
+                    when (val result = getPlaylistAndSongs(playlistId)) {
                         is NetworkResult.Failure.NetworkError -> {
                             SmartMessage("No Internet", PopupType.Error, false, context)
                         }

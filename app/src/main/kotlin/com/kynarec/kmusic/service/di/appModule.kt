@@ -80,8 +80,8 @@ val appModule = module {
         PlaylistOfflineDetailViewModel(playlistId = playlistId, database = get(), ksafe = get())
     }
 
-    viewModel { (playlistPreview: PlaylistPreview) ->
-        PlaylistOnlineDetailViewModel(playlistPreview = playlistPreview, application = get())
+    viewModel { (playlistPreview: PlaylistPreview?, id: String?) ->
+        PlaylistOnlineDetailViewModel(playlistPreview = playlistPreview, id = id, application = get())
     }
 
     viewModel {

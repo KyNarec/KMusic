@@ -3,8 +3,8 @@ package com.kynarec.kmusic
 
 //import com.kynarec.kmusic.service.PlayerService
 import android.Manifest
-import android.content.ComponentName
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -13,46 +13,39 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
-import androidx.media3.common.Player
-import androidx.media3.common.Timeline
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
-import com.google.common.util.concurrent.MoreExecutors
+import com.kynarec.kmusic.data.repository.PlayerRepository
+import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.service.PlayerServiceModern
+import com.kynarec.kmusic.service.innertube.NetworkResult
+import com.kynarec.kmusic.service.innertube.getAlbumAndSongs
 import com.kynarec.kmusic.service.update.PlatformContext
 import com.kynarec.kmusic.ui.screens.MainScreen
+import com.kynarec.kmusic.ui.viewModels.AppAction
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
+import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.setJustStartedUp
 import com.kynarec.kmusic.utils.setPlayerOpen
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import kotlin.time.Duration.Companion.milliseconds
 
 class MainActivity : ComponentActivity() {
 
     private val tag = "MainActivity"
     private var mediaController: MediaController? = null
 
-    // Player.Listener to handle state changes and update the UI accordingly.
-    private val playerListener = object : Player.Listener {
-        // This callback is triggered whenever the player's state changes.
-//        override fun onPlaybackStateChanged(playbackState: Int) {
-//            super.onPlaybackStateChanged(playbackState)
-//            when (playbackState) {
-//                Player.STATE_READY, Player.STATE_BUFFERING -> {
-//                    // Show the control bar whenever the player is ready or buffering.
-//                    hidePlayerControlBar(false)
-//                }
-//                else -> {
-//                    // Hide the control bar when playback is stopped, ended, or has an error.
-//                    hidePlayerControlBar(true)
-//                }
-//            }
-//        }
-        override fun onTimelineChanged(timeline: Timeline, reason: Int) {
-            // Hide the control bar if the playlist is empty, show it if not.
-            //hidePlayerControlBar(timeline.isEmpty)
-        }
-    }
+    private val playerRepository: PlayerRepository by inject()
+    private val appViewModel: AppViewModel by viewModel()
+
 
     private val requestNotificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
@@ -77,6 +70,7 @@ class MainActivity : ComponentActivity() {
         requestNotificationPermission()
         PlatformContext.initialize(applicationContext)
         FileKit.init(this)
+        handleIntent(intent)
         setContent {
             MainScreen()
         }
@@ -93,26 +87,78 @@ class MainActivity : ComponentActivity() {
     @OptIn(UnstableApi::class)
     override fun onStart() {
         super.onStart()
-        // Connect to the service's MediaSession on start.
-        // This is a crucial step for the UI to be able to send commands to the service.
-        val sessionToken = SessionToken(this, ComponentName(this, PlayerServiceModern::class.java))
-        val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
-
-        controllerFuture.addListener(
-            {
-                mediaController = controllerFuture.get()
-                // Once the controller is ready, attach the listener to it.
-                mediaController?.addListener(playerListener)
-            },
-            MoreExecutors.directExecutor()
-        )
     }
 
     override fun onStop() {
         super.onStop()
-        // It's important to release the MediaController when the app is no longer in the foreground.
-        mediaController?.removeListener(playerListener)
         mediaController?.release()
         mediaController = null
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent) {
+        val action = intent.action
+        val uri: Uri? = intent.data
+
+        Log.i(tag, "Received Intent: ${intent.data}")
+        if (Intent.ACTION_VIEW == action && uri != null) {
+
+            when (val path = uri.pathSegments.firstOrNull()) {
+                "playlist" -> uri.getQueryParameter("list")?.let { playlistId ->
+                    val browseId = "VL$playlistId"
+
+                    if (playlistId.startsWith("OLAK5uy_")) {
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            when(val res = getAlbumAndSongs(browseId)) {
+                                is NetworkResult.Success -> withContext(Dispatchers.Main) {
+                                    if (res.data.songs.isEmpty())
+                                        appViewModel.onAction(AppAction.OpenPlaylistOnlineDetailScreen(browseId))
+                                    else
+                                        appViewModel.onAction(AppAction.OpenAlbumDetailScreen(res.data.songs.first().albumId!!))
+                                }
+                                else -> withContext(Dispatchers.Main) {
+                                    SmartMessage(
+                                        "NetworkError",
+                                        PopupType.Error,
+                                        false,
+                                        this@MainActivity
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        appViewModel.onAction(AppAction.OpenPlaylistOnlineDetailScreen(browseId))
+                    }
+                }
+
+                // Todo: Handle @Metallica e.g.
+                "channel", "c" -> uri.lastPathSegment?.let { channelId ->
+                    appViewModel.onAction(AppAction.OpenArtistDetailScreen(artistId = channelId))
+                }
+
+                else -> when {
+                    path == "watch" -> uri.getQueryParameter("v")
+                    else -> null
+                }?.let { videoId ->
+                    val time = uri.getQueryParameter("t")?.toLong()?.times(1000) ?: 0
+                    playerRepository.playSongByIdWithRadio(videoId, startAt = time)
+                    appViewModel.onAction(AppAction.OpenPlayerSheet)
+
+                    /**
+                     * When the app is closed and an intent comes in the playerSheet would not open
+                     * because of a timing issue.
+                     */
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        delay(500.milliseconds)
+                        appViewModel.onAction(AppAction.OpenPlayerSheet)
+
+                    }
+                }
+            }
+        }
     }
 }

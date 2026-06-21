@@ -124,6 +124,7 @@ class PlayerServiceModern : MediaLibraryService(), KoinComponent {
             serviceScope.launch {
                 if (isDownloaded && downloadCache.getCachedSpans(songId).isNotEmpty()) {
                     Log.i("PlayerService", "Download record exists and cache is notEmpty for $songId")
+                    if (mediaItem.localConfiguration?.customCacheKey != null) return@launch
 
                     val offlineResult = createOfflineMediaItem(this@PlayerServiceModern, mediaItem)
                     if (offlineResult.isSuccess) {

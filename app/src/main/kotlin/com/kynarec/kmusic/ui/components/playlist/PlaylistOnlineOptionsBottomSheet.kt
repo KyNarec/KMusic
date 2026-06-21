@@ -55,7 +55,8 @@ fun PlaylistOnlineOptionsBottomSheet(
     modifier: Modifier = Modifier,
 //    playlistId: String,
     playlist: Playlist,
-    thumbnail: String,
+    thumbnail: String? = null,
+    songsThumbnailList: List<String>? = null,
     songs: List<Song>,
     onDismiss: () -> Unit,
     viewModel: LibraryViewModel = koinActivityViewModel(),
@@ -96,15 +97,20 @@ fun PlaylistOnlineOptionsBottomSheet(
                 Box(Modifier.width(100.dp)
                     .height(100.dp)
                 ) {
-                    AsyncImage(
-                        model = thumbnail,
-                        contentDescription = "Playlist art",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(8.dp)),
-                        imageLoader = LocalContext.current.imageLoader
-                    )
+                    thumbnail?.let { th ->
+                        AsyncImage(
+                            model = th,
+                            contentDescription = "Playlist art",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(8.dp)),
+                            imageLoader = LocalContext.current.imageLoader
+                        )
+                    }
+                    songsThumbnailList?.let { list ->
+                        TwoByTwoImageGrid(list)
+                    }
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(

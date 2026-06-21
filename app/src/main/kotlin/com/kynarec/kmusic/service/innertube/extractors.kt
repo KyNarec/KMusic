@@ -277,7 +277,7 @@ fun getRadioFlow(
             val title = renderer.title?.runs?.firstOrNull()?.text ?: "Unknown Title"
 
             val artistRuns = renderer.shortBylineText?.runs.orEmpty()
-            var albumId = "Unknown AlbumId"
+            var albumId : String? = null
             val artistsList = mutableListOf<SongArtist>()
             var dotCount = 0
             for (index in 0..<artistRuns.size) {
@@ -362,15 +362,27 @@ suspend fun getAlbumAndSongs(browseId: String): NetworkResult<AlbumWithSongsAndI
 
     var songList = emptyList<Song>()
 
-    val albumItems = parsed
-        .contents
-        ?.twoColumnBrowseResultsRenderer
-        ?.secondaryContents
-        ?.sectionListRenderer
-        ?.contents
-        ?.firstOrNull()
-        ?.musicShelfRenderer
-        ?.contents
+    val albumItems = if (browseId.length < 20) {
+        parsed
+            .contents
+            ?.twoColumnBrowseResultsRenderer
+            ?.secondaryContents
+            ?.sectionListRenderer
+            ?.contents
+            ?.firstOrNull()
+            ?.musicShelfRenderer
+            ?.contents
+    } else {
+        parsed
+            .contents
+            ?.twoColumnBrowseResultsRenderer
+            ?.secondaryContents
+            ?.sectionListRenderer
+            ?.contents
+            ?.firstOrNull()
+            ?.musicPlaylistShelfRenderer
+            ?.contents
+    }
 
     val album = parsed
         .contents
@@ -516,11 +528,25 @@ suspend fun getAlbumAndSongs(browseId: String): NetworkResult<AlbumWithSongsAndI
             }
         }
 
+        val albumId = if (browseId.length > 20) {
+            item.musicResponsiveListItemRenderer
+                .flexColumns
+                ?.get(2)
+                ?.musicResponsiveListItemFlexColumnRenderer
+                ?.text
+                ?.runs
+                ?.firstOrNull()
+                ?.navigationEndpoint
+                ?.browseEndpoint
+                ?.browseId
+        } else browseId
+
+
         songList = songList + Song(
             id = songId,
             title = songTitle ?: "",
             artists = artistsList,
-            albumId = browseId,
+            albumId = albumId,
             duration = songDuration ?: "",
             thumbnail = thumbnailURL ?: ""
         )
@@ -1594,7 +1620,7 @@ suspend fun getPlaylistAndSongs(browseId: String): NetworkResult<PlaylistWithSon
                     ?.getPlaylistAndSongsText ?: ""
             }
 
-            var albumId = ""
+            var albumId : String? = null
             val artistList = mutableListOf<SongArtist>()
             for (flexColumn in song?.getPlaylistAndSongsFlexColumns.orEmpty()) {
                 val artistRuns = flexColumn
@@ -1643,7 +1669,7 @@ suspend fun getPlaylistAndSongs(browseId: String): NetworkResult<PlaylistWithSon
                         ?.getPlaylistAndSongsBrowseEndpointContextMusicConfig
                         ?.getPlaylistAndSongsPageType == "MUSIC_PAGE_TYPE_ALBUM"
                 ) {
-                    albumId = browseEndpoint.getPlaylistAndSongsBrowseId ?: ""
+                    albumId = browseEndpoint.getPlaylistAndSongsBrowseId
                 }
             }
 
@@ -1769,7 +1795,7 @@ suspend fun browsePlaylistSongsContinuation(
                     ?.browsePlaylistSongsContinuationText ?: ""
 
                 var title = ""
-                var albumId = ""
+                var albumId : String? = null
                 val artistList = mutableListOf<SongArtist>()
 
                 songRenderer.browsePlaylistSongsContinuationFlexColumns?.forEachIndexed { index, flexColumn ->
@@ -1801,7 +1827,7 @@ suspend fun browsePlaylistSongsContinuation(
                                 }
 
                                 "MUSIC_PAGE_TYPE_ALBUM" -> {
-                                    albumId = nav.browsePlaylistSongsContinuationBrowseId ?: ""
+                                    albumId = nav.browsePlaylistSongsContinuationBrowseId
                                 }
                             }
                         }

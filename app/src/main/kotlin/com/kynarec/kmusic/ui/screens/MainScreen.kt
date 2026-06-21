@@ -44,6 +44,7 @@ fun MainScreen() {
     ) {
         Navigation(
             navController = navController,
+            settingsViewModel = settingsViewModel
         )
     }
 }

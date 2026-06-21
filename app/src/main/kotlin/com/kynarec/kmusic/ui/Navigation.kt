@@ -48,9 +48,12 @@ import com.kynarec.kmusic.ui.screens.settings.DataScreen
 import com.kynarec.kmusic.ui.screens.settings.InterfaceScreen
 import com.kynarec.kmusic.ui.screens.settings.SettingsScreen
 import com.kynarec.kmusic.ui.screens.song.SongListScreen
+import com.kynarec.kmusic.ui.viewModels.AppEvent
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.PlaylistOfflineDetailViewModel
 import com.kynarec.kmusic.ui.viewModels.PlaylistOnlineDetailViewModel
 import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
+import com.kynarec.kmusic.utils.ObserveAsEvents
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinActivityViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -61,6 +64,7 @@ import org.koin.core.parameter.parametersOf
 fun Navigation(
     navController: NavHostController,
     settingsViewModel: SettingsViewModel = koinActivityViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -68,6 +72,19 @@ fun Navigation(
     val context = LocalContext.current
 
     val transitionEffect by settingsViewModel.transitionEffectFlow.collectAsStateWithLifecycle(settingsViewModel.transitionEffect)
+
+    ObserveAsEvents(appViewModel.events) { event ->
+        when(event) {
+            is AppEvent.NavigateToAlbumDetailScreen -> {
+                Log.i("Navigation", "Opening AlbumDetailScreen with: ${event.albumId}")
+                navController.navigate(AlbumDetailScreen(albumId = event.albumId))
+            }
+            is AppEvent.NavigateToPlaylistOnlineDetailScreen ->
+                navController.navigate(PlaylistOnlineDetailScreenIdOnly(id = event.playlistId))
+            is AppEvent.NavigateToArtistDetailScreen -> navController.navigate(ArtistDetailScreen(artistId = event.artistId))
+            is AppEvent.NavigateToSearchResultScreen -> navController.navigate(SearchResultScreen(query = event.query))
+        }
+    }
 
     NavHost(
         navController = navController,
@@ -185,6 +202,24 @@ fun Navigation(
             val args = it.toRoute<PlaylistOnlineDetailScreen>()
             val playlistOnlineDetailViewModel: PlaylistOnlineDetailViewModel = koinViewModel(
                 parameters = { parametersOf(args.toPlaylistPreview()) }
+            )
+            ScreenWithContent(
+                navController = navController,
+                currentRoute = currentRoute,
+                isSearchScreen = false,
+                hideVertNavElements = true
+            ) {
+                PlaylistOnlineDetailScreen(
+                    navController = navController,
+                    playlistOnlineDetailViewModel = playlistOnlineDetailViewModel
+                )
+            }
+        }
+
+        composable<PlaylistOnlineDetailScreenIdOnly> {
+            val args = it.toRoute<PlaylistOnlineDetailScreenIdOnly>()
+            val playlistOnlineDetailViewModel: PlaylistOnlineDetailViewModel = koinViewModel(
+                parameters = { parametersOf(null, args.id) }
             )
             ScreenWithContent(
                 navController = navController,
@@ -374,6 +409,11 @@ data class PlaylistOnlineDetailScreen(
     val author: String,
     val thumbnail: String,
     val views : String
+)
+
+@Serializable
+data class PlaylistOnlineDetailScreenIdOnly(
+    val id: String
 )
 
 
