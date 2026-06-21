@@ -1,4 +1,8 @@
 <div align="center">
+  <img src="./assets/images/logo.png" width="100" height="100" style="border-radius: 50%;" />
+</div>
+
+<div align="center">
   <a href="https://github.com/KyNarec/KMusic/releases"><img src="https://img.shields.io/github/downloads/KyNarec/KMusic/total?label=Total%20Downloads"></a>
   <a href="https://github.com/KyNarec/KMusic/releases/latest"><img src="https://img.shields.io/github/downloads/KyNarec/KMusic/latest/total?label=Downloads%20of%20latest%20Release"></a>
   <a href="https://github.com/KyNarec/KMusic/releases/latest"><img src="https://img.shields.io/github/v/release/KyNarec/KMusic?label=Release"></a>
@@ -7,17 +11,28 @@
 
 **KMusic** is an Android Music Player written in Kotlin that allows streaming music from YouTube Music.
 
-## ~~❗ Warning ❗~~
-~~This app is still unstable and database resets are common. Use at your own risk.~~
+---
+## 📷 Screenshots
 
+<div align="center">
+    <img src="./assets/images/preview_01.jpg" width="15%"/>
+    <img src="./assets/images/preview_02.jpg" width="15%"/>
+    <img src="./assets/images/preview_03.jpg" width="15%"/>
+    <img src="./assets/images/preview_04.jpg" width="15%"/>
+    <img src="./assets/images/preview_05.jpg" width="15%"/>
+    <img src="./assets/images/preview_06.jpg" width="15%"/>
+</div>
 
+---
 ## ✨ Features
 - In-app update checker
 - Android Auto support
 - Youtube music playlist import
 - Synced lyrics from lrclib.net
-
-<!-- ## 📷 Screenshots -->
+- Song download
+- Simple sleep timer
+- Opening Youtube music links
+- Search Youtube music for songs, albums, artists, playlists and videos
 
 ## 📲 Installation
 [<img src="./assets/images/getItGithub.png" alt="GitHub" height="80">](https://github.com/KyNarec/KMusic/releases/latest)
