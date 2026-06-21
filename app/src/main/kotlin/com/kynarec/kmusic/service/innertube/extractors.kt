@@ -181,6 +181,97 @@ fun searchSongsFlow(query: String): Flow<Song> = flow {
     }
 }
 
+fun searchVideosFlow(query: String): Flow<Song> = flow {
+    val json = json
+    val innerTubeClient = InnerTube(ClientName.WebRemix)
+
+    try {
+        val raw = innerTubeClient.search(
+            query,
+            params = InnerTube.SearchFilter.Video.value,
+            continuation = null
+        )
+
+        val response = json.decodeFromString<SearchResponse>(raw)
+        val tabs = response.contents?.tabbedSearchResultsRenderer?.tabs ?: emptyList()
+        if (tabs.isEmpty()) return@flow
+
+        val sectionContents =
+            tabs.first().tabRenderer?.content?.sectionListRenderer?.contents ?: emptyList()
+        val musicShelf =
+            sectionContents.firstOrNull { it.musicShelfRenderer != null }?.musicShelfRenderer
+                ?: return@flow
+
+        for (item in musicShelf.contents.orEmpty()) {
+            val renderer = item.musicResponsiveListItemRenderer ?: continue
+
+            // Video ID & title
+            val flex0 =
+                renderer.flexColumns?.getOrNull(0)?.musicResponsiveListItemFlexColumnRenderer
+            val textRun0 = flex0?.text?.runs?.firstOrNull()
+            val videoId = textRun0?.navigationEndpoint?.watchEndpoint?.videoId ?: continue
+            val title = textRun0.text ?: "Unknown Title"
+
+            // Artists
+            val flex1 =
+                renderer.flexColumns.getOrNull(1)?.musicResponsiveListItemFlexColumnRenderer
+            val artistRuns = flex1?.text?.runs.orEmpty()
+            var duration = "Unknown Duration"
+            var albumId = "Unknown AlbumId"
+            val artistsList = mutableListOf<SongArtist>()
+            var dotCount = 0
+            for (index in 0..<artistRuns.size) {
+                if (artistRuns[index].text != " • ") {
+                    when (dotCount) {
+                        0 -> {
+                            val run = artistRuns[index]
+                            val artistId =
+                                run.navigationEndpoint?.browseEndpoint?.browseId ?: continue
+                            val artistName = run.text ?: "Unknown Artist"
+                            artistsList.add(SongArtist(id = artistId, name = artistName))
+                            continue
+                        }
+
+                        1 -> {
+                            val run = artistRuns[index]
+                            albumId = run.navigationEndpoint?.browseEndpoint?.browseId ?: continue
+                        }
+
+                        else -> {
+                            val run = artistRuns[index]
+                            duration = run.text ?: "Unknown Duration"
+                        }
+                    }
+
+                } else {
+                    dotCount++
+                }
+            }
+
+//            // Thumbnail
+            val thumbnails = renderer.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails
+            val fistPartOfThumbnailUrl = thumbnails?.maxByOrNull {
+                it.width + it.height
+            }?.url?.split("=")?.getOrNull(0)
+
+            val song = Song(
+                id = videoId,
+                title = title,
+                artists = artistsList,
+                albumId = albumId,
+                thumbnail = fistPartOfThumbnailUrl ?: "",
+                duration = duration
+            )
+
+            println("Emitting song: $title")
+            emit(song)
+        }
+
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
 suspend fun playSongByIdWithBestBitrate(videoId: String): String {
     val json = json
 
@@ -277,7 +368,7 @@ fun getRadioFlow(
             val title = renderer.title?.runs?.firstOrNull()?.text ?: "Unknown Title"
 
             val artistRuns = renderer.shortBylineText?.runs.orEmpty()
-            var albumId : String? = null
+            var albumId: String? = null
             val artistsList = mutableListOf<SongArtist>()
             var dotCount = 0
             for (index in 0..<artistRuns.size) {
@@ -1620,7 +1711,7 @@ suspend fun getPlaylistAndSongs(browseId: String): NetworkResult<PlaylistWithSon
                     ?.getPlaylistAndSongsText ?: ""
             }
 
-            var albumId : String? = null
+            var albumId: String? = null
             val artistList = mutableListOf<SongArtist>()
             for (flexColumn in song?.getPlaylistAndSongsFlexColumns.orEmpty()) {
                 val artistRuns = flexColumn
@@ -1755,8 +1846,9 @@ suspend fun browsePlaylistSongsContinuation(
                 return NetworkResult.Failure.NotFound
             }
         }
-        val parsed = runCatching { json.decodeFromString<BrowsePlaylistSongsContinuationResponse>(raw) }
-            .getOrNull() ?: return NetworkResult.Failure.ParsingError
+        val parsed =
+            runCatching { json.decodeFromString<BrowsePlaylistSongsContinuationResponse>(raw) }
+                .getOrNull() ?: return NetworkResult.Failure.ParsingError
         try {
             val items = parsed
                 .browsePlaylistSongsContinuationOnResponseReceivedActions
@@ -1795,7 +1887,7 @@ suspend fun browsePlaylistSongsContinuation(
                     ?.browsePlaylistSongsContinuationText ?: ""
 
                 var title = ""
-                var albumId : String? = null
+                var albumId: String? = null
                 val artistList = mutableListOf<SongArtist>()
 
                 songRenderer.browsePlaylistSongsContinuationFlexColumns?.forEachIndexed { index, flexColumn ->
