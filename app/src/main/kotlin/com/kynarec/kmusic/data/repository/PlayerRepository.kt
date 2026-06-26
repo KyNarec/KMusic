@@ -273,10 +273,12 @@ class PlayerRepository(private val context: Context) {
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
-                val nextMediaItem =
-                    createMediaItemFromSong(_playerState.value.songsList[1].song, context)
-                withContext(Dispatchers.Main) {
-                    mediaController?.replaceMediaItem(1, nextMediaItem)
+                if (_playerState.value.songsList.size > 1) {
+                    val nextMediaItem =
+                        createMediaItemFromSong(_playerState.value.songsList[1].song, context)
+                    withContext(Dispatchers.Main) {
+                        mediaController?.replaceMediaItem(1, nextMediaItem)
+                    }
                 }
             }
         }
