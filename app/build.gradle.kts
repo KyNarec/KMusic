@@ -8,16 +8,16 @@ plugins {
     id("kotlin-parcelize")
 }
 
-val appVersion = "0.1.21"
+val appVersion = "0.1.20"
 
 android {
     namespace = "com.kynarec.kmusic"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.kynarec.kmusic"
         minSdk = 30
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = appVersion
 
