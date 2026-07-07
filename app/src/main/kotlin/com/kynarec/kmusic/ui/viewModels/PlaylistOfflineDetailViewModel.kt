@@ -34,6 +34,7 @@ data class PlaylistOfflineDetailState(
     val showSongDetailBottomSheet: Boolean = false,
     val showPlaylistOptionsBottomSheet: Boolean = false,
     val showPlaylistSortByBottomSheet: Boolean = false,
+    val showStopAllDownloadingDialog: Boolean = false,
 )
 
 sealed interface PlaylistOfflineDetailActions {
@@ -42,6 +43,7 @@ sealed interface PlaylistOfflineDetailActions {
     data object ToggleSongDetailBottomSheet: PlaylistOfflineDetailActions
     data object TogglePlaylistOptionsBottomSheet: PlaylistOfflineDetailActions
     data object TogglePlaylistSortByBottomSheet: PlaylistOfflineDetailActions
+    data object ToggleShowStopAllDownloadingDialog: PlaylistOfflineDetailActions
 }
 class PlaylistOfflineDetailViewModel(
     private val playlistId: Long,
@@ -136,6 +138,9 @@ class PlaylistOfflineDetailViewModel(
             }
             PlaylistOfflineDetailActions.TogglePlaylistSortByBottomSheet -> {
                 _state.update { it.copy(showPlaylistSortByBottomSheet = !it.showPlaylistSortByBottomSheet) }
+            }
+            PlaylistOfflineDetailActions.ToggleShowStopAllDownloadingDialog -> {
+                _state.update { it.copy(showStopAllDownloadingDialog = !it.showStopAllDownloadingDialog) }
             }
         }
     }

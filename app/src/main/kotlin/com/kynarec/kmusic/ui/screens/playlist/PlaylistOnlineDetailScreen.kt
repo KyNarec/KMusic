@@ -55,6 +55,7 @@ import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
 import com.kynarec.kmusic.service.innertube.PlaylistWithSongsAndIndices
 import com.kynarec.kmusic.ui.components.playlist.PlaylistOnlineOptionsBottomSheet
+import com.kynarec.kmusic.ui.components.playlist.StopAllDownloadingDialog
 import com.kynarec.kmusic.ui.components.playlist.TwoByTwoImageGrid
 import com.kynarec.kmusic.ui.components.song.SongComponent
 import com.kynarec.kmusic.ui.components.song.SongComponentSkeleton
@@ -131,6 +132,7 @@ fun PlaylistOnlineDetailScreen(
                                         allDownloaded = allDownloaded,
                                         isAnyDownloading = isAnyDownloading,
                                         onAllDownloadedClick = { },
+                                        onAnyDownloadingClick = { },
                                         onNoneDownloadedClick = { },
                                         coloredDownloadIndicator = coloredDownloadIndicator,
                                         playlistOfflineDetailAction = { },
@@ -159,6 +161,9 @@ fun PlaylistOnlineDetailScreen(
                                             scope.launch {
                                                 dataViewModel.removeDownloads(songs)
                                             }
+                                        },
+                                        onAnyDownloadingClick = {
+                                            playlistOnlineDetailViewModel.onAction(PlaylistOnlineDetailActions.ToggleShowStopAllDownloadingDialog)
                                         },
                                         onNoneDownloadedClick = { dataViewModel.addDownloads(songs) },
                                         coloredDownloadIndicator = coloredDownloadIndicator,
@@ -204,6 +209,7 @@ fun PlaylistOnlineDetailScreen(
                                         allDownloaded = allDownloaded,
                                         isAnyDownloading = isAnyDownloading,
                                         onAllDownloadedClick = { },
+                                        onAnyDownloadingClick = { },
                                         onNoneDownloadedClick = { },
                                         coloredDownloadIndicator = coloredDownloadIndicator,
                                         playlistOfflineDetailAction = { },
@@ -224,6 +230,9 @@ fun PlaylistOnlineDetailScreen(
                                             scope.launch {
                                                 dataViewModel.removeDownloads(songs)
                                             }
+                                        },
+                                        onAnyDownloadingClick = {
+                                            playlistOnlineDetailViewModel.onAction(PlaylistOnlineDetailActions.ToggleShowStopAllDownloadingDialog)
                                         },
                                         onNoneDownloadedClick = { dataViewModel.addDownloads(songs) },
                                         coloredDownloadIndicator = coloredDownloadIndicator,
@@ -301,6 +310,20 @@ fun PlaylistOnlineDetailScreen(
                 navController = navController
             )
         }
+    }
+
+    if (state.showStopAllDownloadingDialog) {
+        StopAllDownloadingDialog(
+            onDismissRequest = {
+                playlistOnlineDetailViewModel.onAction(PlaylistOnlineDetailActions.ToggleShowStopAllDownloadingDialog)
+            },
+            onConfirm = {
+                scope.launch {
+                    dataViewModel.removeAllDownloading()
+                }
+                playlistOnlineDetailViewModel.onAction(PlaylistOnlineDetailActions.ToggleShowStopAllDownloadingDialog)
+            }
+        )
     }
 }
 fun LazyListScope.playlistHeader(
@@ -457,6 +480,7 @@ fun LazyListScope.playlistControlRow(
     allDownloaded: Boolean,
     isAnyDownloading: Boolean,
     onAllDownloadedClick: () -> Unit,
+    onAnyDownloadingClick: () -> Unit,
     onNoneDownloadedClick: () -> Unit,
     coloredDownloadIndicator: Boolean,
     playlistOfflineDetailAction: (PlaylistOnlineDetailActions) -> Unit,
@@ -474,7 +498,7 @@ fun LazyListScope.playlistControlRow(
                 isAnyDownloading -> {
                     IconButton(
                         onClick = {
-
+                            onAnyDownloadingClick()
                         }
                     ) {
                         Icon(

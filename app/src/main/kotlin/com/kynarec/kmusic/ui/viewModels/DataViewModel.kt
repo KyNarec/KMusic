@@ -206,6 +206,20 @@ class DataViewModel (
         updateStats()
     }
 
+    fun removeAllDownloading() {
+        val context = application.applicationContext
+        downloadingSongs.value.forEach { (songId, _) ->
+            androidx.media3.exoplayer.offline.DownloadService.sendSetStopReason(
+                context,
+                DownloadService::class.java,
+                songId,
+                Download.STATE_STOPPED,
+                /* foreground = */ false
+            )
+        }
+
+    }
+
     fun isSongDownloaded(songId: String): Boolean {
         val download = downloadManager.downloadIndex.getDownload(songId)
         return download != null && download.state == Download.STATE_COMPLETED
