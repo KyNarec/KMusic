@@ -201,7 +201,7 @@ fun Navigation(
         composable<PlaylistOnlineDetailScreen> {
             val args = it.toRoute<PlaylistOnlineDetailScreen>()
             val playlistOnlineDetailViewModel: PlaylistOnlineDetailViewModel = koinViewModel(
-                parameters = { parametersOf(args.toPlaylistPreview()) }
+                parameters = { parametersOf(args.toPlaylistPreview(), null) }
             )
             ScreenWithContent(
                 navController = navController,
