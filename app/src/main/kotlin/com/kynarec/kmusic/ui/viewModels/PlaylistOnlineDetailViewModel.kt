@@ -27,7 +27,8 @@ data class PlaylistOnlineDetailState(
     val isRefreshing: Boolean = false,
     val longClickSong: Song? = null,
     val showSongDetailBottomSheet: Boolean = false,
-    val showPlaylistOptionsBottomSheet: Boolean = false
+    val showPlaylistOptionsBottomSheet: Boolean = false,
+    val showStopAllDownloadingDialog: Boolean = false
 )
 
 sealed interface PlaylistOnlineDetailActions{
@@ -36,6 +37,7 @@ sealed interface PlaylistOnlineDetailActions{
     data class ShowSongDetailBottomSheet(val song: Song): PlaylistOnlineDetailActions
     data object HideSongDetailBottomSheet: PlaylistOnlineDetailActions
     data object TogglePlaylistOptionsBottomSheet: PlaylistOnlineDetailActions
+    data object ToggleShowStopAllDownloadingDialog: PlaylistOnlineDetailActions
 }
 
 class PlaylistOnlineDetailViewModel(
@@ -134,6 +136,9 @@ class PlaylistOnlineDetailViewModel(
 
             PlaylistOnlineDetailActions.TogglePlaylistOptionsBottomSheet -> {
                 _state.update { it.copy(showPlaylistOptionsBottomSheet = !it.showPlaylistOptionsBottomSheet) }
+            }
+            PlaylistOnlineDetailActions.ToggleShowStopAllDownloadingDialog -> {
+                _state.update { it.copy(showStopAllDownloadingDialog = !it.showStopAllDownloadingDialog) }
             }
         }
     }
