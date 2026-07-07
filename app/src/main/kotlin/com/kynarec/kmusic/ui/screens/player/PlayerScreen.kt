@@ -296,10 +296,6 @@ fun PlayerScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Song title
-            val isLiked = uiState.currentSong?.let {
-                database.songDao().getSongFlowById(it.id)
-                    .collectAsStateWithLifecycle(null).value?.isLiked
-            } ?: false
             Box(
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -353,6 +349,7 @@ fun PlayerScreen(
                     )
                 }
 
+                val isLiked = uiState.currentSong?.isLiked ?: false
                 IconButton(
                     onClick = { uiState.currentSong?.let { viewModel.onAction(PlayerScreenAction.ToggleFavorite(it)) } },
                     modifier = Modifier

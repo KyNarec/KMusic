@@ -34,10 +34,8 @@ class LibraryRepository(
         songDao.insertSong(song)
     }
 
-    suspend fun toggleFavoriteSong(song: Song): Song {
-        val updated = song.toggleLike()
-        songDao.updateSong(updated)
-        return updated
+    suspend fun toggleFavoriteSong(song: Song) {
+        songDao.updateLikedAt(song.id, song.toggleLike().likedAt)
     }
 
     @OptIn(UnstableApi::class)

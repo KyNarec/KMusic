@@ -41,6 +41,9 @@ interface SongDao {
     @Delete
     suspend fun deleteSong(song: Song)
 
+    @Query("UPDATE Song SET likedAt = :likedAt WHERE id = :id")
+    suspend fun updateLikedAt(id: String, likedAt: Long?)
+
     /**
      * Upserts a song into the database.
      * - If the song doesn't exist, it inserts it.
