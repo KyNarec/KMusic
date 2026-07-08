@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.InsertDriveFile
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Interests
 import androidx.compose.material.icons.rounded.Palette
@@ -105,7 +106,7 @@ fun SettingsScreen(
                 }
 
                 item {
-                    val count = 3
+                    val count = 4
                     Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
                         SegmentedListItem(
                             onClick = { navController.navigate(Settings.DataScreen) },
@@ -131,8 +132,22 @@ fun SettingsScreen(
                         )
 
                         SegmentedListItem(
-                            onClick = { navController.navigate(Settings.AboutScreen) },
+                            onClick = { navController.navigate(Settings.Logs.LogsScreen) },
                             shapes = ListItemDefaults.segmentedShapes(index = 2, count = count),
+                            colors = colors,
+                            leadingContent = {
+                                Icon(
+                                    Icons.AutoMirrored.Rounded.InsertDriveFile,
+                                    null
+                                )
+                            },
+                            content = { Text("Logs") },
+                            modifier = Modifier.height(itemHeight)
+                        )
+
+                        SegmentedListItem(
+                            onClick = { navController.navigate(Settings.AboutScreen) },
+                            shapes = ListItemDefaults.segmentedShapes(index = 3, count = count),
                             colors = colors,
                             leadingContent = { Icon(Icons.Rounded.Info, null) },
                             content = { Text("About") },
