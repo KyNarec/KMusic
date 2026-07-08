@@ -21,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.retain
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,14 +44,12 @@ fun AppearanceScreen(
     prefs: SettingsViewModel = koinActivityViewModel(),
     appViewModel: AppViewModel = koinActivityViewModel(),
 ) {
-    val scope = rememberCoroutineScope()
 
     val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
     val bottomPadding = if (showControlBar) 70.dp else 0.dp
 
     val colors =
         ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-    val itemHeight = 72.dp
 
     LazyColumn(
         Modifier
@@ -89,7 +86,7 @@ fun AppearanceScreen(
                             },
                         )
                     },
-                    modifier = Modifier.height(itemHeight)
+                    verticalAlignment = Alignment.CenterVertically,
                 )
 
                 var dynamicColorsChecked by retain {
@@ -117,7 +114,7 @@ fun AppearanceScreen(
                             },
                         )
                     },
-                    modifier = Modifier.height(itemHeight)
+                    verticalAlignment = Alignment.CenterVertically,
                 )
 
                 var wavyLyricsIdleIndicatorChecked by retain {
