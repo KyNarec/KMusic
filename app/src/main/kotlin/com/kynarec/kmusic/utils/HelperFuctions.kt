@@ -15,6 +15,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.shape.CornerBasedShape
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ListItemDefaults.shapes
+import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -415,4 +420,25 @@ fun Modifier.shimmerEffect(): Modifier = composed {
             end = Offset(translateAnim, translateAnim)
         )
     )
+}
+
+@kotlin.OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun singleSegmentedShape(
+    defaultShapes: ListItemShapes = shapes()
+): ListItemShapes {
+    val defaultBaseShape = defaultShapes.shape
+    return if (defaultBaseShape is CornerBasedShape) {
+        defaultShapes.copy(
+            shape =
+                defaultBaseShape.copy(
+                    topStart = CornerSize(16.dp),
+                    topEnd = CornerSize(16.dp),
+                    bottomStart = CornerSize(16.dp),
+                    bottomEnd = CornerSize(16.dp),
+                )
+        )
+    } else {
+        defaultShapes
+    }
 }
