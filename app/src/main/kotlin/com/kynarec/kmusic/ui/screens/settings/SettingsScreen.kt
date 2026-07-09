@@ -87,7 +87,7 @@ fun SettingsScreen(
                             colors = colors,
                             leadingContent = { Icon(Icons.Rounded.Palette, null) },
                             content = { Text("Appearance") },
-                            modifier = Modifier.height(itemHeight)
+                            verticalAlignment = Alignment.CenterVertically,
                         )
                         SegmentedListItem(
                             onClick = { navController.navigate(Settings.Interface) },
@@ -95,8 +95,7 @@ fun SettingsScreen(
                             colors = colors,
                             leadingContent = { Icon(Icons.Rounded.Interests, null) },
                             content = { Text("Interface") },
-                            modifier = Modifier.height(itemHeight)
-
+                            verticalAlignment = Alignment.CenterVertically,
                         )
                     }
                 }
@@ -114,8 +113,7 @@ fun SettingsScreen(
                             colors = colors,
                             leadingContent = { Icon(Icons.Rounded.Storage, null) },
                             content = { Text("Data") },
-                            modifier = Modifier.height(itemHeight)
-
+                            verticalAlignment = Alignment.CenterVertically,
                         )
                         SegmentedListItem(
                             onClick = {
@@ -128,7 +126,7 @@ fun SettingsScreen(
                             colors = colors,
                             leadingContent = { Icon(Icons.Rounded.Update, null) },
                             content = { Text("Check Updates") },
-                            modifier = Modifier.height(itemHeight)
+                            verticalAlignment = Alignment.CenterVertically,
                         )
 
                         SegmentedListItem(
@@ -142,7 +140,7 @@ fun SettingsScreen(
                                 )
                             },
                             content = { Text("Logs") },
-                            modifier = Modifier.height(itemHeight)
+                            verticalAlignment = Alignment.CenterVertically,
                         )
 
                         SegmentedListItem(
@@ -151,7 +149,7 @@ fun SettingsScreen(
                             colors = colors,
                             leadingContent = { Icon(Icons.Rounded.Info, null) },
                             content = { Text("About") },
-                            modifier = Modifier.height(itemHeight)
+                            verticalAlignment = Alignment.CenterVertically,
                         )
                     }
                 }
