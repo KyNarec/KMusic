@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.InsertDriveFile
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Interests
 import androidx.compose.material.icons.rounded.Palette
@@ -86,7 +87,7 @@ fun SettingsScreen(
                             colors = colors,
                             leadingContent = { Icon(Icons.Rounded.Palette, null) },
                             content = { Text("Appearance") },
-                            modifier = Modifier.height(itemHeight)
+                            verticalAlignment = Alignment.CenterVertically,
                         )
                         SegmentedListItem(
                             onClick = { navController.navigate(Settings.Interface) },
@@ -94,8 +95,7 @@ fun SettingsScreen(
                             colors = colors,
                             leadingContent = { Icon(Icons.Rounded.Interests, null) },
                             content = { Text("Interface") },
-                            modifier = Modifier.height(itemHeight)
-
+                            verticalAlignment = Alignment.CenterVertically,
                         )
                     }
                 }
@@ -105,7 +105,7 @@ fun SettingsScreen(
                 }
 
                 item {
-                    val count = 3
+                    val count = 4
                     Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
                         SegmentedListItem(
                             onClick = { navController.navigate(Settings.DataScreen) },
@@ -113,8 +113,7 @@ fun SettingsScreen(
                             colors = colors,
                             leadingContent = { Icon(Icons.Rounded.Storage, null) },
                             content = { Text("Data") },
-                            modifier = Modifier.height(itemHeight)
-
+                            verticalAlignment = Alignment.CenterVertically,
                         )
                         SegmentedListItem(
                             onClick = {
@@ -127,16 +126,30 @@ fun SettingsScreen(
                             colors = colors,
                             leadingContent = { Icon(Icons.Rounded.Update, null) },
                             content = { Text("Check Updates") },
-                            modifier = Modifier.height(itemHeight)
+                            verticalAlignment = Alignment.CenterVertically,
+                        )
+
+                        SegmentedListItem(
+                            onClick = { navController.navigate(Settings.Logs.LogsScreen) },
+                            shapes = ListItemDefaults.segmentedShapes(index = 2, count = count),
+                            colors = colors,
+                            leadingContent = {
+                                Icon(
+                                    Icons.AutoMirrored.Rounded.InsertDriveFile,
+                                    null
+                                )
+                            },
+                            content = { Text("Logs") },
+                            verticalAlignment = Alignment.CenterVertically,
                         )
 
                         SegmentedListItem(
                             onClick = { navController.navigate(Settings.AboutScreen) },
-                            shapes = ListItemDefaults.segmentedShapes(index = 2, count = count),
+                            shapes = ListItemDefaults.segmentedShapes(index = 3, count = count),
                             colors = colors,
                             leadingContent = { Icon(Icons.Rounded.Info, null) },
                             content = { Text("About") },
-                            modifier = Modifier.height(itemHeight)
+                            verticalAlignment = Alignment.CenterVertically,
                         )
                     }
                 }

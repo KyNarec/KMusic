@@ -47,6 +47,8 @@ import com.kynarec.kmusic.ui.screens.settings.AppearanceScreen
 import com.kynarec.kmusic.ui.screens.settings.DataScreen
 import com.kynarec.kmusic.ui.screens.settings.InterfaceScreen
 import com.kynarec.kmusic.ui.screens.settings.SettingsScreen
+import com.kynarec.kmusic.ui.screens.settings.logs.LogFileScreen
+import com.kynarec.kmusic.ui.screens.settings.logs.LogsScreen
 import com.kynarec.kmusic.ui.screens.song.SongListScreen
 import com.kynarec.kmusic.ui.viewModels.AppEvent
 import com.kynarec.kmusic.ui.viewModels.AppViewModel
@@ -71,18 +73,31 @@ fun Navigation(
 
     val context = LocalContext.current
 
-    val transitionEffect by settingsViewModel.transitionEffectFlow.collectAsStateWithLifecycle(settingsViewModel.transitionEffect)
+    val transitionEffect by settingsViewModel.transitionEffectFlow.collectAsStateWithLifecycle(
+        settingsViewModel.transitionEffect
+    )
 
     ObserveAsEvents(appViewModel.events) { event ->
-        when(event) {
+        when (event) {
             is AppEvent.NavigateToAlbumDetailScreen -> {
                 Log.i("Navigation", "Opening AlbumDetailScreen with: ${event.albumId}")
                 navController.navigate(AlbumDetailScreen(albumId = event.albumId))
             }
+
             is AppEvent.NavigateToPlaylistOnlineDetailScreen ->
                 navController.navigate(PlaylistOnlineDetailScreenIdOnly(id = event.playlistId))
-            is AppEvent.NavigateToArtistDetailScreen -> navController.navigate(ArtistDetailScreen(artistId = event.artistId))
-            is AppEvent.NavigateToSearchResultScreen -> navController.navigate(SearchResultScreen(query = event.query))
+
+            is AppEvent.NavigateToArtistDetailScreen -> navController.navigate(
+                ArtistDetailScreen(
+                    artistId = event.artistId
+                )
+            )
+
+            is AppEvent.NavigateToSearchResultScreen -> navController.navigate(
+                SearchResultScreen(
+                    query = event.query
+                )
+            )
         }
     }
 
@@ -327,6 +342,29 @@ fun Navigation(
                 }
             }
 
+            navigation<LogsGraph>(startDestination = Settings.Logs.LogsScreen) {
+                composable<Settings.Logs.LogsScreen> {
+                    ScreenWithContent(
+                        navController = navController,
+                        currentRoute = currentRoute,
+                        isSearchScreen = false,
+                        hideVertNavElements = true,
+                        isSettingsScreen = true
+                    ) {
+                        LogsScreen(
+                            navController = navController
+                        )
+                    }
+                }
+
+                composable<Settings.Logs.LogFileScreen> {
+                    val args = it.toRoute<Settings.Logs.LogFileScreen>()
+                    LogFileScreen(
+                        filename = args.filename,
+                        navBack = { navController.popBackStack() }
+                    )
+                }
+            }
         }
 
         composable<AlbumDetailScreen> {
@@ -395,7 +433,9 @@ fun Navigation(
         }
     }
 }
-@Serializable object StarterScreens
+
+@Serializable
+object StarterScreens
 
 @Serializable
 data class PlaylistOfflineDetailScreen(
@@ -408,7 +448,7 @@ data class PlaylistOnlineDetailScreen(
     val title: String,
     val author: String,
     val thumbnail: String,
-    val views : String
+    val views: String
 )
 
 @Serializable
@@ -429,6 +469,8 @@ data class SearchResultScreen(
 
 @Serializable
 data object SettingsGraph
+@Serializable
+data object LogsGraph
 
 @Serializable
 sealed class Settings {
@@ -441,11 +483,21 @@ sealed class Settings {
     @Serializable
     object Interface : Settings()
 
-    @Serializable
-    object AboutScreen : Settings()
 
     @Serializable
     object DataScreen : Settings()
+
+
+    @Serializable
+    sealed class Logs : Settings() {
+        @Serializable
+        object LogsScreen : Logs()
+        @Serializable
+        data class LogFileScreen(val filename: String) : Logs()
+    }
+
+    @Serializable
+    object AboutScreen : Settings()
 }
 
 

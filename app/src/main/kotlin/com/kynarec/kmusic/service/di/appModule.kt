@@ -6,11 +6,14 @@ import com.kynarec.kmusic.data.db.entities.PlaylistPreview
 import com.kynarec.kmusic.data.repository.LibraryRepository
 import com.kynarec.kmusic.data.repository.LyricsRepository
 import com.kynarec.kmusic.data.repository.PlayerRepository
+import com.kynarec.kmusic.data.repository.logs.LogsRepository
 import com.kynarec.kmusic.service.update.PlatformUpdateManager
 import com.kynarec.kmusic.service.update.UpdateManager
 import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
+import com.kynarec.kmusic.ui.viewModels.LogFileViewModel
+import com.kynarec.kmusic.ui.viewModels.LogsViewModel
 import com.kynarec.kmusic.ui.viewModels.LyricsViewModel
 import com.kynarec.kmusic.ui.viewModels.PlayerScreenViewModel
 import com.kynarec.kmusic.ui.viewModels.PlayerViewModel
@@ -41,6 +44,7 @@ val appModule = module {
     single { LibraryRepository(get(), get(), get(), get()) }
     single { PlayerRepository(androidApplication()) }
     single { LyricsRepository(get(), get(), get()) }
+    single { LogsRepository(androidApplication()) }
 
     viewModel { AppViewModel(get()) }
     viewModel { PlayerScreenViewModel(get(), get(), get()) }
@@ -89,6 +93,18 @@ val appModule = module {
             kSafe = get(),
             database = get(),
             dataViewModel = get()
+        )
+    }
+
+    viewModel {
+        LogsViewModel(
+            logsRepository = get()
+        )
+    }
+
+    viewModel {
+        LogFileViewModel(
+            logsRepository = get()
         )
     }
 }
