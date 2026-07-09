@@ -17,10 +17,11 @@ import androidx.compose.material.icons.rounded.Interests
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material.icons.rounded.Update
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -33,9 +34,7 @@ import androidx.navigation.NavHostController
 import com.kynarec.kmusic.service.update.UpdateManager
 import com.kynarec.kmusic.service.update.getCurrentVersion
 import com.kynarec.kmusic.ui.Settings
-import com.kynarec.kmusic.ui.components.SegmentedColumn
 import com.kynarec.kmusic.ui.components.UpdateDialog
-import com.kynarec.kmusic.ui.components.settings.SettingsFolder
 import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
 import com.kynarec.kmusic.utils.SmartMessage
@@ -44,6 +43,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
 
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsScreen(
     navController: NavHostController,
@@ -69,46 +69,33 @@ fun SettingsScreen(
     }
 
     Box(Modifier.fillMaxSize()) {
-        Column() {
+        Column {
+            val itemHeight = 72.dp
+            val colors =
+                ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
             LazyColumn(
                 Modifier.padding(
                     horizontal = 16.dp
                 )
             ) {
                 item {
-                    SegmentedColumn(
-                        items = listOf(
-                            {
-                                SettingsFolder(
-                                    title = { Text("Appearance") },
-                                    icon = { Icon(Icons.Rounded.Palette, null) },
-                                    onClick = { navController.navigate(Settings.Appearance) }
-                                )
-                            },
-                            {
-                                SettingsFolder(
-                                    title = { Text("Interface") },
-                                    icon = { Icon(Icons.Rounded.Interests, null) },
-                                    onClick = { navController.navigate(Settings.Interface) }
-                                )
-                            }
-                        ),
-                        spacerBackground = MaterialTheme.colorScheme.background,
-                        containerColor = CardDefaults.elevatedCardColors().containerColor
-                    )
-                }
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
+                    Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
+                        SegmentedListItem(
+                            onClick = { navController.navigate(Settings.Appearance) },
+                            shapes = ListItemDefaults.segmentedShapes(index = 0, count = 2),
+                            colors = colors,
+                            leadingContent = { Icon(Icons.Rounded.Palette, null) },
+                            content = { Text("Appearance") },
+                            modifier = Modifier.height(itemHeight)
+                        )
+                        SegmentedListItem(
+                            onClick = { navController.navigate(Settings.Interface) },
+                            shapes = ListItemDefaults.segmentedShapes(index = 1, count = 2),
+                            colors = colors,
+                            leadingContent = { Icon(Icons.Rounded.Interests, null) },
+                            content = { Text("Interface") },
+                            modifier = Modifier.height(itemHeight)
 
-                item {
-                    ElevatedCard(
-                        Modifier.fillMaxWidth()
-                    ) {
-                        SettingsFolder(
-                            title = { Text("Data") },
-                            icon = { Icon(Icons.Rounded.Storage, null) },
-                            onClick = { navController.navigate(Settings.DataScreen) }
                         )
                     }
                 }
@@ -118,36 +105,44 @@ fun SettingsScreen(
                 }
 
                 item {
-                    ElevatedCard(
-                        Modifier.fillMaxWidth()
-                    ) {
-                        SettingsFolder(
-                            title = { Text("Check Updates") },
-                            icon = { Icon(Icons.Rounded.Update, null) },
+                    val count = 3
+                    Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
+                        SegmentedListItem(
+                            onClick = { navController.navigate(Settings.DataScreen) },
+                            shapes = ListItemDefaults.segmentedShapes(index = 0, count = count),
+                            colors = colors,
+                            leadingContent = { Icon(Icons.Rounded.Storage, null) },
+                            content = { Text("Data") },
+                            modifier = Modifier.height(itemHeight)
+
+                        )
+                        SegmentedListItem(
                             onClick = {
                                 scope.launch {
                                     updateViewModel.checkForUpdates()
                                 }
                                 SmartMessage("Checking for Updates...", context = context)
-                            }
+                            },
+                            shapes = ListItemDefaults.segmentedShapes(index = 1, count = count),
+                            colors = colors,
+                            leadingContent = { Icon(Icons.Rounded.Update, null) },
+                            content = { Text("Check Updates") },
+                            modifier = Modifier.height(itemHeight)
+                        )
+
+                        SegmentedListItem(
+                            onClick = { navController.navigate(Settings.AboutScreen) },
+                            shapes = ListItemDefaults.segmentedShapes(index = 2, count = count),
+                            colors = colors,
+                            leadingContent = { Icon(Icons.Rounded.Info, null) },
+                            content = { Text("About") },
+                            modifier = Modifier.height(itemHeight)
                         )
                     }
                 }
 
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
-                }
-
-                item {
-                    ElevatedCard(
-                        Modifier.fillMaxWidth()
-                    ) {
-                        SettingsFolder(
-                            title = { Text("About") },
-                            icon = { Icon(Icons.Rounded.Info, null) },
-                            onClick = { navController.navigate(Settings.AboutScreen) }
-                        )
-                    }
                 }
             }
             Spacer(Modifier.weight(1f))
