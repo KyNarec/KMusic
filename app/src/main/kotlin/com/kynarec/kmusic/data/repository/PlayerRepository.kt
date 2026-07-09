@@ -297,12 +297,17 @@ class PlayerRepository(private val context: Context) {
                     .toList()
                 val mediaItems = radioSongs.mapIndexed { index, song ->
                     if (index == 0) {
-                        _playerState.update { it.copy(currentSong = song, songsList = listOf(song.toPlaylistItem())) }
+                        _playerState.update {
+                            it.copy(
+                                currentSong = song,
+                                songsList = listOf(song.toPlaylistItem())
+                            )
+                        }
                         createMediaItemFromSong(song, context)
                     } else {
                         _playerState.update {
-                                it.copy(songsList = it.songsList + song.toPlaylistItem())
-                            }
+                            it.copy(songsList = it.songsList + song.toPlaylistItem())
+                        }
                         createPartialMediaItemFromSong(song, context)
                     }
                 }
@@ -316,9 +321,8 @@ class PlayerRepository(private val context: Context) {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-            }
-            finally {
-                if(_playerState.value.songsList.size > 2) {
+            } finally {
+                if (_playerState.value.songsList.size > 2) {
                     val nextMediaItem =
                         createMediaItemFromSong(_playerState.value.songsList[1].song, context)
                     withContext(Dispatchers.Main) {
@@ -489,6 +493,29 @@ class PlayerRepository(private val context: Context) {
             PlayerRepeatMode.RepeatModeAll -> Player.REPEAT_MODE_ALL
             PlayerRepeatMode.RepeatModeOne -> Player.REPEAT_MODE_ONE
             PlayerRepeatMode.RepeatModeOff -> Player.REPEAT_MODE_OFF
+        }
+    }
+
+    fun toggleFavoriteSong(id: String) {
+        _playerState.update { currentState ->
+            val updatedCurrentSong = if (currentState.currentSong?.id == id) {
+                currentState.currentSong.toggleLike()
+            } else {
+                currentState.currentSong
+            }
+
+            val updatedSongsList = currentState.songsList.map { item ->
+                if (item.song.id == id) {
+                    item.copy(song = item.song.toggleLike())
+                } else {
+                    item
+                }
+            }
+
+            currentState.copy(
+                currentSong = updatedCurrentSong,
+                songsList = updatedSongsList
+            )
         }
     }
 }

@@ -90,6 +90,7 @@ class PlayerScreenViewModel(
             is PlayerScreenAction.ToggleRepeatMode -> playerRepository.changePlayerRepeatMode(action.mode)
             is PlayerScreenAction.ToggleFavorite -> {
                 viewModelScope.launch {
+                    playerRepository.toggleFavoriteSong(action.song.id)
                     libraryRepository.toggleFavoriteSong(action.song)
                 }
             }

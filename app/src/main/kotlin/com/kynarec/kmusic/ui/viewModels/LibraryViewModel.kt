@@ -69,7 +69,10 @@ class LibraryViewModel(
             }
             
             is LibraryAction.ToggleFavoriteSong -> {
-                viewModelScope.launch { libraryRepository.toggleFavoriteSong(action.song) }
+                viewModelScope.launch {
+                    playerRepository.toggleFavoriteSong(action.song.id)
+                    libraryRepository.toggleFavoriteSong(action.song)
+                }
             }
             is LibraryAction.ToggleFavoriteAlbum -> {
                 viewModelScope.launch { libraryRepository.toggleFavoriteAlbum(action.album, action.songs) }
