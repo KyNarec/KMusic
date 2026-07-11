@@ -8,7 +8,12 @@ plugins {
     id("kotlin-parcelize")
 }
 
-val appVersion = "0.1.21"
+val appVersion = "0.1.21-alpha.1"
+
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
 
 android {
     namespace = "com.kynarec.kmusic"
@@ -23,10 +28,6 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-    }
-
-    ksp {
-        arg("room.schemaLocation", "$projectDir/schemas")
     }
 
     signingConfigs {
