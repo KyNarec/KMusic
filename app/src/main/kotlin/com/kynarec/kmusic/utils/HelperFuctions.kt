@@ -55,6 +55,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @JvmName("StringParseDurationToMillis")
 fun String.parseDurationToMillis(): Long {
@@ -441,4 +444,10 @@ fun singleSegmentedShape(
     } else {
         defaultShapes
     }
+}
+
+fun formatDate(date: String): String {
+    return Instant.parse(date)
+        .atZone(ZoneId.systemDefault())
+        .format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
 }

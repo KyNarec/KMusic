@@ -1,6 +1,7 @@
 package com.kynarec.kmusic.data.db
 
 import android.content.Context
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -9,12 +10,14 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.kynarec.kmusic.data.db.dao.AlbumDao
 import com.kynarec.kmusic.data.db.dao.ArtistDao
+import com.kynarec.kmusic.data.db.dao.GithubDao
 import com.kynarec.kmusic.data.db.dao.PersistedQueueDao
 import com.kynarec.kmusic.data.db.dao.PlaylistDao
 import com.kynarec.kmusic.data.db.dao.SearchQueryDao
 import com.kynarec.kmusic.data.db.dao.SongDao
 import com.kynarec.kmusic.data.db.entities.Album
 import com.kynarec.kmusic.data.db.entities.Artist
+import com.kynarec.kmusic.data.db.entities.GitHubRelease
 import com.kynarec.kmusic.data.db.entities.PersistedQueueItem
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.SearchQuery
@@ -31,19 +34,23 @@ import com.kynarec.kmusic.data.db.entities.SongPlaylistMap
         SongPlaylistMap::class,
         Album::class,
         SongAlbumMap::class,
-        Artist::class
-               ],
-    version = 12
+        Artist::class,
+        GitHubRelease::class
+    ],
+    autoMigrations = [
+        AutoMigration(from = 12, to = 13)
+    ],
+    version = 13
 )
 @TypeConverters(Converters::class)
 abstract class KmusicDatabase : RoomDatabase() {
     abstract fun songDao(): SongDao
-    //    abstract fun queuedMediaItemDao(): QueuedMediaItemDao
     abstract fun persistedQueueDao(): PersistedQueueDao
     abstract fun searchQueryDao(): SearchQueryDao
     abstract fun playlistDao(): PlaylistDao
     abstract fun albumDao(): AlbumDao
     abstract fun artistDao(): ArtistDao
+    abstract fun githubDao(): GithubDao
 
     companion object {
         @Volatile private var INSTANCE: KmusicDatabase? = null

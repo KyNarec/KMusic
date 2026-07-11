@@ -1,12 +1,16 @@
-package com.kynarec.kmusic.service.update
+package com.kynarec.kmusic.data.db.entities
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+@Entity(tableName = "GithubRelease")
 @Serializable
 data class GitHubRelease(
     @SerialName("html_url") val htmlUrl: String,
     @SerialName("tag_name") val tagName: String,
+    @PrimaryKey val id: Int,
     val name: String? = null,
     val draft: Boolean = false,
     @SerialName("prerelease") val preRelease: Boolean = false,

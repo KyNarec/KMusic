@@ -6,9 +6,9 @@ import com.kynarec.kmusic.data.db.entities.PlaylistPreview
 import com.kynarec.kmusic.data.repository.LibraryRepository
 import com.kynarec.kmusic.data.repository.LyricsRepository
 import com.kynarec.kmusic.data.repository.PlayerRepository
+import com.kynarec.kmusic.data.repository.UpdateRepository
 import com.kynarec.kmusic.data.repository.logs.LogsRepository
-import com.kynarec.kmusic.service.update.PlatformUpdateManager
-import com.kynarec.kmusic.service.update.UpdateManager
+import com.kynarec.kmusic.service.update.AppVersionProvider
 import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.DataViewModel
 import com.kynarec.kmusic.ui.viewModels.LibraryViewModel
@@ -36,6 +36,7 @@ val appModule = module {
     single { get<KmusicDatabase>().playlistDao() }
     single { get<KmusicDatabase>().albumDao() }
     single { get<KmusicDatabase>().artistDao() }
+    single { get<KmusicDatabase>().githubDao() }
 
     single<CoroutineScope> {
         CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -45,6 +46,8 @@ val appModule = module {
     single { PlayerRepository(androidApplication()) }
     single { LyricsRepository(get(), get(), get()) }
     single { LogsRepository(androidApplication()) }
+    single { UpdateRepository(get(), get(), get()) }
+    single { AppVersionProvider(androidApplication()) }
 
     viewModel { AppViewModel(get()) }
     viewModel { PlayerScreenViewModel(get(), get(), get()) }
@@ -60,10 +63,10 @@ val appModule = module {
         )
     }
 
-    single<UpdateManager> { PlatformUpdateManager() }
     viewModel {
         UpdateViewModel(
-            updateManager = get()
+            updateRepository = get(),
+            appVersionProvider = get()
         )
     }
 

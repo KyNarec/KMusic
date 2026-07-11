@@ -27,12 +27,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.kynarec.kmusic.R
-import com.kynarec.kmusic.service.update.getCurrentVersion
+import com.kynarec.kmusic.service.update.AppVersionProvider
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(
-    onOpenUrl: (String) -> Unit
+    onOpenUrl: (String) -> Unit,
+    appVersionProvider: AppVersionProvider = koinInject()
 ) {
         Column(
             modifier = Modifier
@@ -56,7 +58,7 @@ fun AboutScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
             Text("KMusic", style = MaterialTheme.typography.headlineMedium)
-            Text("v${getCurrentVersion()}", style = MaterialTheme.typography.bodyMedium)
+            Text("v${appVersionProvider.currentVersion}", style = MaterialTheme.typography.bodyMedium)
 
             Spacer(modifier = Modifier.height(32.dp))
 

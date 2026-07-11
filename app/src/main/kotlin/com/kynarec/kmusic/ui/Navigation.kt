@@ -47,6 +47,7 @@ import com.kynarec.kmusic.ui.screens.settings.AppearanceScreen
 import com.kynarec.kmusic.ui.screens.settings.DataScreen
 import com.kynarec.kmusic.ui.screens.settings.InterfaceScreen
 import com.kynarec.kmusic.ui.screens.settings.SettingsScreen
+import com.kynarec.kmusic.ui.screens.settings.UpdateScreen
 import com.kynarec.kmusic.ui.screens.settings.logs.LogFileScreen
 import com.kynarec.kmusic.ui.screens.settings.logs.LogsScreen
 import com.kynarec.kmusic.ui.screens.song.SongListScreen
@@ -325,6 +326,18 @@ fun Navigation(
                 }
             }
 
+            composable<Settings.UpdateScreen> {
+                ScreenWithContent(
+                    navController = navController,
+                    currentRoute = currentRoute,
+                    isSearchScreen = false,
+                    hideVertNavElements = true,
+                    isSettingsScreen = true
+                ) {
+                    UpdateScreen()
+                }
+            }
+
             composable<Settings.AboutScreen> {
                 ScreenWithContent(
                     navController = navController,
@@ -486,7 +499,8 @@ sealed class Settings {
 
     @Serializable
     object DataScreen : Settings()
-
+    @Serializable
+    object UpdateScreen : Settings()
 
     @Serializable
     sealed class Logs : Settings() {

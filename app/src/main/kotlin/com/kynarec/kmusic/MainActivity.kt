@@ -17,11 +17,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import com.kynarec.kmusic.data.repository.PlayerRepository
+import com.kynarec.kmusic.data.repository.UpdateRepository
 import com.kynarec.kmusic.enums.PopupType
 import com.kynarec.kmusic.service.PlayerServiceModern
 import com.kynarec.kmusic.service.innertube.NetworkResult
 import com.kynarec.kmusic.service.innertube.getAlbumAndSongs
-import com.kynarec.kmusic.service.update.PlatformContext
+import com.kynarec.kmusic.service.update.AppVersionProvider
 import com.kynarec.kmusic.ui.screens.MainScreen
 import com.kynarec.kmusic.ui.viewModels.AppAction
 import com.kynarec.kmusic.ui.viewModels.AppViewModel
@@ -30,10 +31,12 @@ import com.kynarec.kmusic.utils.setJustStartedUp
 import com.kynarec.kmusic.utils.setPlayerOpen
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.android.ext.android.getKoin
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import kotlin.time.Duration.Companion.milliseconds
@@ -68,13 +71,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         requestNotificationPermission()
-        PlatformContext.initialize(applicationContext)
         FileKit.init(this)
         handleIntent(intent)
         setContent {
             MainScreen()
         }
-
+        CoroutineScope(Dispatchers.IO).launch {
+            getKoin().get<AppVersionProvider>()
+            getKoin().get<UpdateRepository>()
+        }
 
         this.setJustStartedUp(true)
         this.setPlayerOpen(false)
