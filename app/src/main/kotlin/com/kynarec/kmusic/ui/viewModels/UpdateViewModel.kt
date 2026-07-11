@@ -7,13 +7,21 @@ import androidx.lifecycle.viewModelScope
 import com.kynarec.kmusic.data.db.entities.GitHubRelease
 import com.kynarec.kmusic.data.repository.UpdateRepository
 import com.kynarec.kmusic.data.repository.UpdateResult
+import com.kynarec.kmusic.enums.ReleaseNotificationType
 import com.kynarec.kmusic.service.update.AppVersionProvider
 import com.kynarec.kmusic.service.update.DownloadStatus
 import com.kynarec.kmusic.service.update.UpdateInfo
+import com.kynarec.kmusic.utils.Constants.DEFAULT_RELEASE_NOTIFICATION
+import com.kynarec.kmusic.utils.Constants.DEFAULT_SHOW_PRE_RELEASES
+import com.kynarec.kmusic.utils.Constants.RELEASE_NOTIFICATION_KEY
+import com.kynarec.kmusic.utils.Constants.SHOW_PRE_RELEASES_KEY
+import eu.anifantakis.lib.ksafe.KSafe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -24,7 +32,9 @@ data class UpdateState(
     val updateInfo: UpdateInfo? = null,
     val downloadStatus: Map<Int, DownloadStatus> = emptyMap(),
     val downloadErrorDialog: String? = null,
-    val currentInstalledVersion: String
+    val currentInstalledVersion: String,
+    val releaseNotificationType: ReleaseNotificationType = DEFAULT_RELEASE_NOTIFICATION,
+    val showPreReleases: Boolean = DEFAULT_SHOW_PRE_RELEASES
 )
 
 sealed interface UpdateAction {
@@ -36,12 +46,30 @@ sealed interface UpdateAction {
 
 class UpdateViewModel(
     private val updateRepository: UpdateRepository,
-    private val appVersionProvider: AppVersionProvider
+    appVersionProvider: AppVersionProvider,
+    kSafe: KSafe
 ) : ViewModel() {
     private val tag = "UpdateViewModel"
     private val _state =
         MutableStateFlow(UpdateState(currentInstalledVersion = appVersionProvider.currentVersion))
-    val state: StateFlow<UpdateState> = _state.asStateFlow()
+
+    val state: StateFlow<UpdateState> = combine(
+        _state,
+        kSafe.getFlow(RELEASE_NOTIFICATION_KEY, DEFAULT_RELEASE_NOTIFICATION),
+        kSafe.getFlow(SHOW_PRE_RELEASES_KEY, DEFAULT_SHOW_PRE_RELEASES)
+    ) { state, releaseNotificationType, showPreReleases ->
+        state.copy(
+            releaseNotificationType = releaseNotificationType,
+            showPreReleases = showPreReleases
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = UpdateState(
+            currentInstalledVersion = appVersionProvider.currentVersion,
+            showPreReleases = kSafe.getDirect(SHOW_PRE_RELEASES_KEY, DEFAULT_SHOW_PRE_RELEASES)
+        )
+    )
 
     init {
         viewModelScope.launch(Dispatchers.IO) {

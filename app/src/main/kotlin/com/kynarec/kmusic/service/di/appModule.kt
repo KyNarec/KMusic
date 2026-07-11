@@ -66,7 +66,8 @@ val appModule = module {
     viewModel {
         UpdateViewModel(
             updateRepository = get(),
-            appVersionProvider = get()
+            appVersionProvider = get(),
+            kSafe = get()
         )
     }
 

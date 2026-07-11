@@ -1,6 +1,7 @@
 package com.kynarec.kmusic.utils
 
 import com.kynarec.kmusic.enums.PlayerRepeatMode
+import com.kynarec.kmusic.enums.ReleaseNotificationType
 import com.kynarec.kmusic.enums.SortBy
 import com.kynarec.kmusic.enums.SortOrder
 import com.kynarec.kmusic.enums.StartDestination
@@ -59,5 +60,11 @@ object Constants {
 
     const val SONGS_SORT_BY_KEY = "songsSortBy"
     val DEFAULT_SONGS_SORT_BY = SortBy.Position
+
+    const val SHOW_PRE_RELEASES_KEY = "showPreReleases"
+    const val DEFAULT_SHOW_PRE_RELEASES = false
+
+    const val RELEASE_NOTIFICATION_KEY = "releaseNotification"
+    val DEFAULT_RELEASE_NOTIFICATION = ReleaseNotificationType.Release
 }
 
