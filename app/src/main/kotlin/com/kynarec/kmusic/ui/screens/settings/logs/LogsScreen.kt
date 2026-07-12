@@ -60,17 +60,20 @@ import com.kynarec.kmusic.ui.Settings
 import com.kynarec.kmusic.ui.components.settings.logs.DeleteLogDialog
 import com.kynarec.kmusic.ui.components.settings.logs.LogTimespan
 import com.kynarec.kmusic.ui.theme.KMusicTheme
+import com.kynarec.kmusic.ui.viewModels.AppViewModel
 import com.kynarec.kmusic.ui.viewModels.LogsActions
 import com.kynarec.kmusic.ui.viewModels.LogsViewModel
 import com.kynarec.kmusic.utils.singleSegmentedShape
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinActivityViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun LogsScreen(
     modifier: Modifier = Modifier,
     navController: NavHostController,
-    logsViewModel: LogsViewModel = koinViewModel()
+    logsViewModel: LogsViewModel = koinViewModel(),
+    appViewModel: AppViewModel = koinActivityViewModel()
 ) {
     val context = LocalContext.current
     val state by logsViewModel.state.collectAsStateWithLifecycle()
@@ -79,6 +82,9 @@ fun LogsScreen(
         ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     val focusManager = LocalFocusManager.current
     val imeVisible = WindowInsets.isImeVisible
+
+    val showControlBar = appViewModel.state.collectAsStateWithLifecycle().value.showControlBar
+    val bottomPadding = if (showControlBar) 70.dp else 0.dp
 
     LaunchedEffect(imeVisible) {
         if (!imeVisible) {
@@ -252,6 +258,12 @@ fun LogsScreen(
                             }
                         }
                     }
+                }
+            }
+
+            if (showControlBar) {
+                item {
+                    Spacer(Modifier.height(bottomPadding + 16.dp))
                 }
             }
         }
