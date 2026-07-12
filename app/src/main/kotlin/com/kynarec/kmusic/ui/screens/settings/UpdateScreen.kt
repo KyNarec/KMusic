@@ -65,6 +65,7 @@ import com.kynarec.kmusic.ui.viewModels.UpdateAction
 import com.kynarec.kmusic.ui.viewModels.UpdateViewModel
 import com.kynarec.kmusic.utils.Constants.SHOW_PRE_RELEASES_KEY
 import com.kynarec.kmusic.utils.formatDate
+import com.kynarec.kmusic.utils.preview_off
 import com.kynarec.kmusic.utils.singleSegmentedShape
 import com.mikepenz.markdown.compose.Markdown
 import com.mikepenz.markdown.m3.markdownColor
@@ -118,7 +119,7 @@ fun UpdateScreen(
                         },
                         shapes = ListItemDefaults.segmentedShapes(index = 0, count = 2),
                         colors = colors,
-                        leadingContent = { Icon(Icons.Rounded.Preview, null) },
+                        leadingContent = { Icon(if(state.showPreReleases) Icons.Rounded.Preview else preview_off, null) },
                         content = { Text("Show Pre-Releases") },
                         supportingContent = {
                             Text("Choose whether to show pre-releases in the list below")
@@ -167,7 +168,7 @@ fun UpdateScreen(
                         AnimatedVisibility(
                             visible = expanded,
                             enter = expandVertically(MaterialTheme.motionScheme.fastSpatialSpec()),
-                            exit = shrinkVertically(MaterialTheme.motionScheme.fastSpatialSpec()),
+                            exit = shrinkVertically(MaterialTheme.motionScheme.fastEffectsSpec()),
                         ) {
                             Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
                                 ReleaseNotificationType.entries.forEachIndexed { index, releaseNotificationType ->
@@ -347,7 +348,7 @@ fun UpdateScreen(
                     AnimatedVisibility(
                         visible = expanded,
                         enter = expandVertically(MaterialTheme.motionScheme.fastSpatialSpec()),
-                        exit = shrinkVertically(MaterialTheme.motionScheme.fastSpatialSpec()),
+                        exit = shrinkVertically(MaterialTheme.motionScheme.fastEffectsSpec()),
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
                             SegmentedListItem(

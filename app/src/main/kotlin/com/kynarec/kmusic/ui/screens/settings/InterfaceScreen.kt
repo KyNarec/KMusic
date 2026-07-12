@@ -108,7 +108,7 @@ fun InterfaceScreen(
                 AnimatedVisibility(
                     visible = expanded,
                     enter = expandVertically(MaterialTheme.motionScheme.fastSpatialSpec()),
-                    exit = shrinkVertically(MaterialTheme.motionScheme.fastSpatialSpec()),
+                    exit = shrinkVertically(MaterialTheme.motionScheme.fastEffectsSpec()),
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
                         StartDestination.entries.forEachIndexed { index, destination ->
@@ -172,7 +172,7 @@ fun InterfaceScreen(
                 AnimatedVisibility(
                     visible = expanded,
                     enter = expandVertically(MaterialTheme.motionScheme.fastSpatialSpec()),
-                    exit = shrinkVertically(MaterialTheme.motionScheme.fastSpatialSpec()),
+                    exit = shrinkVertically(MaterialTheme.motionScheme.fastEffectsSpec()),
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
                         TransitionEffect.entries.forEachIndexed { index, effect ->
@@ -234,7 +234,7 @@ fun InterfaceScreen(
                 AnimatedVisibility(
                     visible = expanded,
                     enter = expandVertically(MaterialTheme.motionScheme.fastSpatialSpec()),
-                    exit = shrinkVertically(MaterialTheme.motionScheme.fastSpatialSpec()),
+                    exit = shrinkVertically(MaterialTheme.motionScheme.fastEffectsSpec()),
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
                         PlayerRepeatMode.entries.forEachIndexed { index, repeatMode ->
