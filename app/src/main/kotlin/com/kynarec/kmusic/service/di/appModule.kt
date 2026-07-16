@@ -43,7 +43,7 @@ val appModule = module {
     }
 
     single { LibraryRepository(get(), get(), get(), get()) }
-    single { PlayerRepository(androidApplication()) }
+    single { PlayerRepository(androidApplication(), get(), get()) }
     single { LyricsRepository(get(), get(), get()) }
     single { LogsRepository(androidApplication()) }
     single { UpdateRepository(get(), get(), get()) }

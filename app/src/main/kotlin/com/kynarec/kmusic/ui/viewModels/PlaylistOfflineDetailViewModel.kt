@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
+import com.kynarec.kmusic.data.repository.PlaylistItem
+import com.kynarec.kmusic.data.repository.toPlaylistItem
 import com.kynarec.kmusic.enums.SortBy
 import com.kynarec.kmusic.enums.SortOrder
 import com.kynarec.kmusic.utils.Constants.DEFAULT_PLAYLIST_SORT_BY

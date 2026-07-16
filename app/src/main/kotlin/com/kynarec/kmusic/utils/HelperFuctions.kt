@@ -2,6 +2,8 @@ package com.kynarec.kmusic.utils
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -42,6 +44,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import androidx.room.withTransaction
+import coil.imageLoader
+import coil.request.ImageRequest
 import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.data.db.entities.Playlist
 import com.kynarec.kmusic.data.db.entities.Song
@@ -55,6 +59,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -116,9 +121,7 @@ fun List<Song>.formatDuration(): String {
     }
 }
 
-suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = withContext(Dispatchers.IO) {
-    val uri = playSongById(song.id)
-
+suspend fun createMediaItemFromSong(song: Song, context: Context, downloaded: Boolean): MediaItem = withContext(Dispatchers.IO) {
     val extras = Bundle().apply {
         putString("ALBUM_ID", song.albumId)
         putString("DURATION", song.duration)
@@ -139,11 +142,60 @@ suspend fun createMediaItemFromSong(song: Song, context: Context): MediaItem = w
     val songDao = KmusicDatabase.getDatabase(context).songDao()
     songDao.upsertSong(song)
 
-    MediaItem.Builder()
+    /**
+     * When downloaded, try to use the offline media item if that fails, fetch song url
+     */
+    if (downloaded) {
+        createOfflineMediaItem(context, MediaItem.Builder()
+            .setMediaId(song.id)
+            .setUri(song.id)
+            .setMediaMetadata(mediaMetadataBuilder.build())
+            .build())
+            .onSuccess { return@withContext it }
+    }
+    val uri = playSongById(song.id)
+    return@withContext MediaItem.Builder()
         .setMediaId(song.id)
         .setUri(uri)
         .setMediaMetadata(mediaMetadataBuilder.build())
         .build()
+
+}
+
+@OptIn(UnstableApi::class)
+suspend fun createOfflineMediaItem(
+    context: Context,
+    mediaItem: MediaItem,
+): Result<MediaItem> {
+    val songId = mediaItem.mediaId
+    if (mediaItem.localConfiguration?.customCacheKey != songId) {
+        val request = ImageRequest.Builder(context)
+            .data(mediaItem.mediaMetadata.artworkUri)
+            .allowHardware(false)
+            .build()
+
+        val result = context.imageLoader.execute(request)
+        val bitmap = (result.drawable as? BitmapDrawable)?.bitmap
+        val artworkData = bitmap?.let {
+            val outputStream = ByteArrayOutputStream()
+            it.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+            outputStream.toByteArray()
+        }
+        val offlineNeighborItem = MediaItem.Builder()
+            .setMediaId(songId)
+            .setUri(mediaItem.localConfiguration?.uri.toString())
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(mediaItem.mediaMetadata.title)
+                    .setArtist(mediaItem.mediaMetadata.artist)
+                    .setArtworkData(artworkData, MediaMetadata.PICTURE_TYPE_FRONT_COVER).build()
+            )
+            .setCustomCacheKey(songId)
+            .build()
+        return Result.success(offlineNeighborItem)
+    } else {
+        return Result.failure(Exception("MediaItem already has customCacheKey"))
+    }
 }
 
 @OptIn(UnstableApi::class)

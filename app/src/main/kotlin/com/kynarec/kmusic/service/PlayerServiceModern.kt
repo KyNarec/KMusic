@@ -1,10 +1,7 @@
 package com.kynarec.kmusic.service
 
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
 import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -30,8 +27,6 @@ import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionError
-import coil.imageLoader
-import coil.request.ImageRequest
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -46,6 +41,7 @@ import com.kynarec.kmusic.ui.viewModels.SettingsViewModel
 import com.kynarec.kmusic.utils.SmartMessage
 import com.kynarec.kmusic.utils.createFullMediaItem
 import com.kynarec.kmusic.utils.createMediaItemFromSong
+import com.kynarec.kmusic.utils.createOfflineMediaItem
 import com.kynarec.kmusic.utils.createPartialMediaItemFromSong
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -57,7 +53,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.io.ByteArrayOutputStream
 
 @UnstableApi
 class PlayerServiceModern : MediaLibraryService(), KoinComponent {
@@ -413,7 +408,7 @@ class PlayerServiceModern : MediaLibraryService(), KoinComponent {
                         val song = songDao.getSongById(mediaId)
                         if (song != null) {
                             Log.i(tag, "Found song with mediaId: $mediaId. Creating full MediaItem.")
-                            val mediaItem = createMediaItemFromSong(song, applicationContext)
+                            val mediaItem = createMediaItemFromSong(song, applicationContext,isSongDownloaded(mediaId))
                             future.set(LibraryResult.ofItem(mediaItem, null))
                         } else {
                             Log.e(tag, "Could not find song with mediaId: $mediaId")
@@ -592,38 +587,10 @@ class PlayerServiceModern : MediaLibraryService(), KoinComponent {
         }
     }
 
-    private suspend fun createOfflineMediaItem(
-        context: Context,
-        mediaItem: MediaItem,
-    ): Result<MediaItem> {
-        val songId = mediaItem.mediaId
-        if (mediaItem.localConfiguration?.customCacheKey != songId) {
-            val request = ImageRequest.Builder(context)
-                .data(mediaItem.mediaMetadata.artworkUri)
-                .allowHardware(false)
-                .build()
+    fun isSongDownloaded(songId: String): Boolean {
+        val download = downloadManager.downloadIndex.getDownload(songId)
+        val isDownloaded = download != null && download.state == Download.STATE_COMPLETED
 
-            val result = context.imageLoader.execute(request)
-            val bitmap = (result.drawable as? BitmapDrawable)?.bitmap
-            val artworkData = bitmap?.let {
-                val outputStream = ByteArrayOutputStream()
-                it.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-                outputStream.toByteArray()
-            }
-            val offlineNeighborItem = MediaItem.Builder()
-                .setMediaId(songId)
-                .setUri(mediaItem.localConfiguration?.uri.toString())
-                .setMediaMetadata(
-                    MediaMetadata.Builder()
-                        .setTitle(mediaItem.mediaMetadata.title)
-                        .setArtist(mediaItem.mediaMetadata.artist)
-                        .setArtworkData(artworkData, MediaMetadata.PICTURE_TYPE_FRONT_COVER).build()
-                )
-                .setCustomCacheKey(songId)
-                .build()
-            return Result.success(offlineNeighborItem)
-        } else {
-            return Result.failure(Exception("MediaItem already has customCacheKey"))
-        }
+        return isDownloaded && downloadCache.getCachedSpans(songId).isNotEmpty()
     }
 }
