@@ -7,6 +7,16 @@ enum class ClientName(val label: String, val version: String, val userAgent: Str
     MWeb("MWEB", "2.20211214.00.00",
         "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Mobile Safari/537.36"
     ),
+
+    /**
+     * Maybe update to
+     * Android(
+     *     "ANDROID",
+     *     "21.26.364",
+     *     "com.google.android.youtube/21.26.364 (Linux; U; Android 11) gzip"
+     * ),
+     * in the future
+     */
     Android("ANDROID", "19.17.34",
         "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Mobile Safari/537.36"
     ),
@@ -82,8 +92,12 @@ enum class ClientName(val label: String, val version: String, val userAgent: Str
     AndroidLite("ANDROID_LITE", "3.26.1",
         "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Mobile Safari/537.36"
     ),
-    AndroidVr("ANDROID_VR", "1.64.22",
-        "Mozilla/5.0 (Linux; Android 12; Quest 3 Build/SQ3A.220605.009.A1; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/118.0.5993.111 VR Safari/537.36"
+    //    AndroidVr("ANDROID_VR", "1.64.22",
+//        "Mozilla/5.0 (Linux; Android 12; Quest 3 Build/SQ3A.220605.009.A1; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/118.0.5993.111 VR Safari/537.36"
+//    ),
+    AndroidVr(
+        "ANDROID_VR", "1.65.10",
+        "com.google.android.apps.youtube.vr.oculus/1.65.10 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip"
     ),
     AndroidTv("ANDROID_TV", "2.16.032",
         "Mozilla/5.0 (Linux; Android 5.1.1; AFTT Build/LVY48F; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/49.0.2623.10"
@@ -96,5 +110,9 @@ enum class ClientName(val label: String, val version: String, val userAgent: Str
     ),
     WebAnalytics("WEB_MUSIC_ANALYTICS", "0.2",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.157 Safari/537.36"
-    )
+    ),
+    VisionOS(
+        "VISIONOS", "1.02",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15"
+    ),
 }
