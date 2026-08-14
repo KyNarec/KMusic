@@ -297,7 +297,7 @@ suspend fun playSongByIdWithBestBitrate(videoId: String): String {
 suspend fun playSongById(videoId: String): String {
     val json = json
 
-    val raw = InnerTube(ClientName.AndroidVr).player(videoId)
+    val raw = InnerTube(ClientName.VisionOS).player(videoId)
     try {
         val response = json.decodeFromString<PlayerResponse>(raw)
 //        response.streamingData?.adaptiveFormats?.forEach {
