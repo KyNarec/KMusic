@@ -221,7 +221,7 @@ fun PlaylistsScreen(
                     val uri = url.toUri()
                     val listParam = uri.getQueryParameter("list") ?: ""
 
-                    val playlistId = if (listParam.length == 34) {
+                    val playlistId = if (listParam.length == 34 || listParam.length == 13) {
                         "VL$listParam"
                     } else {
                         listParam
