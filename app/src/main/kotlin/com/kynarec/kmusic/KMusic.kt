@@ -57,16 +57,5 @@ class KMusic : Application(), ImageLoaderFactory {
         }
 
         NewPipe.init(KtorDownloader())
-
-//        CoroutineScope(Dispatchers.IO).launch {
-//            try {
-//                YtDlpInit.start(this@KMusic)
-////                YoutubeDL.getInstance().updateYoutubeDL(this@KMusic, YoutubeDL.UpdateChannel.STABLE)
-//                FFmpeg.getInstance().init(this@KMusic);
-//                Aria2c.getInstance().init(this@KMusic);
-//            } catch (e: YoutubeDLException) {
-//                Log.e("ytdlp", "init failed", e)
-//            }
-//        }
     }
 }

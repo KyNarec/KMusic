@@ -30,9 +30,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.KMusic">
 
-        <!--        android:extractNativeLibs="true"-->
-        <!--        android:requestLegacyExternalStorage="true"-->
-
 
         <activity
             android:name=".MainActivity"
