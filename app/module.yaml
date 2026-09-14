@@ -1,0 +1,84 @@
+product: android/app
+
+apply:
+  - //android-common.module-template.yaml
+
+settings:
+  android:
+    namespace: com.kynarec.kmusic
+    applicationId: com.kynarec.kmusic.debug
+    minSdk: 30
+    targetSdk: 37
+    compileSdk:
+      apiLevel: 37
+    versionCode: 1
+    versionName: 0.1.22-alpha.6
+    signing:
+      enabled: true
+      propertiesFile: ./keystore.properties
+    parcelize:
+      enabled: true
+  compose: enabled
+  kotlin:
+    serialization:
+      format: json
+    ksp:
+      processors:
+        - $libs.androidx.room.compiler
+      processorOptions:
+        room.schemaLocation: schemas
+  jvm:
+    jdk:
+      version: 21
+
+dependencies:
+  - //LrcLib
+  - //KLyrics
+  - bom: $libs.androidx.compose.bom
+  - bom: $libs.koin.bom
+  - $libs.androidx.media3.session
+  - $libs.androidx.media3.exoplayer
+  - $libs.androidx.media3.ui
+  - $libs.androidx.media3.common
+  - $libs.ktor.client.core
+  - $libs.ktor.client.okhttp
+  - $libs.ktor.client.content.negotiation
+  - $libs.ktor.client.encoding
+  - $libs.ktor.client.serialization
+  - $libs.ktor.serialization.json
+  - $libs.androidx.room.runtime
+  - $libs.androidx.room.common.jvm
+  - $libs.androidx.room.runtime.android
+  - $libs.toasty
+  - $libs.androidx.core.ktx
+  - $libs.androidx.activity.compose
+  - $libs.androidx.navigation.compose
+  - $libs.androidx.compose.material3
+  - $libs.androidx.compose.material.icons.extended
+  - $libs.androidx.compose.ui
+  - $libs.androidx.compose.ui.tooling
+  - $libs.androidx.compose.ui.tooling.preview
+  - $libs.coil.compose
+  - $libs.kotlinx.serialization.json
+  - $libs.wavy.slider
+  - $libs.ksafe
+  - $libs.ksafe.compose
+  - $libs.multiplatform.markdown.renderer.m3
+  - $libs.filekit.dialogs
+  - $libs.reorderable
+  - $libs.koin.core
+  - $libs.koin.android
+  - $libs.koin.androidx.compose
+  - $libs.koin.compose
+  - $libs.koin.compose.viewmodel
+  - $libs.lyrics.core
+  - $libs.lyrics.ui
+  - $libs.androidx.compose.adaptive
+  - $libs.androidx.compose.adaptive.layout
+  - $libs.androidx.compose.adaptive.navigation
+  - $libs.lottie.compose
+  - $libs.newpipeextractor
+
+test-dependencies:
+  - $libs.junit
+  - $libs.test.balloon

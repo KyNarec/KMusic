@@ -16,6 +16,7 @@ jobs:
 
     env:
       CI: "true"
+      KOTLIN_CLI_NO_WELCOME_BANNER: "1"
       KEYSTORE_FILE: ${{ github.workspace }}/release.keystore
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
       KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -25,34 +26,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21 (Android supported)
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
-          cache: gradle
-
       - name: Decode release keystore
         run: |
           echo "${{ secrets.RELEASE_KEYSTORE_B64 }}" | base64 --decode > release.keystore
+          cat > app/keystore.properties <<EOF
+          storeFile=${{ github.workspace }}/release.keystore
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          EOF
 
-      - name: Build signed release APK
+      - name: Build and package with Kotlin Toolchain
         run: |
-          ./gradlew \
-            --no-daemon \
-            --no-build-cache \
-            clean \
-            assembleRelease
+          # Release builds ship without the .debug suffix (the Toolchain has no
+          # per-variant applicationId, so local dev builds use the .debug ID).
+          sed -i 's/applicationId: com.kynarec.kmusic.debug/applicationId: com.kynarec.kmusic/' app/module.yaml
+          ./kotlin build -m app -v release
+          ./kotlin test
+          ./kotlin package -m app
 
-      - name: Verify APK output
+      - name: Stage signed release APK
         run: |
-          ls -lh app/build/outputs/apk/release
+          cp build/tasks/_app_buildAndroidRelease/gradle-project-release.apk \
+            KMusic_${{ github.event.inputs.version }}.apk
+          ls -lh KMusic_*.apk build/tasks/_app_bundleAndroid/
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4
         with:
           name: KMusic-${{ github.run_number }}
-          path: app/build/outputs/apk/release/KMusic_v*.apk
+          path: |
+            KMusic_*.apk
+            build/tasks/_app_bundleAndroid/gradle-project-release.aab
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -61,5 +66,7 @@ jobs:
             name: ${{ github.event.inputs.version }}
             draft: true
             prerelease: false
-            files: app/build/outputs/apk/release/KMusic_v*.apk
+            files: |
+              KMusic_*.apk
+              build/tasks/_app_bundleAndroid/gradle-project-release.aab
             token: ${{ github.token }}

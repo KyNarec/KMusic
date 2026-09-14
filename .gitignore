@@ -1,4 +1,3 @@
-.gradle
 /local.properties
 /.idea/caches
 /.idea/libraries
@@ -15,7 +14,6 @@
 # FOLLOWING: github android gitignore file
 
 # Gradle files
-.gradle/
 build/
 
 # Local configuration file (sdk path, etc)
@@ -41,6 +39,7 @@ render.experimental.xml
 # Keystore files
 *.jks
 *.keystore
+app/keystore.properties
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json

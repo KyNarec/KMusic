@@ -1,0 +1,4 @@
+modules:
+  - KLyrics
+  - LrcLib
+  - app

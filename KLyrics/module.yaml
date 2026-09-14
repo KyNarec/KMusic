@@ -1,0 +1,21 @@
+product:
+  type: lib
+  platforms: [android]
+
+apply:
+  - //android-common.module-template.yaml
+
+settings:
+  android:
+    namespace: com.kynarec.klyrics
+    minSdk: 30
+    compileSdk:
+      apiLevel: 37
+  compose: enabled
+  jvm:
+    jdk:
+      version: 21
+
+dependencies:
+  - $libs.compose.foundation
+  - $libs.compose.animation

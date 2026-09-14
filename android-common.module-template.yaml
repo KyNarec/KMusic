@@ -1,0 +1,19 @@
+settings:
+  jvm:
+    jdk:
+      version: 21
+  kotlin:
+    languageVersion: 2.4
+    serialization:
+      format: json
+  junit: junit-4
+
+repositories:
+  - id: google
+    url: https://dl.google.com/dl/android/maven2/
+  - id: central
+    url: https://repo.maven.apache.org/maven2/
+  - id: jitpack
+    url: https://jitpack.io
+  - id: martmists
+    url: https://maven.martmists.com/releases
