@@ -22,9 +22,14 @@ import com.kynarec.kmusic.service.innertube.responses.SearchCommunityPlaylistsRe
 import com.kynarec.kmusic.service.innertube.responses.SearchResponse
 import com.kynarec.kmusic.service.innertube.responses.SearchSuggestionsResponse
 import innertube.responses.BrowseSongsResponse
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import org.schabi.newpipe.extractor.ServiceList
+import org.schabi.newpipe.extractor.stream.StreamInfo
+
 
 private val json = Json { ignoreUnknownKeys = true }
 
@@ -294,39 +299,97 @@ suspend fun playSongByIdWithBestBitrate(videoId: String): String {
     }
 }
 
+object YtDlpInit {
+//    private val ready = CompletableDeferred<Unit>()
+//
+//    fun start(context: Context) {
+//        CoroutineScope(Dispatchers.IO).launch {
+//            try {
+//                YoutubeDL.getInstance().init(context)
+//                YoutubeDL.updateYoutubeDL(context, YoutubeDL.UpdateChannel.STABLE)
+//                Log.i("playSongById", "yt-dlp version: ${YoutubeDL.version(context)}")
+//                ready.complete(Unit)
+//            } catch (e: YoutubeDLException) {
+//                Log.e("ytdlp", "init failed", e)
+//                ready.completeExceptionally(e)
+//            }
+//        }
+//    }
+//
+//    suspend fun awaitReady() = ready.await()
+}
+
 suspend fun playSongById(videoId: String): String {
-    val json = json
+    println("playSongById was called with videoId: $videoId")
 
-    val raw = InnerTube(ClientName.VisionOS).player(videoId)
-    try {
-        val response = json.decodeFromString<PlayerResponse>(raw)
-//        response.streamingData?.adaptiveFormats?.forEach {
-//            println("Adaptive: itag: ${it.itag}, audioQuality: ${it.audioQuality}, url: ${it.url}")
-//        }
-//        response.streamingData?.formats?.forEach {
-//            println("Format: itag: ${it.itag}, audioQuality: ${it.audioQuality}, url: ${it.url}")
-//        }
+    return withContext(Dispatchers.IO) {
 
-        val url: String? =
-            response.streamingData?.adaptiveFormats
-                ?.firstOrNull { it.itag == 251 }
-                ?.url
-                ?: response.streamingData?.formats
-                    ?.firstOrNull { it.itag == 18 }
-                    ?.url
+        val info = StreamInfo.getInfo(
+            ServiceList.YouTube,
+            "https://www.youtube.com/watch?v=$videoId"
+        )
 
-//            ?.adaptiveFormats
-//            ?.filter { it.audioQuality in listOf("AUDIO_QUALITY_HIGH", "AUDIO_QUALITY_MEDIUM") }
-//            ?.filter { it.url != null }
-//            ?.maxByOrNull { it.averageBitrate ?: 0 }
+        val audioStream = info.audioStreams
+            .filter {
+                it.codec?.contains("opus", ignoreCase = true) == true
+            }
+            .maxByOrNull { it.averageBitrate }
+            ?: info.audioStreams.maxByOrNull { it.averageBitrate }
 
-        println("Song URL: $url")
-
-        return url ?: "NA"
-    } catch (e: Exception) {
-        e.printStackTrace()
-        return ""
+        audioStream?.content ?: "NA"
     }
+
+//    val url = "https://music.youtube.com/watch?v=$videoId"
+//    Log.i("PlaySongById", "starting waiting for YtDlp")
+//    YtDlpInit.awaitReady()
+//    Log.i("PlaySongById", "ending waiting for YtDlp")
+//    try {
+//        return withContext(Dispatchers.IO) {
+//            val request = YoutubeDLRequest(url).apply {
+//                addOption("-f", "bestaudio[ext=m4a]/bestaudio/best")
+//            }
+//            val info = getInstance().getInfo(request)
+//            return@withContext info.url ?: "NA"
+//        }
+//    } catch (e: YoutubeDLException) {
+//        Log.e("PlaySongById", e.stackTrace.contentToString())
+//        e.message?.let { Log.e("PlaySongById", it) }
+//        return "NA"
+//    }
+
+
+//    val json = json
+//
+//    val raw = InnerTube(ClientName.VisionOS).player(videoId)
+//    try {
+//        val response = json.decodeFromString<PlayerResponse>(raw)
+////        response.streamingData?.adaptiveFormats?.forEach {
+////            println("Adaptive: itag: ${it.itag}, audioQuality: ${it.audioQuality}, url: ${it.url}")
+////        }
+////        response.streamingData?.formats?.forEach {
+////            println("Format: itag: ${it.itag}, audioQuality: ${it.audioQuality}, url: ${it.url}")
+////        }
+//
+//        val url: String? =
+//            response.streamingData?.adaptiveFormats
+//                ?.firstOrNull { it.itag == 251 }
+//                ?.url
+//                ?: response.streamingData?.formats
+//                    ?.firstOrNull { it.itag == 18 }
+//                    ?.url
+//
+////            ?.adaptiveFormats
+////            ?.filter { it.audioQuality in listOf("AUDIO_QUALITY_HIGH", "AUDIO_QUALITY_MEDIUM") }
+////            ?.filter { it.url != null }
+////            ?.maxByOrNull { it.averageBitrate ?: 0 }
+//
+//        println("Song URL: $url")
+//
+//        return url ?: "NA"
+//    } catch (e: Exception) {
+//        e.printStackTrace()
+//        return ""
+//    }
 }
 
 fun getRadioFlow(

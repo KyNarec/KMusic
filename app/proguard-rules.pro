@@ -103,3 +103,7 @@
 #-dontwarn com.kynarec.lrclib.LrcLib
 #-dontwarn com.kynarec.lrclib.LyricsRepository
 #-dontwarn com.kynarec.lrclib.model.Lyrics
+
+# Rules for NewPipeExtractor
+-keep class org.schabi.newpipe.extractor.timeago.patterns.** { *; }
+-dontwarn java.beans.**

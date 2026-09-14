@@ -8,7 +8,7 @@ plugins {
     id("kotlin-parcelize")
 }
 
-val appVersion = "0.1.22-alpha.5"
+val appVersion = "0.1.22-alpha.6"
 
 
 ksp {
@@ -88,6 +88,12 @@ android {
         buildConfig = true
         resValues = true
     }
+//    defaultConfig {
+//        ndk {
+//            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+//        }
+//    }
+//    packaging.jniLibs.useLegacyPackaging = true
 }
 
 androidComponents {
@@ -189,4 +195,10 @@ dependencies {
 
     // Animations
     implementation(libs.lottie.compose)
+
+//    implementation("io.github.junkfood02.youtubedl-android:library:0.18.1")
+//    implementation("io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1")
+//    implementation("io.github.junkfood02.youtubedl-android:aria2c:0.18.1")
+
+    implementation("com.github.teamnewpipe:NewPipeExtractor:0.26.5")
 }

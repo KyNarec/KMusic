@@ -30,6 +30,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.KMusic">
 
+        <!--        android:extractNativeLibs="true"-->
+        <!--        android:requestLegacyExternalStorage="true"-->
+
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -39,6 +43,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 

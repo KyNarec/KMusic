@@ -41,6 +41,7 @@ import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import kotlin.time.Duration.Companion.milliseconds
 
+
 class MainActivity : ComponentActivity() {
 
     private val tag = "MainActivity"
@@ -76,6 +77,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MainScreen()
         }
+
         CoroutineScope(Dispatchers.IO).launch {
             getKoin().get<AppVersionProvider>()
             getKoin().get<UpdateRepository>()

@@ -11,9 +11,11 @@ import com.kynarec.kmusic.data.db.KmusicDatabase
 import com.kynarec.kmusic.service.di.appModule
 import com.kynarec.kmusic.service.di.lrcLibModule
 import com.kynarec.kmusic.service.di.mediaModule
+import com.kynarec.kmusic.service.innertube.KtorDownloader
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
+import org.schabi.newpipe.extractor.NewPipe
 
 class KMusic : Application(), ImageLoaderFactory {
     lateinit var database: KmusicDatabase
@@ -53,5 +55,18 @@ class KMusic : Application(), ImageLoaderFactory {
             androidContext(this@KMusic)
             modules(lrcLibModule, appModule, mediaModule)
         }
+
+        NewPipe.init(KtorDownloader())
+
+//        CoroutineScope(Dispatchers.IO).launch {
+//            try {
+//                YtDlpInit.start(this@KMusic)
+////                YoutubeDL.getInstance().updateYoutubeDL(this@KMusic, YoutubeDL.UpdateChannel.STABLE)
+//                FFmpeg.getInstance().init(this@KMusic);
+//                Aria2c.getInstance().init(this@KMusic);
+//            } catch (e: YoutubeDLException) {
+//                Log.e("ytdlp", "init failed", e)
+//            }
+//        }
     }
 }
