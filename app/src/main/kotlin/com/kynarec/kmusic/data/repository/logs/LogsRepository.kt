@@ -4,7 +4,6 @@ package com.kynarec.kmusic.data.repository.logs
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.os.Process
 import androidx.core.content.FileProvider
 import com.kynarec.kmusic.ui.components.settings.logs.LogTimespan
 import kotlinx.serialization.json.Json
@@ -27,29 +26,22 @@ class LogsRepository(
     private val bufferMarkerRegex = Regex("""^\s*-+\s*beginning of\s+\S+\s*$""")
 
     fun captureLogs(filename: String, logTimespan: LogTimespan) {
-        val process = if (logTimespan == LogTimespan.AllTime) {
-            Runtime.getRuntime().exec(
-                arrayOf(
-                    "logcat",
-                    "-d",
-                    "--pid=${Process.myPid()}",
-                    "-v",
-                    "epoch"
-                )
-            )
-        } else {
-            Runtime.getRuntime().exec(
-                arrayOf(
-                    "logcat",
-                    "-d",
-                    "-T",
-                    logTimespan.formatedTime(),
-                    "--pid=${Process.myPid()}",
-                    "-v",
-                    "epoch",
-                )
-            )
+        // No --pid: the app can only read its own UID's logs anyway
+        val command = buildList {
+            add("logcat")
+            add("-d")
+            if (logTimespan != LogTimespan.AllTime) {
+                add("-T")
+                add(logTimespan.formatedTime())
+            }
+            add("-v")
+            add("threadtime,epoch")
         }
+
+        val process = ProcessBuilder(command)
+            .redirectErrorStream(true)
+            .start()
+
         val logText = process.inputStream.bufferedReader().readText()
 
         val logcatFile = LogcatFile(
