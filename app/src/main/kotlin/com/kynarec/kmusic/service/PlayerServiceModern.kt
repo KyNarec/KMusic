@@ -96,6 +96,7 @@ class PlayerServiceModern : MediaLibraryService(), KoinComponent {
          * Called when the player transitions to a new song or the playlist ends
          */
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            Log.i("PlayerService", "onMediaItemTransition called")
             when (reason) {
                 Player.MEDIA_ITEM_TRANSITION_REASON_AUTO ->
                     Log.i("PlayerService", "MEDIA_ITEM_TRANSITION_REASON_AUTO (Playback has automatically transitioned to the next media item)")
@@ -139,7 +140,8 @@ class PlayerServiceModern : MediaLibraryService(), KoinComponent {
                             val fullMediaItem = mediaItem.createFullMediaItem()
 
                             withContext(Dispatchers.Main) {
-                                if (fullMediaItem != MediaItem.EMPTY && currentIndex == player?.currentMediaItemIndex) {
+                                val atIndex = player?.getMediaItemAt(currentIndex)
+                                if (fullMediaItem != MediaItem.EMPTY && currentIndex == player?.currentMediaItemIndex && atIndex?.mediaId == mediaItem.mediaId) {
                                     player?.replaceMediaItem(currentIndex, fullMediaItem)
                                     player?.prepare()
                                     player?.play()
@@ -332,7 +334,7 @@ class PlayerServiceModern : MediaLibraryService(), KoinComponent {
                         }
                         ALL_SONGS_ID -> {
                             val allSongs = songDao.getAllSongs()
-                            allSongs.map { createPartialMediaItemFromSong(it, applicationContext) }
+                            allSongs.map { createPartialMediaItemFromSong(it, applicationContext, tag) }
                         }
                         SORT_OPTIONS_ID -> {
                             listOf(
@@ -348,11 +350,11 @@ class PlayerServiceModern : MediaLibraryService(), KoinComponent {
                         }
                         SORT_BY_TITLE_ID -> {
                             val sortedSongs = songDao.getAllSongs().sortedBy { it.title }
-                            sortedSongs.map { createPartialMediaItemFromSong(it, applicationContext) }
+                            sortedSongs.map { createPartialMediaItemFromSong(it, applicationContext, tag) }
                         }
                         SORT_BY_ARTIST_ID -> {
                             val sortedSongs = songDao.getAllSongs().sortedBy { it.artists.first().name }
-                            sortedSongs.map { createPartialMediaItemFromSong(it, applicationContext) }
+                            sortedSongs.map { createPartialMediaItemFromSong(it, applicationContext, tag) }
                         }
                         else -> {
                             Log.w(tag, "Invalid parentId: $parentId")

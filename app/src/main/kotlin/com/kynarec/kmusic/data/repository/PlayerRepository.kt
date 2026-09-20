@@ -68,6 +68,16 @@ class PlayerRepository(
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             Log.i(tag, "onMediaItemTransition called with reason: $reason")
+            Log.i(
+                tag,
+                "current mediaItemCount: ${mediaController?.mediaItemCount}, ${mediaController?.currentTracks?.toString()}"
+            )
+            for (idx in 0 until (mediaController?.mediaItemCount ?: 0)) {
+                Log.i(tag, "==== mediaItemAt: $idx ====")
+                val tMediaItem = mediaController?.getMediaItemAt(idx) ?: MediaItem.EMPTY
+                Log.i(tag, tMediaItem.mediaMetadata.title.toString())
+                Log.i(tag, tMediaItem.mediaId)
+            }
 
             val songsList = _playerState.value.songsList
             val currentSong = songsList.find { it.song.id == mediaItem?.mediaId }?.song
@@ -169,7 +179,8 @@ class PlayerRepository(
         repositoryScope.launch(Dispatchers.IO) {
             val mediaItem = createMediaItemFromSong(song, context, isSongDownloaded(song.id))
             withContext(Dispatchers.Main) {
-                controller.setMediaItem(mediaItem)
+                controller.addMediaItem(0, mediaItem)  // or replaceMediaItem at idx
+                controller.seekTo(0, 0L)
                 controller.prepare()
                 controller.play()
             }
@@ -235,7 +246,7 @@ class PlayerRepository(
             yield()
             if (currentLoadingPlaylistId != playlistId) return@forEach
             val mediaItems = withContext(Dispatchers.IO) {
-                chunk.map { createPartialMediaItemFromSong(it, context) }
+                chunk.map { createPartialMediaItemFromSong(it, context, tag) }
             }
 
             withContext(Dispatchers.Main) {
@@ -260,15 +271,16 @@ class PlayerRepository(
             _playerState.update { it.copy(songsList = emptyList()) }
         }
 
-        playSong(song)
-
-        repositoryScope.launch {
-            try {
+        try {
+            repositoryScope.launch {
+                mediaController?.clearMediaItems()
+                playSong(song)
                 getRadioFlow(song.id)
                     .flowOn(Dispatchers.IO)
                     .collect { radioSong ->
                         if (radioSong.id != song.id) {
-                            val mediaItem = createPartialMediaItemFromSong(radioSong, context)
+                            val mediaItem =
+                                createPartialMediaItemFromSong(radioSong, context, tag)
                             _playerState.update {
                                 it.copy(songsList = it.songsList + radioSong.toPlaylistItem())
                             }
@@ -277,12 +289,19 @@ class PlayerRepository(
                             }
                         }
                     }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            } finally {
-                if (_playerState.value.songsList.size > 1) {
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            if (_playerState.value.songsList.size > 1) {
+                repositoryScope.launch {
+
                     val nextMediaItem =
-                        createMediaItemFromSong(_playerState.value.songsList[1].song, context, isSongDownloaded(song.id))
+                        createMediaItemFromSong(
+                            _playerState.value.songsList[1].song,
+                            context,
+                            isSongDownloaded(song.id)
+                        )
                     withContext(Dispatchers.Main) {
                         mediaController?.replaceMediaItem(1, nextMediaItem)
                     }
@@ -315,7 +334,7 @@ class PlayerRepository(
                         _playerState.update {
                             it.copy(songsList = it.songsList + song.toPlaylistItem())
                         }
-                        createPartialMediaItemFromSong(song, context)
+                        createPartialMediaItemFromSong(song, context, tag)
                     }
                 }
 
@@ -370,7 +389,7 @@ class PlayerRepository(
             try {
                 val mediaItem = if (_playerState.value.songsList.size < 2)
                     createMediaItemFromSong(song, context, isSongDownloaded(song.id))
-                else createPartialMediaItemFromSong(song, context)
+                else createPartialMediaItemFromSong(song, context, tag)
                 mediaController?.addMediaItem(mediaItem)
 
                 _playerState.update { currentState ->
@@ -385,7 +404,8 @@ class PlayerRepository(
     fun playNextList(songs: List<Song>) {
         repositoryScope.launch {
             try {
-                val mediaItems = songs.map { song -> createPartialMediaItemFromSong(song, context) }
+                val mediaItems =
+                    songs.map { song -> createPartialMediaItemFromSong(song, context, tag) }
                 val currentMediaIndex = mediaController?.currentMediaItemIndex ?: 0
                 val nextIndex = currentMediaIndex + 1
 
@@ -408,7 +428,8 @@ class PlayerRepository(
     fun enqueueSongList(songs: List<Song>) {
         repositoryScope.launch {
             try {
-                val mediaItems = songs.map { song -> createPartialMediaItemFromSong(song, context) }
+                val mediaItems =
+                    songs.map { song -> createPartialMediaItemFromSong(song, context, tag) }
                 mediaController?.addMediaItems(mediaItems)
 
                 _playerState.update { currentState ->

@@ -199,8 +199,8 @@ suspend fun createOfflineMediaItem(
 }
 
 @OptIn(UnstableApi::class)
-fun createPartialMediaItemFromSong(song: Song, context: Context): MediaItem {
-    Log.i("PlayerService", "createFullMediaItem called for ${song.id}")
+fun createPartialMediaItemFromSong(song: Song, context: Context, tag: String): MediaItem {
+    Log.i(tag, "createPartialMediaItemFromSong called for ${song.id}")
 
     val extras = Bundle().apply {
         putString("ALBUM_ID", song.albumId)
