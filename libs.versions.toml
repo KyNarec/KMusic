@@ -23,7 +23,8 @@ roomCommonJvm = "2.8.4"
 roomRuntimeAndroid = "2.8.4"
 toasty = "1.5.2"
 testBalloon = "1.0.1-K2.4.0"
-composeJetbrains = "1.10.0"
+composeJetbrains = "1.11.1"
+composeAlpha = "1.12.0-alpha03"
 material3 = "1.5.0-alpha23"
 material3Adaptive = "1.2.0"
 ui = "1.10.3"
@@ -43,9 +44,9 @@ androidx-compose-adaptive-layout = { module = "androidx.compose.material3.adapti
 androidx-compose-adaptive-navigation = { module = "androidx.compose.material3.adaptive:adaptive-navigation", version.ref = "material3Adaptive" }
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version = "1.7.8" }
-androidx-compose-ui = { module = "androidx.compose.ui:ui" }
-androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
-androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+androidx-compose-ui = { module = "androidx.compose.ui:ui", version.ref = "composeAlpha" }
+androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "composeAlpha" }
+androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "composeAlpha" }
 androidx-compose-ui-util = { module = "androidx.compose.ui:ui-util" }
 androidx-compose-material3  = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
