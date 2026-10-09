@@ -27,8 +27,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import org.schabi.newpipe.extractor.ServiceList
-import org.schabi.newpipe.extractor.stream.StreamInfo
 
 
 private val json = Json { ignoreUnknownKeys = true }
@@ -304,20 +302,10 @@ suspend fun playSongById(videoId: String): String {
 
     try {
         return withContext(Dispatchers.IO) {
-
-            val info = StreamInfo.getInfo(
-                ServiceList.YouTube,
-                "https://www.youtube.com/watch?v=$videoId"
-            )
-
-            val audioStream = info.audioStreams
-                .filter {
-                    it.codec?.contains("opus", ignoreCase = true) == true
-                }
-                .maxByOrNull { it.averageBitrate }
-                ?: info.audioStreams.maxByOrNull { it.averageBitrate }
-
-            audioStream?.content ?: "NA"
+            when (val resolve = UrlFetcher().resolve(videoId)) {
+                is NetworkResult.Success -> return@withContext resolve.data
+                else -> "NA"
+            }
         }
     } catch (e: Exception) {
         e.printStackTrace()

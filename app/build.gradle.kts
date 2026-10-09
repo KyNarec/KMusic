@@ -8,7 +8,7 @@ plugins {
     id("kotlin-parcelize")
 }
 
-val appVersion = "0.1.22-alpha.7"
+val appVersion = "0.1.22-alpha.8"
 
 
 ksp {
