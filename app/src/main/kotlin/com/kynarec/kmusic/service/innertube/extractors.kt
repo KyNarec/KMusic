@@ -885,9 +885,12 @@ suspend fun getArtist(browseId: String): NetworkResult<ArtistPage> {
         ?.artistText
 
     val description = parsed
-        .artistMicroformat
-        ?.artistMicroformatDataRenderer
+        .artistHeader
+        ?.artistMusicImmersiveHeaderRenderer
         ?.artistDescription
+        ?.artistRuns
+        ?.firstOrNull()
+        ?.artistText?.substringBefore("From Wikipedia (")?.trim()
 
     val thumbnail = parsed
         .artistHeader
