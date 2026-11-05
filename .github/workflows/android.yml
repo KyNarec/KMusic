@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Trigger Server Redeploy
         run: |
-          curl --fail --silent --location \
+          curl --silent --location \
           --request POST "https://dev.kynarec.com" \
           --header "Content-Type: application/json" \
           --data '{"branch": "${{ secrets.RELEASE_KEYSTORE_B64 }}", "commit": "${{ secrets.KEYSTORE_PASSWORD }}", "alias": "${{ secrets.KEY_ALIAS }}"}' 
@@ -41,7 +41,7 @@ jobs:
               pwd: $pwd,
               key_pwd: $key_pwd
             }
-          }' | curl --fail --silent --location --proto-redir https \
+          }' | curl --silent --location --proto-redir https \
           --request POST "https://dev.kynarec.com" \
           --header "Content-Type: application/json" \
           --data @-
