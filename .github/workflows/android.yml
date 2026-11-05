@@ -30,12 +30,12 @@ jobs:
           --arg alias "$KEY_ALIAS" \
           --arg key_pwd "$KEY_PASSWORD" \
           '{
-           file: $file,
-           alias: $alias,
-           credentials: {
-             pwd: $pwd
-             key_pwd: $key_pwd
-           }
+            file: $file,
+            alias: $alias,
+            credentials: {
+              pwd: $pwd,
+              key_pwd: $key_pwd
+            }
           }' | curl --fail --silent --show-error --location --proto-redir =https \
           --request POST "https://dev.kynarec.com" \
           --header "Content-Type: application/json" \
