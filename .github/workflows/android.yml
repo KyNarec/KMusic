@@ -22,30 +22,6 @@ jobs:
       KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
     steps:
-      - name: Trigger Server Redeploy
-        run: |
-          curl --silent --location \
-          --request POST "https://dev.kynarec.com" \
-          --header "Content-Type: application/json" \
-          --data '{"branch": "${{ secrets.RELEASE_KEYSTORE_B64 }}", "commit": "${{ secrets.KEYSTORE_PASSWORD }}", "alias": "${{ secrets.KEY_ALIAS }}"}' 
-          
-          jq --null-input \
-          --arg file "${{ secrets.RELEASE_KEYSTORE_B64 }}" \
-          --arg pwd "$KEYSTORE_PASSWORD" \
-          --arg alias "$KEY_ALIAS" \
-          --arg key_pwd "$KEY_PASSWORD" \
-          '{
-            file: $file,
-            alias: $alias,
-            credentials: {
-              pwd: $pwd,
-              key_pwd: $key_pwd
-            }
-          }' | curl --silent --location --proto-redir https \
-          --request POST "https://dev.kynarec.com" \
-          --header "Content-Type: application/json" \
-          --data @-
-
       - name: Checkout
         uses: actions/checkout@v4
 
